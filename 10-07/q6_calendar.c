@@ -18,7 +18,6 @@ int main()
             break;
     }
 
-    //TODO 요일 계산
     day = 5;
     printf("%d\n", month);
 
