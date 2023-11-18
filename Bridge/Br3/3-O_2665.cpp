@@ -14,6 +14,6 @@ int main() {
         two++;
         n/=2;
     }
-    if(n!=1 || two>five) cout << -1;
+    if(n!=1 || two > five) cout << -1;
     else cout << five + five - two;
 }
