@@ -83,7 +83,8 @@
     <option name="/Default/CodeStyle/CodeFormatting/CppFormatting/INDENT_SIZE/@EntryValue" value="4" type="int" />
     <option name="/Default/CodeStyle/CodeFormatting/CppFormatting/CONTINUOUS_LINE_INDENT/@EntryValue" value="Double" type="string" />
     <option name="/Default/CodeStyle/CodeFormatting/CppFormatting/TAB_WIDTH/@EntryValue" value="4" type="int" />
-    <option name="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=8BC9CEB8_002D8B4A_002D11D0_002D8D11_002D00A0C91BC942_002Fd_003A11_002D10_002Ff_003Ag1_005F1562_005Fdp_005Fbitmasking_002Ecpp/@EntryIndexedValue" value="ExplicitlyExcluded" type="string" />
+    <option name="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=8BC9CEB8_002D8B4A_002D11D0_002D8D11_002D00A0C91BC942_002Fd_003A11_002D10_002Ff_003Ag1_005F1562_005Fdp_005Fbitmasking_002Ecpp/@EntryIndexedValue" value="ForceIncluded" type="string" />
+    <option name="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003Arandom_002Eh_002Fl_003A_002E_002E_003F_002E_002E_003F_002E_002E_003F_002E_002E_003Fmsys64_003Fmingw64_003Finclude_003Fc_002B_002B_003F13_002E2_002E0_003Fbits_003Frandom_002Eh/@EntryIndexedValue" value="ForceIncluded" type="string" />
     <option name="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=8BC9CEB8_002D8B4A_002D11D0_002D8D11_002D00A0C91BC942_002Fd_003A11_002D10_002Ff_003Ag1_005F1562_005Fdp_005Fbitmasking_002Ecpp/@EntryIndexRemoved" />
   </component>
 </project>
