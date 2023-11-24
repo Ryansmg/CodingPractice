@@ -5,6 +5,8 @@
 using namespace std;
 #define ll long long
 
+//발전소
+
 bool contains(ll bitmask, int num) //num번째 발전소가 작동 중인지를 반환
 {
     return (bitmask >> num) % 2;

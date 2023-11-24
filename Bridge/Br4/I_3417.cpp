@@ -8,19 +8,12 @@ ll max(ll a, ll b) {
     return a>b?a:b;
 }
 int main() {
-    ll n; cin >> n;
-    vector<int> temp(n);
-    vector<vector<int>> note(n, temp);
-    for(int i=0; i<n; i++) {
-        for(int j=0; j<n/2.0; j++) {
-            note[i][j] = (i+1) * (j+1);
-            note[i][n-j-1] = note[i][j];
-        }
+    char a; cin >> a;
+    string base = "5!!5!!5\n3!4!1!4!3\n1!7!7!1\n!98!\n1!96!1\n3!92!3\n5!7!5\n7!3!7\n9!";
+    for(char c : base) {
+        if(c=='!') cout << a;
+        else if(c>='0' && c<='9')
+            for(int i=0; i<c-'0'; i++) cout << " ";
+        else cout << c;
     }
-    for(int i=0; i<n; i++) {
-        for(int j=0; j<n; j++)
-            cout << note[i][j] << " ";
-        cout << "\n";
-    }
-
 }

@@ -8,12 +8,20 @@ ll max(ll a, ll b) {
     return a>b?a:b;
 }
 int main() {
-    char a; cin >> a;
-    string base = "5!!5!!5\n3!4!1!4!3\n1!7!7!1\n!98!\n1!96!1\n3!92!3\n5!7!5\n7!3!7\n9!";
-    for(char c : base) {
-        if(c=='!') cout << a;
-        else if(c>='0' && c<='9')
-            for(int i=0; i<c-'0'; i++) cout << " ";
-        else cout << c;
+    ll n,m,a,b,c,d;
+    cin >> n >> m >> a >> c >> b >> d;
+
+    if(a>c&&b>d) {cout << 0; return 0;}
+    if(a>c) {cout << (d-b) * (n*m/2); return 0;}
+    if(b>d) {cout << n*m*(c-a); return 0;}
+
+    if((c-a)*2 >= d-b) { //감자를 심는 게 이득
+        cout << n * m * (c-a);
+    }
+    else { //옥수수를 심는 게 이득
+        ll s=0;
+        s += (d-b) * (n*m/2);
+        s += n*m%2*(c-a);
+        cout << s;
     }
 }

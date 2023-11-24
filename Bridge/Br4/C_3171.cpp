@@ -5,5 +5,7 @@ using namespace std;
 int main() {
     ll a, b, A, B;
     cin >> a >> b >> A >> B;
-    cout << A*a + B*b;
+    ll s = A*a + B*b;
+    if(s>=10000) s-=1000;
+    cout << s;
 }

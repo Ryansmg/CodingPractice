@@ -3,7 +3,7 @@ using namespace std;
 #define ll long long
 
 int main() {
-    ll a, b;
-    cin >> a >> b;
-    cout << 1500*a + 900*b;
+    ll a, b, A, B;
+    cin >> a >> b >> A >> B;
+    cout << A*a + B*b;
 }

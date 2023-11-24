@@ -16,5 +16,6 @@ int main() {
         int a; cin >> a;
         sum += count[i] * a;
     }
+    if(sum>=10000) sum -= 1000;
     cout << sum;
 }

@@ -4,24 +4,22 @@
 using namespace std;
 #define ll long long
 
-ll max(ll a, ll b) {
-    return a>b?a:b;
-}
 int main() {
-    ll n,m,a,b,c,d;
-    cin >> n >> m >> a >> c >> b >> d;
+    vector<ll> cnt(10000,0);
+    for(int i=1; i<250; i++)
+        for(int j=i; j<250; j++) {
+            for(int k=j; k<250; k++)
+                if(i*i + j*j == k*k) cnt[i+j+k]++;
 
-    if(a>c&&b>d) {cout << 0; return 0;}
-    if(a>c) {cout << (d-b) * (n*m/2); return 0;}
-    if(b>d) {cout << n*m*(c-a); return 0;}
+        }
 
-    if((c-a)*2 >= d-b) { //감자를 심는 게 이득
-        cout << n * m * (c-a);
-    }
-    else { //옥수수를 심는 게 이득
-        ll s=0;
-        s += (d-b) * (n*m/2);
-        s += n*m%2*(c-a);
-        cout << s;
-    }
+    vector<int> av;
+    for(int i=1; i<=600; i++)
+        if(cnt[i]==1) {av.push_back(i);}
+
+    int n;
+    cin >> n;
+    int i;
+    for(i=0; av[i]<=n; i++) {}
+    cout << i;
 }

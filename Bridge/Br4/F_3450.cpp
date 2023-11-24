@@ -3,19 +3,23 @@
 using namespace std;
 #define ll long long
 
+ll max(ll a, ll b) {
+    return a>b?a:b;
+}
 int main() {
-    ll n;
+    ll n, ans=0;
     cin >> n;
-    vector<int> count;
-    ll sum = 0;
-    for(int i=0; i<n; i++) {
-        int a; cin >> a;
-        count.push_back(a);
+    ll pre, now = 1, maxlen = 0;
+    for(ll i=0; i<n; i++) {
+        ll a; cin >> a;
+        pre=now; now=a;
+        maxlen = max(maxlen, now-pre);
     }
-    for(int i=0; i<n; i++) {
-        int a; cin >> a;
-        sum += count[i] * a;
+    ll m; cin >> m;
+    for(ll i=0; i<m; i++) {
+        ll a; cin >> a;
+        if(a>=maxlen) ans++;
     }
-    if(sum>=10000) sum -= 1000;
-    cout << sum;
+    cout << ans;
+
 }
