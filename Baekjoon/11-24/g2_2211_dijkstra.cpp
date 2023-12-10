@@ -9,10 +9,10 @@ using namespace std;
 
 struct TRI { 
     int node, //정점 번호
-    dist; //최단 거리
-    vector<int> preNodes; //이전 노드
-    TRI(int a, int b, vector<int> c) {
-        node = a; dist = b; preNodes = c;
+    dist, //최단 거리
+    preNode; //이전 노드
+    TRI(int a, int b, int c) {
+        node = a; dist = b; preNode = c;
     }
     TRI(){}
 } typedef tri;
@@ -49,66 +49,30 @@ int main()
         child[b].emplace_back(a, c);
     }
 
-    set<string> recovered;
-    vector<int> onevec; onevec.push_back(1);
+    vector<pair<int, int>> recovered;
 
-    for(int dest = 1; dest<=n; dest++)
-    {
         priority_queue<tri, vector<tri>, cmp> pq;
         vector<int> dist(n+1, inf);
         dist[1] = 0;
         for(auto pair : child[1]) {
-            pq.emplace(pair.node, pair.weight, onevec);
+            pq.emplace(pair.node, pair.weight, 1);
         }
-
-        tri t;
-        bool tset = false;
-        int tnum = 0;
 
         while(!pq.empty()) 
         {
             tri top = pq.top(); pq.pop();
             if(dist[top.node] != inf) continue;
             dist[top.node] = top.dist;
-            if(dest == top.node) {
-                if(!tset) {
-                    tset=true; t = top;
-                    int len = t.preNodes.size();
-                    for(int i=0; i<len-1; i++)
-                    {
-                        string s = to_string(t.preNodes[i]) + " " + to_string(t.preNodes[i+1]);
-                        if(recovered.find(s)==recovered.end()) tnum++;
-                    }
-                } else {
-                    int len = top.preNodes.size();
-                    int tnum2 = 0;
-                    for(int i=0; i<len-1; i++)
-                    {
-                        string s = to_string(top.preNodes[i]) + " " + to_string(top.preNodes[i+1]);
-                        if(recovered.find(s)==recovered.end()) tnum2++;
-                    }
-                    if(tnum2 < tnum) t = top;
-                }
-            }
+            recovered.push_back({top.preNode, top.node});
+            
             for(auto pair : child[top.node]) 
             {
                 if(dist[pair.node] <= top.dist + pair.weight) continue;
-                vector nvec = top.preNodes;
-                nvec.push_back(top.node);
-                pq.emplace(pair.node, top.dist + pair.weight, nvec);
+                pq.emplace(pair.node, top.dist + pair.weight, top.node);
             }
         }
-
-        //cout << "1->" << dest << ": " << dist[dest] << '\n';
-        t.preNodes.push_back(dest);
-        int len = t.preNodes.size();
-        for(int i=0; i<len-1; i++)
-        {
-            string s = to_string(t.preNodes[i]) + " " + to_string(t.preNodes[i+1]);
-            if(recovered.find(s)==recovered.end()) recovered.insert(s);
-        }
-    }
+    
 
     cout << recovered.size() << "\n";
-    for(string s : recovered) cout << s << "\n";
+    for(auto s : recovered) cout << s.first << " " << s.second << "\n";
 }
