@@ -17,7 +17,7 @@
 #define p cout x
 #define x2 >>
 #define kiok3 tie
-#define getnm varn n c m; kiok1 x2 n x2 m sc
+#define getnm varn n c m sc kiok1 x2 n x2 m sc
 #define himp :
 #define pc %
 #define imp ::
