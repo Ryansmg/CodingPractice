@@ -138,7 +138,7 @@ int main()
     // input
 
     int n, m; // n:세로, m:가로
-    cin >> n >> m;      
+    cin >> n >> m;
     int plgenx, plgeny; // player pos (used on generate)
     vector<string> level;
     vector<char> firstRow;
@@ -225,7 +225,7 @@ int main()
     }
 
     // simulation
-    int turns = 0;         // 턴 수
+    int turns = 0; // 턴 수
     bool dead = false;
     bool win = false;
     monster mon;
@@ -263,26 +263,28 @@ int main()
         ornas.insert({"HU", hucount});
         ornas.insert({"CU", cucount});
 
-            switch (c)
-            {
-            case 'L':
-                player.pos.x--;
-                break;
-            case 'R':
-                player.pos.x++;
-                break;
-            case 'U':
-                player.pos.y--;
-                break;
-            case 'D':
-                player.pos.y++;
-                break;
-            }
-        
-        if(player.pos.y > n || player.pos.x > m) {
+        switch (c)
+        {
+        case 'L':
+            player.pos.x--;
+            break;
+        case 'R':
+            player.pos.x++;
+            break;
+        case 'U':
+            player.pos.y--;
+            break;
+        case 'D':
+            player.pos.y++;
+            break;
+        }
+
+        if (player.pos.y > n || player.pos.x > m)
+        {
             player.pos = originalPos;
         }
-        else if (level[player.pos.y][player.pos.x] == '#'){
+        else if (level[player.pos.y][player.pos.x] == '#')
+        {
             player.pos = originalPos;
         }
         if (level[player.pos.y][player.pos.x] == '^')
@@ -291,16 +293,19 @@ int main()
                 player.hp -= 1;
             else
                 player.hp -= 5;
-            if(player.hp <= 0) goto death;
+            if (player.hp <= 0)
+                goto death;
         }
         else if (level[player.pos.y][player.pos.x] == 'B')
         {
             box curbox = boxes[player.pos];
-            if (curbox.type == 'W'){
+            if (curbox.type == 'W')
+            {
                 player.wp = curbox.weapon_;
                 player.hasweapon = true;
             }
-            else if (curbox.type == 'A'){
+            else if (curbox.type == 'A')
+            {
                 player.amr = curbox.armor_;
                 player.hasarmor = true;
             }
@@ -317,63 +322,91 @@ int main()
         {
             mon = monsters[player.pos];
             bool firstTurn = true;
-            while(player.hp>0 && mon.hp>0) {
-                //player attack
+            while (player.hp > 0 && mon.hp > 0)
+            {
+                // player attack
                 int boost = 1;
-                if(firstTurn && ornas["CO"]) {
-                    if(ornas["DX"]) boost = 3;
-                    else boost = 2;
+                if (firstTurn && ornas["CO"])
+                {
+                    if (ornas["DX"])
+                        boost = 3;
+                    else
+                        boost = 2;
                 }
                 int playeratt = player.att;
-                if(player.hasweapon) playeratt += player.wp.att;
+                if (player.hasweapon)
+                    playeratt += player.wp.att;
                 int playerdef = player.def;
-                if(player.hasarmor) playerdef += player.amr.def;
-                mon.hp -= max(1, (playeratt) * boost - mon.def);
-                if(mon.hp<=0) break;
+                if (player.hasarmor)
+                    playerdef += player.amr.def;
+                mon.hp -= max(1, (playeratt)*boost - mon.def);
+                if (mon.hp <= 0)
+                    break;
                 player.hp -= max(1, mon.att - playerdef);
                 firstTurn = false;
             }
-            if(player.hp <= 0) goto death;
+            if (player.hp <= 0)
+                goto death;
             level[player.pos.y][player.pos.x] = '.';
-            if(ornas["HR"]) player.hp = min(player.maxhp, player.hp+3);
-            float boost = 1; if(ornas["EX"]) boost = 1.2f;
+            if (ornas["HR"])
+                player.hp = min(player.maxhp, player.hp + 3);
+            float boost = 1;
+            if (ornas["EX"])
+                boost = 1.2f;
             player.xp += mon.xp * boost;
-            if(player.xp >= 5*player.lv) {
-                player.lv++; 
+            if (player.xp >= 5 * player.lv)
+            {
+                player.lv++;
                 player.xp = 0;
                 player.maxhp += 5;
                 player.att += 2;
                 player.def += 2;
                 player.hp = player.maxhp;
             }
-        } else if (level[player.pos.y][player.pos.x] == 'M') {
+        }
+        else if (level[player.pos.y][player.pos.x] == 'M')
+        {
             mon = monsters[player.pos];
             bool firstTurn = true;
-            if(ornas["HU"]) player.hp = player.maxhp;
-            while(player.hp>0 && mon.hp>0) {
-                //player attack
+            if (ornas["HU"])
+                player.hp = player.maxhp;
+            while (player.hp > 0 && mon.hp > 0)
+            {
+                // player attack
                 int boost = 1;
-                if(firstTurn && ornas["CO"]) {
-                    if(ornas["DX"]) boost = 3;
-                    else boost = 2;
+                if (firstTurn && ornas["CO"])
+                {
+                    if (ornas["DX"])
+                        boost = 3;
+                    else
+                        boost = 2;
                 }
                 int playeratt = player.att;
-                if(player.hasweapon) playeratt += player.wp.att;
+                if (player.hasweapon)
+                    playeratt += player.wp.att;
                 int playerdef = player.def;
-                if(player.hasarmor) playerdef += player.amr.def;
-                mon.hp -= max(1, (playeratt) * boost - mon.def);
-                if(mon.hp<=0) break;
-                if(!(firstTurn && ornas["HU"])) {
+                if (player.hasarmor)
+                    playerdef += player.amr.def;
+                mon.hp -= max(1, (playeratt)*boost - mon.def);
+                if (mon.hp <= 0)
+                    break;
+                if (!(firstTurn && ornas["HU"]))
+                {
                     player.hp -= max(1, mon.att - playerdef);
                 }
                 firstTurn = false;
             }
-            if(player.hp <= 0) goto death;
+            if (player.hp <= 0)
+                goto death;
             level[player.pos.y][player.pos.x] = '.';
-            if(ornas["HR"]) player.hp = min(player.maxhp, player.hp+3);
-            float boost = 1; if(ornas["EX"]) boost = 1.2f;
+            if (ornas["HR"])
+                player.hp = min(player.maxhp, player.hp + 3);
+            float boost = 1;
+            if (ornas["EX"])
+                boost = 1.2f;
             player.xp += mon.xp * boost;
-            if(player.xp >= 5*player.lv) {
+            if (player.xp >= 5 * player.lv)
+            {
                 player.lv++;
                 player.xp = 0;
                 player.maxhp += 5;
@@ -387,21 +420,26 @@ int main()
 
         continue;
 
-        death:
-        if(ornas["RE"]) {
+    death:
+        if (ornas["RE"])
+        {
             int ornassize = player.ornaments.size();
             int i;
-            for(i=0; i<ornassize; i++){
-                if(player.ornaments[i].type.compare("RE")==0) {
+            for (i = 0; i < ornassize; i++)
+            {
+                if (player.ornaments[i].type.compare("RE") == 0)
+                {
                     break;
                 }
             }
-            player.ornaments.erase(player.ornaments.begin()+i);
+            player.ornaments.erase(player.ornaments.begin() + i);
             player.pos.x = plgenx;
             player.pos.y = plgeny;
             player.hp = player.maxhp;
             mon.hp = mon.maxhp;
-        } else {
+        }
+        else
+        {
             dead = true;
             break;
         }
@@ -409,12 +447,16 @@ int main()
 
     // output
     string deathreason;
-    if(level[player.pos.y][player.pos.x] == '^') deathreason = "SPIKE TRAP";
-    else deathreason = mon.name;
-    if(!dead) level[player.pos.y][player.pos.x] = '@';
-    for (int i=1; i<=n; i++)
+    if (level[player.pos.y][player.pos.x] == '^')
+        deathreason = "SPIKE TRAP";
+    else
+        deathreason = mon.name;
+    if (!dead)
+        level[player.pos.y][player.pos.x] = '@';
+    for (int i = 1; i <= n; i++)
     {
-        for(int j=1; j<=m; j++) cout << level[i][j];
+        for (int j = 1; j <= m; j++)
+            cout << level[i][j];
         cout << "\n";
     }
     cout << "Passed Turns : " << turns << "\n";
@@ -422,9 +464,12 @@ int main()
     cout << "HP : " << max(player.hp, 0) << "/" << player.maxhp << "\n";
     cout << "ATT : " << player.att << "+" << (player.hasweapon ? player.wp.att : 0) << "\n";
     cout << "DEF : " << player.def << "+" << (player.hasarmor ? player.amr.def : 0) << "\n";
-    cout << "EXP : " << player.xp << "/" << player.lv*5 << "\n";
-    if(dead) cout << "YOU HAVE BEEN KILLED BY " << deathreason << "..";
-    else if(win) cout << "YOU WIN!";
-    else cout << "Press any key to continue.";
+    cout << "EXP : " << player.xp << "/" << player.lv * 5 << "\n";
+    if (dead)
+        cout << "YOU HAVE BEEN KILLED BY " << deathreason << "..";
+    else if (win)
+        cout << "YOU WIN!";
+    else
+        cout << "Press any key to continue.";
     return 0;
 }
