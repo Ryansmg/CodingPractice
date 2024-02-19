@@ -16,7 +16,7 @@ int main() {
     cout.tie(nullptr);
     random_device rd;
     mt19937 gen(rd());
-    uniform_int_distribution dis(1, 52);
+    uniform_int_distribution dis(1, 52); //1<=dis(gen)<=52
     //uniform_int_distribution dis(1, 14);
 
     int i = dis(gen);
