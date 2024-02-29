@@ -2,13 +2,11 @@
 #include <algorithm>
 #include <vector>
 #include <cmath>
-#include <cassert>
-#include <unordered_map>
 typedef long long ll;
 #define pair pair<ll, ll>
 using namespace std;
 
-//수열과 쿼리 5
+//13547. 수열과 쿼리 5
 //#mo
 
 //mo's algorithm (모스 알고리즘)
@@ -41,8 +39,10 @@ int main()
     sqrtsize = sqrt(n);
 
     vector<ll> a(1,1);
+    ll maxa = -1;
     for(ll i=0; i<n; i++) {
         ll asdf; cin >> asdf; a.push_back(asdf);
+        maxa = max(maxa, asdf);
     }
     ll m; cin >> m;
     vector<query> queries;
@@ -52,46 +52,39 @@ int main()
         queries.emplace_back(b, c, i);
     }
     sort(queries.begin(), queries.end(), cmp);
-    unordered_map<ll, ll> cnt; //<i,j> == i j개 있음
+    vector<ll> cnt(maxa+1, 0);
+    ll ansnow = 0;
     vector<ll> ans(m);
     ll l = queries[0].i, r = queries[0].j;
     for(ll i=l; i<=r; i++) {
-        auto ptr = cnt.find(a[i]);
-        if(ptr == cnt.end()) {
-            cnt.emplace(a[i], 1);
-        } else {
-            ptr->second++;
-        }
+        if(cnt[a[i]]==0) ansnow++;
+        cnt[a[i]]++;
     }
-    ans[queries[0].order] = cnt.size();
+    ans[queries[0].order] = ansnow;
     for(ll i=1; i<m; i++) {
         ll nl = queries[i].i;
         ll nr = queries[i].j;
         while(l < nl) {
-            assert(cnt.find(a[l]) != cnt.end());
             cnt[a[l]]--;
-            if(cnt[a[l]]==0) cnt.erase(a[l]);
+            if(cnt[a[l]]==0) ansnow--;
             l++;
         }
         while(nl < l) {
             l--;
-            auto ptr = cnt.find(a[l]);
-            if(ptr==cnt.end()) cnt.insert({a[l], 1});
-            else ptr->second++;
+            if(cnt[a[l]]==0) ansnow++;
+            cnt[a[l]]++;
         }
         while(r < nr) {
             r++;
-            auto ptr = cnt.find(a[r]);
-            if(ptr==cnt.end()) cnt.insert({a[r], 1});
-            else ptr->second++;
+            if(cnt[a[r]]==0) ansnow++;
+            cnt[a[r]]++;
         }
         while(nr < r) {
-            assert(cnt.find(a[r]) != cnt.end());
             cnt[a[r]]--;
-            if(cnt[a[r]]==0) cnt.erase(a[r]);
+            if(cnt[a[r]]==0) ansnow--;
             r--;
         }
-        ans[queries[i].order] = cnt.size();
+        ans[queries[i].order] = ansnow;
     }
     for(ll i : ans) cout << i << "\n";
 }
