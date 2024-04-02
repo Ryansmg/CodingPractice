@@ -16,6 +16,6 @@ int main() {
         if(a+b>c) canMake = true;
         if(canMake) break;
     }
-    if(canMake) cout << "No";
+if(canMake) cout << "No";
     else cout << "Yes";
 }

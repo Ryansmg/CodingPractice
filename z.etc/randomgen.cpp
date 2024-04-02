@@ -16,11 +16,14 @@ int main() {
     cout.tie(nullptr);
     random_device rd;
     mt19937 gen(rd());
-    uniform_int_distribution dis(1, 52); //1<=dis(gen)<=52
-    //uniform_int_distribution dis(1, 14);
+    uniform_int_distribution dis(0, 25);
+    FILE *output = fopen("output.txt", "w");
+    for(int i=0; i<200000; i++) {
+        fprintf(output, "%c", 'a' + dis(gen));
+    }
+    fclose(output);
+    // int i = dis(gen);
+    // while(!isAvailable(i)) i = dis(gen);
 
-    int i = dis(gen);
-    while(!isAvailable(i)) i = dis(gen);
-
-    cout << i;
+    //cout << i;
 }

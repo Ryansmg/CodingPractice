@@ -1,0 +1,7 @@
+B. 모기잡이
+STL : next_permutation(v.begin(), v.end())
+
+C. Split the SSHS 3
+DFS, DP
+
+E. 도망쳐
