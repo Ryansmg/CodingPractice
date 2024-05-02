@@ -8,34 +8,20 @@ using namespace std;
 //O(NlogN)
 //1916. <g2> 최소비용 구하기
 
-struct path
-{
-    ll target;
-    ll weight;
+struct path {
+    ll target, weight;
     path(){};
-    path(ll a, ll b)
-    {
-        target = a;
-        weight = b;
-    }
+    path(ll a, ll b) { target = a; weight = b; }
 };
 
-struct pqi
-{
-    ll target;
-    ll length;
+struct pqi {
+    ll target, length;
     pqi(){};
-    pqi(ll a, ll b)
-    {
-        target = a;
-        length = b;
-    }
+    pqi(ll a, ll b){ target = a; length = b; }
 };
 
-struct pqcmp
-{
-    bool operator()(pqi a, pqi b)
-    {
+struct pqcmp {
+    bool operator()(pqi a, pqi b) {
         return a.length > b.length;
     }
 };

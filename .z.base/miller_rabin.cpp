@@ -23,12 +23,12 @@ ull pow(ull a, ull b, ull mod) {
 bool _isPrime(ull n, ull a) {
     if(a % n == 0) return true;
     ull d = n - 1;
-    while(!d&1) {
-        if (pow(a, d, n) == n-1) return true;
-        d >>= 2;
+    while(true) {
+        ull temp = pow(a, d, n);
+        if(temp == n-1) return true;
+        if(d%2 == 1) return (temp == 1 || temp == n-1);
+        d /= 2;
     }
-    ull temp = pow(a, d, n);
-    return temp == 1 || temp == n-1;
 }
 
 bool isPrime(ull n) {
