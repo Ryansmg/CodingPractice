@@ -5,7 +5,7 @@
 [AtCoder Profile](https://atcoder.jp/users/ryanson)   
   
 ## 폴더 설명
-.z.base에는 각 알고리즘을 설명해주는 주석이 달린 코드들이 들어있습니다.
+.z.base에는 각 알고리즘을 설명해주는 주석이 달린 코드들이 들어있습니다.  
 .contest에는 CP 대회 코드들이 있습니다.  
 Baekjoon, Koistudy에는 각 사이트의 문제를 푼 코드들이 있습니다.  
 z.etc에는 기타 테스트용 코드들이 들어있습니다.
