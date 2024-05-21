@@ -1,4 +1,4 @@
-#define USE_MACROS 1
+#define USE_MACROS true
 #define USE_INT128 false
 #define GCC_OPTIMIZE_ENABLE false
 #pragma region macros

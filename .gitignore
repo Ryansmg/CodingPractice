@@ -4,6 +4,3 @@
 /.idea
 /venv
 /RandE
-/RandE/
-rande/dijkstra.cpp
-rande/*
