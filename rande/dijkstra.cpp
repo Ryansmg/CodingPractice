@@ -4,7 +4,7 @@
 #define INF 2147483640
 using namespace std;
 
-// A* 알고리즘
+// A* algorithm
 
 // 입력:
 // width height
