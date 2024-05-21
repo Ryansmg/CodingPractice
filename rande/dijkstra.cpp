@@ -83,9 +83,9 @@ using namespace std;
 */
 
 struct point { int x, y; };
-struct pa { point p; double dist; double destdist; };
+struct pa { point p; double dist; };
 
-int destx, desty; 
+int destx, desty;
 point dest;
 
 double euclidDist(const point &a, const point &b, const int &ha, const int &hb) {
@@ -106,14 +106,12 @@ double edFromH(const int &h1, const int &h2, const double &td) {
 }
 
 vector<vector<int>> hmap;
-
-const int edWeight = 5;
 int cmpCnt = 0;
 struct cmp {
     bool operator()(const pa &a, const pa &b) {
         cmpCnt++;
-        return a.dist+ a.destdist * edWeight
-            > b.dist+b.destdist * edWeight;
+        return a.dist
+               > b.dist;
     }
 };
 
@@ -132,7 +130,7 @@ void printMD(const vector<vector<double>> &mindist, const vector<vector<int>> &m
 signed main()
 {
     freopen(R"(C:\Users\ryans\Desktop\Coding\RandE\output.txt)", "r", stdin);
-    freopen(R"(C:\Users\ryans\Desktop\Coding\RandE\astarOutput.txt)", "w", stdout);
+    freopen(R"(C:\Users\ryans\Desktop\Coding\RandE\dijkOutput.txt)", "w", stdout);
     int height, width; cin >> width >> height;
     int startx, starty; cin >> startx >> starty;
     cin >> destx >> desty;
@@ -156,7 +154,7 @@ signed main()
     }
     clock_t startClock = clock();
     priority_queue<pa, vector<pa>, cmp> pq;
-    pq.emplace(start, 0, euclidDist(start, dest));
+    pq.emplace(start, 0);
     mindist[start.y][start.x] = 0;
     int emplaceCnt = 0, popCnt = 0;
     while(!pq.empty()) {
@@ -173,14 +171,14 @@ signed main()
             if(mindist[ny][nx] <= top.dist + edFromH(hmap[top.p.y][top.p.x], hmap[ny][nx], td)) continue;
             mindist[ny][nx] = top.dist + edFromH(hmap[top.p.y][top.p.x], hmap[ny][nx], td);
             pre[ny][nx] = top.p;
-            pq.emplace(nxtp, mindist[ny][nx], euclidDist(nxtp, dest));
+            pq.emplace(nxtp, mindist[ny][nx]);
             haveChange = true;
             emplaceCnt++;
         }
         //if(haveChange) printMD(mindist, map, height, width);
         if(mindist[dest.y][dest.x] != INF) break;
     }
-    cout << emplaceCnt << ' ' << popCnt << ' ' << cmpCnt;
+    cout << emplaceCnt << " " << popCnt << ' ' << cmpCnt;
     cout << "\n==============================\n";
     cout << "Time : " << static_cast<double>(clock() - startClock) << " (ms)\n";
     cout << "==============================\n";

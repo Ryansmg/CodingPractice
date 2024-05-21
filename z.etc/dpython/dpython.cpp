@@ -11,11 +11,11 @@ using namespace std;
 #define while(boolVal) while(boolVal){
 #define whileend }
 #define decRange(varName, limit) vector<string> varName; int limitInt = int(limit); for(int iii=0; iii<limitInt; iii++) varName.push_back(to_string(iii));
-#define declareRangeFunc vector<string> rangef(string limit) { decRange(varr, limit) return varr; }
+#define declareRangeFunc vector<string> rangef(const string &limit) { decRange(varr, limit) return varr; }
 #define declareInputFunc string inputf() { string in; getline(cin, in); return in; }
 #define defCInFun string cinputf() { string in; cin >> in; return in; }
-#define defSplitF vector<string> splitf(string s, string delimiter) { vector<string> ret; size_t pos = 0; string token; while ((pos = s.find(delimiter)) != string::npos) token = s.substr(0, pos); ret.push_back(token); s.erase(0, pos + delimiter.length()); endprogram ret.push_back(s); return ret; }
-#define defMapIntF vector<int> mapIntf(vector<string> arr) { vector<int> ret; for(string s : arr) ret.push_back(stoi(s)); return ret; }
+#define defSplitF vector<string> splitf(string s, const string &delimiter) { vector<string> ret; size_t pos = 0; string token; while ((pos = s.find(delimiter)) != string::npos) token = s.substr(0, pos); ret.push_back(token); s.erase(0, pos + delimiter.length()); endprogram ret.push_back(s); return ret; }
+#define defMapIntF vector<int> mapIntf(const vector<string> &arr) { vector<int> ret; for(string s : arr) ret.push_back(stoi(s)); return ret; }
 #define str(val) to_string(val)
 #define dectostr string tostr(string s) { return s; } string tostr(int s) { return str(s); }
 #define input() inputf()
@@ -66,7 +66,7 @@ using namespace std;
 #define load_pow powdef powdef2//거듭제곱을 수행하는 vull pow(vull a, vull b, vull mod)와 vull pow(vull a, vull b) 함수를 선언한다.
 #define powdef expfunc(vull, pow, (vull a, vull b, vull mod)) expdef(vull, ans, 1) while(b) if(b&1) set(ans, ans * a % mod) endif set(b, b>>1) set(a, a * a % mod) endwhile endfunc(ans)
 #define powdef2 expfunc(vull, pow, (vull a, vull b)) expdef(vull, ans, 1) while(b) if(b&1) set(ans, ans * a) endif set(b, b>>1) set(a, a * a) endwhile endfunc(ans)
-#define lmrdef2 expfunc(bool, _isPrime, (vull n, vull a)) expdef(vull, temp, 1) expdef(vull, d, n-1) if(a%n==0) goto(_ipend) endif while(!d&1) if(pow(a, d, n) == n-1) goto(_ipend) endif set(d, d>>2) endwhile set(temp, pow(a, d, n)) _ipend: endfunc(temp == 1 || temp == n-1)
+#define lmrdef2 expfunc(bool, _isPrime, (vull n, vull a)) expdef(vull, temp, 1) expdef(vull, d, n-1) if(a%n==0) goto(_ipend) endif while((!d)&1) if(pow(a, d, n) == n-1) goto(_ipend) endif set(d, d>>2) endwhile set(temp, pow(a, d, n)) _ipend: endfunc(temp == 1 || temp == n-1)
 #define lmrdef3 expfunc(bool, isPrime, (vull n)) expdef(bool, result, true) expdef(vull, base[], mrbaseVal) if(!n) set(result, false) goto(ipend) endif expforin(vull, a, base) if(!_isPrime(n, a)) set(result, false) break endif endfor ipend: endfunc(result)
 #define load_dpy loaddpy
 #define load_vgcd func(vgcd, (var a, var b)) if(ull(a) > ull(b)) swap(a,b) endif while(bool(a)) seta(b, ull(b) % ull(a)) swap(a,b) endwhile endfunc(b) //var vgcd(var a, var b)

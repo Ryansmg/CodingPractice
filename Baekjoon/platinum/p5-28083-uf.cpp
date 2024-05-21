@@ -5,6 +5,7 @@
 
 // 28083. 마왕의 성
 // #sorting #disjoint_set
+// http://boj.kr/28083
 
 using namespace std;
 template <typename T> using v = vector<T>;

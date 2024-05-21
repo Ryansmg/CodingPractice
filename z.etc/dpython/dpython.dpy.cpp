@@ -3,12 +3,12 @@ load_all
 
 start
 
-// forin(i, range(input()))
-//     def(in, input())
-//     print(tern("True", isPrime(ull(in)), "False"))
-// endfor
-expdef(vector<var>, in, split(input(), " "))
-print(gcd(in[0], in[1]))
+ forin(i, range(input()))
+     def(in, input())
+     print(tern("True", isPrime(ull(in)), "False"))
+ endfor
+//expdef(vector<var>, in, split(input(), " "))
+//print(vgcd(in[0], in[1]))
 
 endprogram
 

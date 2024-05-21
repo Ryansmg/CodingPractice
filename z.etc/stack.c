@@ -3,17 +3,17 @@
 #define l long long
 #define init() {0, 0, 0, -1}
 
-struct _ptrvalpair {
+struct ptrvalpair {
     void *preptr; l val;
 } typedef pv;
-struct _pvarr {
+struct pvarr {
     pv *block;
 } typedef pvarr;
-struct _pvb {
+struct pvb {
     void *preblock;
     pvarr *block;
 } typedef pvblock;
-struct _ast {
+struct ast {
     pvblock *blc;
     pv *last;
     l cursize;

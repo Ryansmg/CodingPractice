@@ -13,7 +13,7 @@ struct nd {
     ll rval; //오른쪽 값 포함 최대 부분합 = max(R_rval, R_all+L_rval)
     ll val; //최대 부분합 = max(L_val, R_val, L_rval + R_lval)
     ll all; //전체 합 = L_all + R_all
-    nd(){}
+    nd()= default;
     nd(ll a, ll b, ll c, ll d) : lval(a), rval(b), val(c), all(d){}
 };
 
@@ -66,7 +66,7 @@ nd query(vector<nd> &tree, ll node, ll start, ll end, ll left, ll right) {
 signed main()
 {
     ios_base::sync_with_stdio(false);
-    cin.tie(0); cout.tie(0);
+    cin.tie(nullptr); cout.tie(nullptr);
     ll n, q, u, v; cin >> n >> q >> u >> v;
     vector<ll> a;
     for(ll i=0; i<n; i++) {
