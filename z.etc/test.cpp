@@ -1,5 +1,8 @@
+#define USE_MACROS true
 #define USE_INT128 false
 #define GCC_OPTIMIZE_ENABLE false
+#pragma region macros
+#if USE_MACROS
 #include <bits/stdc++.h>
 #if GCC_OPTIMIZE_ENABLE
 #pragma GCC optimize("O3")
@@ -8,11 +11,13 @@
 #endif
 #define int long long
 #define llmax 9223372036854775807
+#define INF 1000000000000000000
 #define inf 3000000000
 #define fastio ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr)
 #define filein freopen("C:/Users/ryans/Desktop/Coding/Baekjoon/input.txt", "r", stdin)
 #define fileout freopen("C:/Users/ryans/Desktop/Coding/Baekjoon/output.txt", "w", stdout)
 #define all(vec) (vec).begin(), (vec).end()
+#define forn(name, val) for(int name = 0; name < val; name++)
 
 using namespace std;
 template <typename T> using v = vector<T>;
@@ -31,13 +36,23 @@ lint linput() { return (lint) input(); }
 void print(const lint &i, const string& end="") { cout << (int)i << end;}
 #endif
 template <typename T> T temp() { T t; return t; }
+#endif
+#pragma endregion
 
-// prob
-// #tags
+bool in = false;
 
-signed main()
+signed main(signed argv, char** argc)
 {
-    int a[] = {1, 3, 5, 7, 9};
-    cout << *lower_bound(a, a+5, 4) << *lower_bound(a, a+5, 5) << *upper_bound(a, a+5, 4) <<
-    *upper_bound(a, a+5, 5);
+    if(argv == 1 && in) {
+        cout << "*\n";
+        return 0;
+    } else if(in) {
+        forn(i, argv) cout << '*';
+        cout << '\n';
+        main(argv-1, argc);
+        return 0;
+    }
+    in = true;
+    signed t = input<signed>();
+    main(t, argc);
 }
