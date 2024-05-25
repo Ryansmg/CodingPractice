@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-project(C)
+project(Coding)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -60,3 +60,6 @@ add_executable(RandE_test RandE/test.cpp)
 add_executable(Baekjoon_p4-2367-flow Baekjoon/platinum/p4-2367-flow.cpp)
 add_executable(Baekjoon_g3-6086-flow Baekjoon/gold/g3-6086-flow.cpp)
 add_executable(.z.base_flow .z.base/flow.cpp)
+add_executable(Baekjoon_11408-p3-mcmf Baekjoon/platinum/p3-11408-mcmf.cpp)
+add_executable(Baekjoon_g1-17435-sparse Baekjoon/gold/g1-17435-sparse.cpp)
+add_executable(Baekjoon_p3-11409-mcmf Baekjoon/platinum/p3-11409-mcmf.cpp)

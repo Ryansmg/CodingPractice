@@ -52,7 +52,7 @@ signed main()
         cin >> a >> b;
         con[a].push_back(b);
     }
-    vector<bool> tfinished(v+1, false); finished = tfinished;
+    finished = vector<bool>(v+1, false);
     vector<int> tid(v+1, -1); id = tid;
     for(int i=1; i<=v; i++) {
         if(finished[i]) continue;
@@ -60,10 +60,8 @@ signed main()
     }
     sort(sccs.begin(), sccs.end(), sccsCmp);
     cout << sccs.size() << "\n";
-    for(auto v : sccs) {
-        for(int i : v) {
-            cout << i << " ";
-        }
+    for(const auto &v : sccs) {
+        for(int i : v) cout << i << " ";
         cout << "-1\n";
     }
 }

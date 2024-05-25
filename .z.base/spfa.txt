@@ -1,0 +1,12 @@
+벨만 포드와 달리 바뀐 정점과 연결된 간선에 대해서만 업데이트를 진행한다.
+
+1. 출발 노드 설정
+2. 최단 테이블 초기화(dist[] 배열 초기화)
+3. Queue를 생성, boolean[] inQueue, int[] cycle 배열도 생성
+
+출발 노드 idx를 넣어주고 Queue가 빌 때까지 반복문 사용
+Queue에 있는 노드 index 꺼내주고 해당 index를 출발 노드 index 값으로 가지는 Edge를 그래프에서 확인
+해당 Edge를 꺼내서 dist[] 배열을 초기화(dist[도착] > dist[출발] + 가중치 인 경우)
+최단 거리 테이블이 초기화 되는 경우 cycle[] 배열에서 cycle[도착]++처리 해준다.
+이후 Queue에 도착노드를 push해주면서 inQueue[도착] = true 처리를 해준다.
+만약 cycle[도착] >= n이라면 음수 사이클이 존재하는 것이다.
