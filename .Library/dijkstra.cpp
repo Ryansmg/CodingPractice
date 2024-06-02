@@ -26,13 +26,12 @@ struct pqcmp {
     }
 };
 
-int main()
-{
+int main() {
     ios_base::sync_with_stdio(false);
     cin.tie(nullptr); cout.tie(nullptr);
     ll n, m; cin >> n >> m;
     vector<vector<path>> pv(n+1);
-    for(ll i=0; i<m; i++){
+    for(ll i=0; i<m; i++) {
         ll a, b, c; cin >> a >> b >> c;
         pv[a].emplace_back(b, c);
     }
@@ -40,8 +39,7 @@ int main()
     priority_queue<pqi, vector<pqi>, pqcmp> toP;
     vector<int> minDist(n + 1, inf);
     pqi tpq(start, 0); toP.push(tpq);
-    while (!toP.empty())
-    {
+    while (!toP.empty()) {
         pqi top = toP.top(); toP.pop();
         if (minDist[top.target] != inf) continue;
         minDist[top.target] = top.length;

@@ -21,8 +21,7 @@ template <typename T> T temp() { T t; return t; }
 // 14504. 수열과 쿼리 18
 // #sqrt_decomposition
 
-signed main()
-{
+signed main() {
     fastio;
     int n = input(), sqrtSize = (int) sqrt(n),
             bucketCnt = (n / sqrtSize) + 5;

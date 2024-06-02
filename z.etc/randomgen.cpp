@@ -19,7 +19,7 @@ int main() {
     uniform_int_distribution dis(0,1);
     FILE *output = fopen("output.txt", "w");
     for(int i=0; i<100000; i++) {
-        fprintf(output, "%s", ("ㅈㅅ"));
+        fprintf(output, "%d", dis(gen));
     }
     fclose(output);
 }

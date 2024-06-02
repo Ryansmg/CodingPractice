@@ -18,9 +18,11 @@
 #define fileout freopen("C:/Users/ryans/Desktop/Coding/Baekjoon/output.txt", "w", stdout)
 #define all(vec) (vec).begin(), (vec).end()
 #define forn(name, val) for(int name = 0; name < val; name++)
+#define forf(name, start, end) for(int name = start; name <= end; name++)
 
 using namespace std;
 template <typename T> using v = vector<T>;
+template <typename T> using v2 = v<v<T>>;
 template <typename T> using pq = priority_queue<T>;
 using ii = array<int, 2>;
 using iii = array<int, 3>;
@@ -30,30 +32,46 @@ template <typename T> T idx(const T &val, const v<T> &compressed) { return lower
 template <typename T> T input() {T t; cin >> t; return t;}
 int input() { int t=llmax; cin >> t; return t;}
 template <typename T> void print(const T &i, const string& end="") { cout << i << end; }
+template <typename T> T pow_(T a, T b) { return pow_(a, b, llmax); }
+template <typename T> T pow_(T a, T b, T mod) { a %= mod; T ans = 1; while(b) { if(b&1) ans = ans * a % mod; b >>= 1; a = a * a % mod; } return ans; }
+template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 #if USE_INT128
 #define lint __int128
 lint linput() { return (lint) input(); }
 void print(const lint &i, const string& end="") { cout << (int)i << end;}
 #endif
-template <typename T> T temp() { T t; return t; }
 #endif
 #pragma endregion
 
-bool in = false;
+// c
+// #tags
 
-signed main(signed argv, char** argc)
-{
-    if(argv == 1 && in) {
-        cout << "*\n";
-        return 0;
-    } else if(in) {
-        forn(i, argv) cout << '*';
-        cout << '\n';
-        main(argv-1, argc);
-        return 0;
+signed main() {
+    fastio;
+    int n, m; cin >> n >> m;
+    v<int> road[n];
+    v2<bool> visited(n, v<bool>(m, false));
+    forn(i, n) forn(j, m) road[i].push_back(input());
+    int p = input();
+    int state = road[0][0];
+    queue<ii> bfs;
+    bfs.push({0, 0});
+    while(!bfs.empty()) {
+        ii front = bfs.front(); bfs.pop();
+        for(int x = front[0] - p; x <= front[0] + p; x++) {
+            for(int y = front[1] - p; y <= front[1] + p; y++) {
+                if(x<0 || y<0 || x>=m || y>=n) continue;
+                if(abs(x-front[0]) + abs(y-front[1]) > p) continue;
+                if(visited[y][x]) continue;
+                if(road[y][x] != state) continue;
+                visited[y][x] = true;
+                bfs.push({x, y});
+                if(y==n-1 && x==m-1) {
+                    cout << "ALIVE";
+                    return 0;
+                }
+            }
+        }
     }
-    in = true;
-    signed t = input<signed>();
-    main(t, argc);
-    cout << "Hello world!";
+    cout << "DEAD";
 }

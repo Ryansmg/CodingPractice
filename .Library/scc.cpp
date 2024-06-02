@@ -60,8 +60,8 @@ signed main()
     }
     sort(sccs.begin(), sccs.end(), sccsCmp);
     cout << sccs.size() << "\n";
-    for(const auto &v : sccs) {
-        for(int i : v) cout << i << " ";
+    for(const auto &vv : sccs) {
+        for(int i : vv) cout << i << " ";
         cout << "-1\n";
     }
 }

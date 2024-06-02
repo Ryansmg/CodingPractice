@@ -43,9 +43,26 @@ void print(const lint &i, const string& end="") { cout << (int)i << end;}
 #endif
 #pragma endregion
 
-// prob
+// a
 // #tags
 
 signed main() {
-    int a, b; cin >> a >> b; cout << gcd_(a, b) << ' ' << a/gcd_(a,b)*b;
+    fastio;
+    v<iii> arr;
+    forn(i, 8) arr.push_back({(i&4)?1:0, (i&2)?1:0, i&1});
+    int t = input();
+    forn(i, t) {
+        int a, b, c, d;
+        cin >> a >> b >> c >> d;
+        forn(k, 4) {
+            if(k==3) {
+                cout << "NO\n";
+                break;
+            }
+            if(arr[a][k] == arr[b][k] && arr[b][k] == arr[c][k] && arr[c][k] == arr[d][k]) {
+                cout << "YES\n";
+                break;
+            }
+        }
+    }
 }
