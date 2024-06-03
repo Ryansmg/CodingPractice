@@ -68,66 +68,81 @@ template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a 
 #endif
 #pragma endregion
 
-// 1420. 학교 가지마!
-// #mfmc
+// 16404. 주식회사 승범이네
+// #lazyprop #euler_path_technique
+
+void update_lazy(vector<long long> &tree, vector<long long> &lazy, int node, int start, int end) {
+    if(lazy[node] == 0) return;
+    tree[node] += (end-start+1) * lazy[node];
+    if(start != end) {
+        lazy[node*2] += lazy[node];
+        lazy[node*2+1] += lazy[node];
+    }
+    lazy[node] = 0;
+}
+
+//left, right :  업데이트할 범위 / start, end : 탐색 범위
+void update_range(vector<ll> &tree, vector<ll> &lazy, ll node, ll start, ll end, ll left, ll right, ll diff)
+{
+    update_lazy(tree, lazy, node, start, end);
+    if(right<start || end<left) return;
+    if(left <= start && end <= right) {
+        tree[node] += (end-start+1) * diff;
+        if (start != end) {
+            lazy[node*2] += diff;
+            lazy[node*2+1] += diff;
+        }
+    } else {
+        update_range(tree, lazy, node*2, start, (start+end)/2, left, right, diff);
+        update_range(tree, lazy, node*2+1, (start+end)/2+1, end, left, right, diff);
+        tree[node] = tree[node*2] + tree[node*2+1];
+    }
+}
+
+//left, right : 구할 범위 / start, end : 탐색 범위
+ll query(vector<ll> &tree, vector<ll> &lazy, ll node, ll start, ll end, ll left, ll right) {
+    update_lazy(tree, lazy, node, start, end);
+    if(end < left || right < start) return 0;
+    if(left <= start && end <= right) return tree[node];
+    return query(tree, lazy, node*2, start, (start+end)/2, left, right)
+           + query(tree, lazy, node*2+1, (start+end)/2+1, end, left, right);
+}
+
+int curEn = 0;
+void dfs(int top, v<bool> &visited, v<int> &en, v<ii> &range, v2<int> &con) {
+    en[top] = ++curEn;
+    for(int i : con[top]) {
+        if(visited[i]) continue;
+        visited[i] = true;
+        dfs(i, visited, en, range, con);
+    }
+    range[top] = {en[top], curEn};
+}
 
 signed main() {
     fastio;
     int n, m; cin >> n >> m;
-	v<string> city;
-	ii source, sink;
-	forn(i, n) {
-		city.push_back(input<string>());
-		forn(j, m) {
-			if(city[i][j]=='K') source = {i, j};
-			if(city[i][j]=='H') sink = {i, j};
-		}
-	}
-	v2<array<int, 4>> capacity(n, v<array<int, 4>>(m, {1,1,1,1}));
-	v2<array<int, 4>> flow(n, v<array<int, 4>>(m, {0,0,0,0}));
-	ii visF = {-1, -1};
-	v2<ii> visited(n, v<ii>(m, visF));
-	v2<int> vis2(n, v<int>(m, -1));
+    v2<int> con(n+1, v<int>());
+    v<int> en(n+1);
+    v<ii> range(n+1);
+    input(); // 불쌍한 승범이는 사수가 없다
+    forf(i, 2, n)  con[input()].push_back(i);
 
-	int maxFlow = 0;
-	const int dx[] = {0, -1, 0, 1};
-	const int dy[] = {-1, 0, 1, 0};
-	bool check = true;
-    while(true) {
-		for(auto &v : visited)
-            fill(all(v), visF);
-        queue<ii> bfs;
-        bfs.push(source);
-        while(!bfs.empty()) {
-            ii cur = bfs.front(); bfs.pop();
-            forn(i, 4) {
-				if(cur[0]+dy[i]<0 || cur[0]+dy[i]>=n || cur[1]+dx[i]<0 || cur[1]+dx[i]>=m) continue;
-				if(check && city[cur[0]+dy[i]][cur[1]+dx[i]]=='H') {
-					cout << -1; return 0;
-				}
-				if(city[cur[0]+dy[i]][cur[1]+dx[i]]=='#') continue;
-                if(capacity[cur[0]][cur[1]][i] - flow[cur[0]][cur[1]][i] > 0
-					&& visited[cur[0]+dy[i]][cur[1]+dx[i]] == visF) {
-                    bfs.push({cur[0]+dy[i], cur[1]+dx[i]});
-                    visited[cur[0]+dy[i]][cur[1]+dx[i]] = cur;
-					vis2[cur[0]+dy[i]][cur[1]+dx[i]] = i;
-					ii nxt = {cur[0]+dy[i], cur[1]+dx[i]};
-                    if(nxt == sink) break;
-                }
-            }
-			check = false;
-            if(visited[sink[0]][sink[1]] != visF) break;
+    // dfs를 통해 부모 노드 - 자식 노드에 연속한 수를 부여, 자신 + 자식 노드의 수 범위를 저장
+    v<bool> visited(n+1, false); visited[1] = true;
+    dfs(1, visited, en, range, con);
+    assert(curEn == n);
+
+    // 쿼리 처리
+    v<int> tree(4*n+10, 0);
+    v<int> lazy(4*n+10, 0);
+    forn(qi, m) {
+        int type, a; cin >> type >> a;
+        if(type == 1) { //update
+            int b = input();
+            update_range(tree, lazy, 1, 1, n, range[a][0], range[a][1], b);
+        } else {
+            cout << query(tree, lazy, 1, 1, n, en[a], en[a]) << '\n';
         }
-        if(visited[sink[0]][sink[1]] == visF) break;
-
-        for(ii i = sink; i != source; i = visited[i[0]][i[1]]) {
-			ii j = visited[i[0]][i[1]];
-			int vis2i = vis2[i[0]][i[1]];
-            flow[j[0]][j[1]][vis2i]++;
-            flow[i[0]][i[1]][(vis2i+2)%4]--;
-        }
-
-        maxFlow++;
     }
-    cout << maxFlow;
 }
