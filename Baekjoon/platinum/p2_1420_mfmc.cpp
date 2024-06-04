@@ -199,7 +199,7 @@ class CostScalingMCMF {
 		array<int, MAX_V> level, ptr;
 };
 
-CostScalingMCMF<20003, ll, ll, llmax, llmax, 2> flow;
+CostScalingMCMF<20003, ll, ll, llmax, llmax, 2> Flow;
 
 /*
 // 정점, 간선, start, end 
@@ -226,14 +226,14 @@ signed main() {
         if(lvl[i][j] == 'H') sink = i*m+j;
     }
     int rsource = 20000, rsink = 20001;
-    flow.addEdge(rsource, source, INF, 0);
-    flow.addEdge(sink, rsink, INF, 0);
+    Flow.addEdge(rsource, source, INF, 0);
+    Flow.addEdge(sink, rsink, INF, 0);
     const int dx[] = {0, 1, -1};
     const int dy[] = {1, 0, 0};
     // 노드 번호 : y * m + x
     // in 노드 : 그대로, out 노드 : +10000
     forn(i, n) forn(j, m) {
-        flow.addEdge(i*m+j, i*m+j+10000, 1, 1);
+        Flow.addEdge(i * m + j, i * m + j + 10000, 1, 1);
     }
     forn(i, n) forn(j, m) {
         if(lvl[i][j] == '#') continue;
@@ -244,11 +244,12 @@ signed main() {
             if(lvl[i][j] == 'K' && lvl[ny][nx] == 'H') {
                 cout << -1; return 0;
             }
-            flow.addEdge(i*m+j+10000, ny*m+nx, 1, 1);
-            flow.addEdge(ny*m+nx+10000, i*m+j, 1, 1);
+            Flow.addEdge(i * m + j + 10000, ny * m + nx, 1, 1);
+            Flow.addEdge(ny * m + nx + 10000, i * m + j, 1, 1);
 //            cout << i*m+j+10000 << ' ' << ny*m+nx << '\n';
         }
     }
-    auto [fl, cst] = flow.run(20002, rsource, rsink);
-    cout << fl;
+    cout << Flow.getMaxFlow(20002, rsource, rsink);
+//    auto [fl, cst] = Flow.run(20002, rsource, rsink);
+//    cout << fl;
 }

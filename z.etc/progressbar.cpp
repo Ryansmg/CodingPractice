@@ -43,8 +43,7 @@ using iii = array<int, 3>;
 #if USE_INT128
 #define lint __int128 // to disable lint, set USE_INT128 to false
 #define ll long long
-lint LINTMAX = ((lint(1)<<126)-1)*2+1;
-string lint2str(const lint &i) {string ret,bs;if(i==-LINTMAX-1)return lint2str(i/10)+"8";if(!i)return "0";if(i<0)return "-"+lint2str(-i);
+string lint2str(const lint &i) {string ret,bs;if(!i)return "0";if(i<0)return "-"+lint2str(-i);
 	lint t=1; forn(as, 18)t*=10;lint a=i/(t*t);if(a){ret += to_string((ll) a);bs = to_string((ll) (i / t % (t * 10) + t));
 		forn(j, 18) ret += bs[j + 1];bs = to_string((ll) ((i % t) + t));forn(j, 18) ret += bs[j + 1];
 	} else {lint b = i / t % (t * 10);if (b) {ret += to_string((ll) b);bs = to_string((ll) ((i % t) + t));
@@ -65,9 +64,13 @@ template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a 
 #endif
 #pragma endregion
 
-// prob
-// #tags
-
 signed main() {
-
+    int t; cin >> t;
+    lint ans = 0;
+    for(int i=0; i<t; i++) {
+        cout << '\r' << i+1 << "/" << t << "(" << (i+1)*100/t << "%)";
+        for(int j=0; j<1000000; j++) ans++;
+    }
+    cout << "\n";
+    cout << ans;
 }

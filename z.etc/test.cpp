@@ -43,17 +43,18 @@ bool in = false;
 
 signed main(signed argv, char** argc)
 {
-    if(argv == 1 && in) {
-        cout << "*\n";
-        return 0;
-    } else if(in) {
-        forn(i, argv) cout << '*';
-        cout << '\n';
-        main(argv-1, argc);
-        return 0;
-    }
-    in = true;
-    signed t = input<signed>();
-    main(t, argc);
-    cout << "Hello world!";
+    int a = 0, b = 1234;
+//    if(argv == 1 && in) {
+//        cout << "*\n";
+//        return 0;
+//    } else if(in) {
+//        forn(i, argv) cout << '*';
+//        cout << '\n';
+//        main(argv-1, argc);
+//        return 0;
+//    }
+//    in = true;
+//    signed t = input<signed>();
+//    main(t, argc);
+//    cout << "Hello world!";
 }
