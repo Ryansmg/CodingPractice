@@ -41,12 +41,12 @@ using iii = array<int, 3>;
 #define ll long long
 lint LINTMAX = ((lint(1)<<126)-1)*2+1;
 string lint2str(const lint &i) {string ret,bs;if(i==-LINTMAX-1)return lint2str(i/10)+"8";if(!i)return "0";if(i<0)return "-"+lint2str(-i);
-	lint t=1; forn(as, 18)t*=10;lint a=i/(t*t);if(a){ret += to_string((ll) a);bs = to_string((ll) (i / t % (t * 10) + t));
-		forn(j, 18) ret += bs[j + 1];bs = to_string((ll) ((i % t) + t));forn(j, 18) ret += bs[j + 1];
-	} else {lint b = i / t % (t * 10);if (b) {ret += to_string((ll) b);bs = to_string((ll) ((i % t) + t));
-			forn(j, 18) ret += bs[j + 1];} else { ret += to_string((ll) (i % t)); }}return ret;}
+    lint t=1; forn(as, 18)t*=10;lint a=i/(t*t);if(a){ret += to_string((ll) a);bs = to_string((ll) (i / t % (t * 10) + t));
+        forn(j, 18) ret += bs[j + 1];bs = to_string((ll) ((i % t) + t));forn(j, 18) ret += bs[j + 1];
+    } else {lint b = i / t % (t * 10);if (b) {ret += to_string((ll) b);bs = to_string((ll) ((i % t) + t));
+            forn(j, 18) ret += bs[j + 1];} else { ret += to_string((ll) (i % t)); }}return ret;}
 istream &operator>>(istream &in, lint &l) {string s;in>>s;lint t=l=0,size=s.size(),k=1;if(s[0]=='-')t=1;
-	for(lint i=size-1;i>=t;i--){if(!t)l+=(s[i]-'0')*k;else l-=(s[i]-'0')*k;k*=10;}return in;}
+    for(lint i=size-1;i>=t;i--){if(!t)l+=(s[i]-'0')*k;else l-=(s[i]-'0')*k;k*=10;}return in;}
 ostream &operator<<(ostream &out,const lint &i){ out << lint2str(i); return out; }
 #pragma endregion
 
@@ -72,6 +72,8 @@ public:
         T operator+(const int &i) const { return T(val + i); }
         void operator+=(const T &i) { val += i.val; }
         void operator+=(const int &i) { val += i; }
+        T& operator=(cint i) { val = i; return *this; }
+        T& operator=(const T &i) = default;
     };
     vector<T> tree;
     int n;
@@ -79,28 +81,35 @@ public:
         tree = v<T>(4*treeSize, T());
         n = treeSize;
     }
-    explicit segtree(const v<T> &a) : segtree((int) a.size()) {
+    template <typename t = T>
+    explicit segtree(const v<t> &a) : segtree((int) a.size()) {
         init(a, 1, 1, n);
     }
-    segtree(const v<T> &a, int treeSize) : segtree(treeSize) {
+    template <typename t = T>
+    segtree(const v<t> &a, int treeSize) : segtree(treeSize) {
         init(a, 1, 1, n);
         assert(a.size() == treeSize);
     }
-    void update(int tar, int diff) { update(tar, tar, diff); }
-    T query(int tar) { return query(tar, tar); }
+    template <typename t = T>
+    void update(int tar, t diff) { update(tar, tar, diff); }
+    T query_node(int tar) { return query(tar, tar); }
+    int query(int tar) { return query(tar, tar).val; }
     T query(int left, int right) { return query(1, left, right, 1, n); }
 protected:
-    void update(int left, int right, int diff) { update(1, left, right, 1, n, diff); }
-    void init(const v<T> &a, int node, int start, int end) {
-        if(start==end) {
-            tree[node] = a[start-1];
+    template <typename t = T>
+    void update(int left, int right, t diff) { update(1, left, right, 1, n, diff); }
+    template <typename t = T>
+    void init(const v<t> &a, int node, int start, int end) {
+        if (start == end) {
+            tree[node] = a[start - 1];
         } else {
-            init(a, node*2, start, (start+end)/2);
-            init(a, node*2+1, (start+end)/2+1, end);
-            tree[node] = tree[node*2] + tree[node*2+1];
+            init(a, node * 2, start, (start + end) / 2);
+            init(a, node * 2 + 1, (start + end) / 2 + 1, end);
+            tree[node] = tree[node * 2] + tree[node * 2 + 1];
         }
     }
-    void update(int node, int left, int right, int start, int end, int diff) {
+    template <typename t = T>
+    void update(int node, int left, int right, int start, int end, t diff) {
         if(end<left || right < start) return;
         if(left <= start && end <= right) {
             tree[node] += diff;
@@ -152,22 +161,6 @@ private:
         init();
     }
     void init() { for(int i=n-1; i>0; i--) tree[i] = tree[i<<1] + tree[i<<1|1]; }
-};
-
-class seg2d {
-    class T {
-    public:
-        int val = 0;
-        T()=default;
-        explicit T(int v) : val(v) {}
-        T operator+(const T &t2) const { return T(val + t2.val); }
-        T operator+(const int &i) const { return T(val + i); }
-        void operator+=(const T &i) { val += i.val; }
-        void operator+=(const int &i) { val += i; }
-    };
-    vector<T> tree;
-    int n;
-
 };
 
 class lazyprop {
