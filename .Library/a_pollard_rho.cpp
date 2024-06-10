@@ -49,8 +49,8 @@ istream &operator>>(istream &in, lint &l) {string s;in>>s;lint t=l=0,size=s.size
 	for(lint i=size-1;i>=t;i--){if(!t)l+=(s[i]-'0')*k;else l-=(s[i]-'0')*k;k*=10;}return in;}
 ostream &operator<<(ostream &out,const lint &i){ out << lint2str(i); return out; }
 #pragma endregion
-
 template <typename T = int> T input() {T t; cin >> t; return t;}
+
 
 #define all(vec) (vec).begin(), (vec).end()
 template <typename T> void compress(v<T> &v, const bool &autosort=true) { if(autosort) sort(all(v)); v.erase(unique(all(v)), v.end()); }
@@ -61,8 +61,68 @@ template <typename T> T pow_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)a
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 #pragma endregion
 
-// prob
-// #tags
+class pollard_rho {
+public:
+    explicit pollard_rho() {
+        base = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41};
+        gen = mt19937(random_device()());
+    }
+    bool isPrime(lint n) {
+        if(n<=1) return false;
+        for(const lint &a: base) if (!_isPrime(n, a)) return false;
+        return true;
+    }
+    lint factorize(lint n) {
+        if (n % 2 == 0) return 2;
+        if (isPrime(n)) return n;
+        lint x = dis(gen) % (n - 2) + 2, y = x, c = dis(gen) % 10 + 1, g = 1;
+        while (g == 1) {
+            x = (x * x % n + c) % n;
+            y = (y * y % n + c) % n;
+            y = (y * y % n + c) % n;
+            g = gcd(x - y > 0 ? x - y : y - x, n);
+            if (g == n) return factorize(n);
+        }
+        if (isPrime(g)) return g;
+        else return factorize(g);
+    }
+    static lint pow(lint a, lint b) {
+        return pow(a, b, LINTMAX);
+    }
+    static lint pow(lint a, lint b, lint mod) {
+        a %= mod;
+        lint ans = 1;
+        while (b) {
+            if (b & 1) ans = ans * a % mod;
+            b >>= 1;
+            a = a * a % mod;
+        }
+        return ans;
+    }
+    static lint gcd(lint a, lint b) {
+        if (a < b) swap(a, b);
+        while (b != 0) {
+            lint r = a % b;
+            a = b;
+            b = r;
+        }
+        return a;
+    }
+private:
+    v<lint> base;
+    mt19937 gen;
+    uniform_int_distribution<lint> dis;
+    static bool _isPrime(lint n, lint a) {
+        if (a % n == 0) return true;
+        lint d = n - 1;
+        while (true) {
+            lint temp = pow(a, d, n);
+            if (temp == n - 1) return true;
+            if (d % 2 == 1) return (temp == 1 || temp == n - 1);
+            d /= 2;
+        }
+    }
+};
 
 signed main() {
 

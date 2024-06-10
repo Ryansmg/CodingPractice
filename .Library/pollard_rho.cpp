@@ -7,6 +7,8 @@ using namespace std;
 // 4149. 큰 수 소인수분해
 // #miller_rabin #pollard_rho
 
+
+
 i128 base[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37};
 
 i128 pow_(i128 a, i128 b, i128 mod) {

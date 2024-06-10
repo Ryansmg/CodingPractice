@@ -38,20 +38,23 @@ public:
         sink = Sink;
         con=v2<int>(maxNodeN+10, v<int>());
         visited = v<int>(maxNodeN+10, -1);
+        assert(Source <= MaxNodeN && Sink <= MaxNodeN);
     }
     void addEdge(int start, int end, int Capacity, int Dist = 0) {
-            edgeCount++;
-            edges.push_back({start, end, Dist});
-            capacity.push_back(Capacity);
-            edgeFlow.push_back(0);
-            revEdge.push_back(edgeCount+1);
-            con[start].push_back(edgeCount);
-            edgeCount++;
-            edges.push_back({end, start, -Dist});
-            capacity.push_back(0);
-            edgeFlow.push_back(0);
-            con[end].push_back(edgeCount);
-            revEdge.push_back(edgeCount-1);
+        assert(start <= maxNodeN && end <= maxNodeN);
+        assert(Capacity >= 0);
+        edgeCount++;
+        edges.push_back({start, end, Dist});
+        capacity.push_back(Capacity);
+        edgeFlow.push_back(0);
+        revEdge.push_back(edgeCount+1);
+        con[start].push_back(edgeCount);
+        edgeCount++;
+        edges.push_back({end, start, -Dist});
+        capacity.push_back(0);
+        edgeFlow.push_back(0);
+        con[end].push_back(edgeCount);
+        revEdge.push_back(edgeCount-1);
     }
 
     /// returns true if successes

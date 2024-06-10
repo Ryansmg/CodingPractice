@@ -18,7 +18,7 @@ bool cmp(const pair4 &a, const pair4 &b) {
     return n1 < n2;
 }
 struct segtree {
-    segtree(){}
+    segtree()= default;
     vector<int> tree, lazy;
     int n, size; // 리프 노드의 개수, 총 노드의 개수
     void update_lazy(int node, int start, int end) {

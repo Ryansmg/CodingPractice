@@ -113,7 +113,7 @@ int input() { long long a; cin >> a; return (int) a; }
 
 signed main() {
     auto startTime = clock(); // 실행 시간 측정을 위한 시작 시간 측정
-    filein; fileout; // 파일 입출력 활성화
+    // filein; fileout; // 파일 입출력 활성화
     ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr); // 빠른 입출력
     cout.precision(8); cout << fixed; // 소수점 아래 8자리까지 출력
     int l, n, m; l = input(); n = input(); m = input();
