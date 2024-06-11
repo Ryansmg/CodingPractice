@@ -20,4 +20,5 @@ add_executable(Baekjoon_p4_11658_fenwick_tree Baekjoon/platinum/p4_11658_multi_s
 add_executable(.Library_a_2dsegtree .Library/a_2dsegtree.cpp)
 add_executable(.Library_nCk .Library/lucas.cpp)
 add_executable(.Library_a_graphs .Library/a_graphs.cpp)
-add_executable(Baekjoon_p1_18246_2dseg Baekjoon/p1_18246_2dseg.cpp)
+add_executable(Baekjoon_p1_18246_2dseg Baekjoon/platinum/p1_18246_2dseg.cpp)
+add_executable(RandE_astar RandE/astar.cpp)

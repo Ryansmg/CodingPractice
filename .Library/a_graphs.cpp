@@ -61,8 +61,14 @@ template <typename T> T pow_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)a
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 #pragma endregion
 
+template <bool use_map=true, typename MAP = map<int, int>, int maxNodeNumber=-1>
 class graph {
+    MAP map;
+    int nodeCnt = 0;
+public:
+    void addEdge(int start, int end, int weight=1) {
 
+    }
 };
 
 signed main() {
