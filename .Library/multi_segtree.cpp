@@ -64,91 +64,91 @@ template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a 
 // 11658. 구간 합 구하기 3
 // #multi_segtree
 
-class segtree {
-public:
-    vector<int> tree;
-    int n;
-    explicit segtree(int treeSize) {
-        tree = v<int>(4*treeSize, 0);
-        n = treeSize;
-    }
-    explicit segtree(const v<int> &a) : segtree((int) a.size()) {
-        init(a, 1, 1, n);
-    }
-    segtree(const v<int> &a, int treeSize) : segtree(treeSize) {
-        init(a, 1, 1, n);
-        assert(a.size() == treeSize);
-    }
-    void update(int tar, int diff) { update(tar, tar, diff); }
-    static int findNode(int start, int end, cint tar, int node) {
-        if(start==end) { return node; }
-        if(tar<=(start+end)/2) return findNode(start, (start+end)/2, tar, node*2);
-        return findNode((start+end)/2+1, end, tar, node*2+1);
-    }
-    int query(int tar) { return query(tar, tar); }
-    int query(int left, int right) { return query(1, left, right, 1, n); }
-protected:
-    void update(int left, int right, int diff) { update(1, left, right, 1, n, diff); }
-    void init(const v<int> &a, int node, int start, int end) {
-        if(start==end) {
-            tree[node] = a[start-1];
-        } else {
-            init(a, node*2, start, (start+end)/2);
-            init(a, node*2+1, (start+end)/2+1, end);
-            tree[node] = tree[node*2] + tree[node*2+1];
-        }
-    }
-    void update(int node, int left, int right, int start, int end, int diff) {
-        if(end<left || right < start) return;
-        if(left <= start && end <= right) {
-            tree[node] = diff;
-            return;
-        }
-        update(node*2, left, right, start, (start+end)/2, diff);
-        update(node*2+1, left, right, (start+end)/2+1, end, diff);
-        tree[node] = tree[node*2] + tree[node*2+1];
-    }
-    int query(int node, int left, int right, int start, int end) {
-        if(right < start || end < left) return {};
-        if(left <= start && end <= right) return tree[node];
-        return query(node*2, left, right, start, (start+end)/2) +
-               query(node*2+1, left, right, (start+end)/2+1, end);
-    }
-};
 // [y][x]
 class seg2d {
 public:
-    v<segtree> trees; int yn, xn;
+    class seg1d {
+    public:
+        vector<int> tree;
+        int n;
+        explicit seg1d(int treeSize) {
+            tree = v<int>(4*treeSize, 0);
+            n = treeSize;
+        }
+        explicit seg1d(const v<int> &a) : seg1d((int) a.size()) {
+            init(a, 1, 1, n);
+        }
+        seg1d(const v<int> &a, int treeSize) : seg1d(treeSize) {
+            init(a, 1, 1, n);
+            assert(a.size() == treeSize);
+        }
+        void update(int tar, int diff) { update(tar, tar, diff); }
+        static int findNode(int start, int end, cint tar, int node) {
+            if(start==end) { return node; }
+            if(tar<=(start+end)/2) return findNode(start, (start+end)/2, tar, node*2);
+            return findNode((start+end)/2+1, end, tar, node*2+1);
+        }
+        int query(int tar) { return query(tar, tar); }
+        int query(int left, int right) { return query(1, left, right, 1, n); }
+    protected:
+        void update(int left, int right, int diff) { update(1, left, right, 1, n, diff); }
+        void init(const v<int> &a, int node, int start, int end) {
+            if(start==end) {
+                tree[node] = a[start-1];
+            } else {
+                init(a, node*2, start, (start+end)/2);
+                init(a, node*2+1, (start+end)/2+1, end);
+                tree[node] = tree[node*2] + tree[node*2+1];
+            }
+        }
+        void update(int node, int left, int right, int start, int end, int diff) {
+            if(end<left || right < start) return;
+            if(left <= start && end <= right) {
+                tree[node] = diff;
+                return;
+            }
+            update(node*2, left, right, start, (start+end)/2, diff);
+            update(node*2+1, left, right, (start+end)/2+1, end, diff);
+            tree[node] = tree[node*2] + tree[node*2+1];
+        }
+        int query(int node, int left, int right, int start, int end) {
+            if(right < start || end < left) return {};
+            if(left <= start && end <= right) return tree[node];
+            return query(node*2, left, right, start, (start+end)/2) +
+                   query(node*2+1, left, right, (start+end)/2+1, end);
+        }
+    };
+    v<seg1d> trees; int yn, xn;
     //Cnt : y, Size : x
     seg2d(cint treeCnt, cint treeSize) {
-        trees = v<segtree>(treeCnt*4, segtree(treeSize));
+        trees = v<seg1d>(treeCnt*4, seg1d(treeSize));
         yn = treeCnt, xn = treeSize;
     }
     seg2d(cint treeCnt, cint treeSize, const v2<int> &arr) {
-        trees = v<segtree>(treeCnt*4, segtree(treeSize));
+        trees = v<seg1d>(treeCnt*4, seg1d(treeSize));
         yn = treeCnt, xn = treeSize;
         init(1, 1, yn, arr, (int) arr[0].size());
     }
     /// 1<=x1<=treeSize, 1<=y1<=treeCnt
     void update(cint x, cint y, cint val) {
-        update(1, 1, yn, x, y, val, segtree::findNode(1, xn, x, 1));
+        update(1, 1, yn, x, y, val, seg1d::findNode(1, xn, x, 1));
     }
     /// 1<=x1<=treeSize, 1<=y1<=treeCnt
     int query(cint x1, cint x2, cint y1, cint y2) {
         return query(1, 1, yn, x1, x2, y1, y2);
     }
-    segtree* query_tree(int y) {
+    seg1d* query_tree(int y) {
         return query_tree(1, 1, yn, y);
     }
 private:
-    segtree* query_tree(int node, int start, int end, cint y) {
+    seg1d* query_tree(int node, int start, int end, cint y) {
         if(start==end) return &trees[node];
         if(y<=(start+end)/2) return query_tree(node*2, start, (start+end)/2, y);
         else return query_tree(node*2+1, (start+end)/2+1, end, y);
     }
     void init(int node, int start, int end, const v2<int> &arr, cint sz) {
         if(start==end) {
-            trees[node] = segtree(arr[start-1], sz);
+            trees[node] = seg1d(arr[start-1], sz);
             return;
         }
         init(node*2, start, (start+end)/2, arr, sz);

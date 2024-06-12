@@ -1,6 +1,5 @@
 #include <bits/stdc++.h>
 #pragma GCC optimize("Ofast")
-#pragma GCC optimize("unroll-loops")
 bool useDebugPrints = false;
 #define mcl if(useDebugPrints)
 //#define int long long
@@ -120,15 +119,13 @@ double edFromH(const int &h1, const int &h2, const double &td) {
     mcl {edfht += clock()-a;}
     return ans;
 }
-
 vector<vector<int>> hmap;
 
 const double edWeight = 1.6;
 int cmpCnt = 0;
 struct cmp {
     bool operator()(const pa &a, const pa &b) {
-        cmpCnt++;
-        return a.destdist > b.destdist;
+        cmpCnt++; return a.destdist > b.destdist;
     }
 };
 
@@ -142,36 +139,29 @@ void printMD(const vector<vector<double>> &mindist, const int &height, const int
     }
     printf("\n");
 }
-
 bool printPath = false;
 
-signed main()
-{
+signed main() {
     clock_t rsc = clock();
     ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
     freopen(R"(C:\Users\ryans\Desktop\Coding\RandE\output.txt)", "r", stdin);
     freopen(R"(C:\Users\ryans\Desktop\Coding\RandE\astarOutput.txt)", "w", stdout);
-    int height, width; cin >> width >> height;
-    int startx, starty; cin >> startx >> starty;
-    cin >> destx >> desty;
+    int height, width, startx, starty;
+    cin >> width >> height >> startx >> starty >> destx >> desty;
     point tempd(destx, desty); dest = tempd;
     vector<double> mindistt(width, INF);
     vector<vector<double>> mindist(height, mindistt); //INF => not visited
     point start(startx, starty);
-    vector<int> temp;
-    vector<point> temp2(width);
+    vector<int> temp; vector<point> temp2(width);
     vector<vector<int>> hmapt(height, temp);
     hmap = hmapt;
     vector<vector<point>> pre(height, temp2);
     for(int i=0; i<height; i++)
-    {
         for(int j=0; j<width; j++) {
-            int t;
-            cin >> t;
+            int t; cin >> t;
             hmap[i].push_back(t);
             pre[i].push_back({j, i});
         }
-    }
     double emplaceTime = 0, searchPreTime = 0;
     priority_queue<pa, vector<pa>, cmp> pq;
     pq.emplace(start, 0, euclidDist(start, dest));
@@ -183,7 +173,6 @@ signed main()
     while(!pq.empty()) {
         pa top = pq.top();
         pq.pop(); popCnt++;
-        //bool haveChange = false;
         for(int i=0; i<8; i++) {
             int nx = top.p.x + dx[i], ny = top.p.y + dy[i];
             if(nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
@@ -193,9 +182,7 @@ signed main()
                     edFromH(hmap[top.p.y][top.p.x], hmap[ny][nx],
                             abs(dx[i]) + abs(dy[i]));
             mcl searchPreTime += clock() - scht;
-            if(mindist[ny][nx] <= ttd) {
-                continue;
-            }
+            if(mindist[ny][nx] <= ttd) continue;
             mindist[ny][nx] = ttd;
             pre[ny][nx] = top.p;
             mcl searchPreTime += clock() - scht;
@@ -204,10 +191,8 @@ signed main()
             pq.emplace(nxtp, mindist[ny][nx],
                        euclidDist(nxtp, dest)*edWeight + mindist[ny][nx]);
             mcl emplaceTime += clock() - emc;
-            //haveChange = true;
             emplaceCnt++;
         }
-        //if(haveChange) printMD(mindist, map, height, width);
         if(mindist[dest.y][dest.x] != INF) break;
     }
     auto time = clock() - startClock;
@@ -239,7 +224,9 @@ signed main()
         cnt++;
         for(int i=1; i<=9; i++) {
             cnt++;
-            cout << (int)round(btx*10+1+i*xdiff) << ' ' << (int)round(bty*10+1+i*ydiff) << ' ' << hmap[bty][btx] + i*diff << '\n';
+            cout << (int)round(btx*10+1+i*xdiff) << ' '
+                << (int)round(bty*10+1+i*ydiff)
+                << ' ' << hmap[bty][btx] + i*diff << '\n';
         }
         bty = pp.y;
         btx = pp.x;

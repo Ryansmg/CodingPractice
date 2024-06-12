@@ -89,6 +89,7 @@ public:
         return true;
     }
 };
+
 class Mcmf : public Flow {
 protected:
     v<int> dist = v<int>();

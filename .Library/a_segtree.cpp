@@ -62,6 +62,7 @@ template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a 
 #pragma endregion
 
 class segtree {
+#define MID ((start+end)/2)
 public:
     class T {
     public:
@@ -82,48 +83,37 @@ public:
         n = treeSize;
     }
     template <typename t = T>
-    explicit segtree(const v<t> &a) : segtree((int) a.size()) {
+    explicit segtree(const v<int> &a) : segtree((int) a.size()) {
         init(a, 1, 1, n);
     }
     template <typename t = T>
-    segtree(const v<t> &a, int treeSize) : segtree(treeSize) {
+    segtree(const v<int> &a, int treeSize) : segtree(treeSize) {
         init(a, 1, 1, n);
         assert(a.size() == treeSize);
     }
-    template <typename t = T>
-    void update(int tar, t diff) { update(tar, tar, diff); }
+    void update(int tar, int diff) { update(tar, tar, diff); }
     T query_node(int tar) { return query(tar, tar); }
     int query(int tar) { return query(tar, tar).val; }
     T query(int left, int right) { return query(1, left, right, 1, n); }
 protected:
-    template <typename t = T>
-    void update(int left, int right, t diff) { update(1, left, right, 1, n, diff); }
-    template <typename t = T>
-    void init(const v<t> &a, int node, int start, int end) {
-        if (start == end) {
-            tree[node] = a[start - 1];
-        } else {
-            init(a, node * 2, start, (start + end) / 2);
-            init(a, node * 2 + 1, (start + end) / 2 + 1, end);
-            tree[node] = tree[node * 2] + tree[node * 2 + 1];
-        }
+    void update(int left, int right, int diff) { update(1, left, right, 1, n, diff); }
+    T init(const v<int> &a, int node, int start, int end) {
+        if (start == end) return tree[node] = a[start - 1];
+        return tree[node] = init(a, node * 2, start, MID) +
+        init(a, node * 2 + 1, MID + 1, end);
     }
-    template <typename t = T>
-    void update(int node, int left, int right, int start, int end, t diff) {
+    void update(int node, int left, int right, int start, int end, int diff) {
         if(end<left || right < start) return;
-        if(left <= start && end <= right) {
-            tree[node] += diff;
-            return;
-        }
-        update(node*2, left, right, start, (start+end)/2, diff);
-        update(node*2+1, left, right, (start+end)/2+1, end, diff);
+        if(left <= start && end <= right) { tree[node] += diff; return; }
+        update(node*2, left, right, start, MID, diff);
+        update(node*2+1, left, right, MID+1, end, diff);
         tree[node] = tree[node*2] + tree[node*2+1];
     }
     T query(int node, int left, int right, int start, int end) {
         if(right < start || end < left) return {};
         if(left <= start && end <= right) return tree[node];
-        return query(node*2, left, right, start, (start+end)/2) +
-               query(node*2+1, left, right, (start+end)/2+1, end);
+        return query(node*2, left, right, start, MID) +
+               query(node*2+1, left, right, MID+1, end);
     }
 };
 
@@ -302,6 +292,408 @@ protected:
         return c;
     }
 
+};
+
+class seg2d {
+public:
+    class seg1d {
+    public:
+        vector<int> tree;
+        int n;
+        explicit seg1d(int treeSize) {
+            tree = v<int>(4*treeSize, 0);
+            n = treeSize;
+        }
+        explicit seg1d(const v<int> &a) : seg1d((int) a.size()) {
+            init(a, 1, 1, n);
+        }
+        seg1d(const v<int> &a, int treeSize) : seg1d(treeSize) {
+            init(a, 1, 1, n);
+            assert(a.size() == treeSize);
+        }
+        void update(int tar, int diff) { update(tar, tar, diff); }
+        static int findNode(int start, int end, cint tar, int node) {
+            if(start==end) { return node; }
+            if(tar<=(start+end)/2) return findNode(start, (start+end)/2, tar, node*2);
+            return findNode((start+end)/2+1, end, tar, node*2+1);
+        }
+        int query(int tar) { return query(tar, tar); }
+        int query(int left, int right) { return query(1, left, right, 1, n); }
+    protected:
+        void update(int left, int right, int diff) { update(1, left, right, 1, n, diff); }
+        void init(const v<int> &a, int node, int start, int end) {
+            if(start==end) {
+                tree[node] = a[start-1];
+            } else {
+                init(a, node*2, start, (start+end)/2);
+                init(a, node*2+1, (start+end)/2+1, end);
+                tree[node] = tree[node*2] + tree[node*2+1];
+            }
+        }
+        void update(int node, int left, int right, int start, int end, int diff) {
+            if(end<left || right < start) return;
+            if(left <= start && end <= right) {
+                tree[node] = diff;
+                return;
+            }
+            update(node*2, left, right, start, (start+end)/2, diff);
+            update(node*2+1, left, right, (start+end)/2+1, end, diff);
+            tree[node] = tree[node*2] + tree[node*2+1];
+        }
+        int query(int node, int left, int right, int start, int end) {
+            if(right < start || end < left) return {};
+            if(left <= start && end <= right) return tree[node];
+            return query(node*2, left, right, start, (start+end)/2) +
+                   query(node*2+1, left, right, (start+end)/2+1, end);
+        }
+    };
+    v<seg1d> trees; int yn, xn;
+    //Cnt : y, Size : x
+    seg2d(cint treeCnt, cint treeSize) {
+        trees = v<seg1d>(treeCnt*4, seg1d(treeSize));
+        yn = treeCnt, xn = treeSize;
+    }
+    seg2d(cint treeCnt, cint treeSize, const v2<int> &arr) {
+        trees = v<seg1d>(treeCnt*4, seg1d(treeSize));
+        yn = treeCnt, xn = treeSize;
+        init(1, 1, yn, arr, (int) arr[0].size());
+    }
+    /// 1<=x1<=treeSize, 1<=y1<=treeCnt
+    void update(cint x, cint y, cint val) {
+        update(1, 1, yn, x, y, val, seg1d::findNode(1, xn, x, 1));
+    }
+    /// 1<=x1<=treeSize, 1<=y1<=treeCnt
+    int query(cint x1, cint x2, cint y1, cint y2) {
+        return query(1, 1, yn, x1, x2, y1, y2);
+    }
+    seg1d* query_tree(int y) {
+        return query_tree(1, 1, yn, y);
+    }
+private:
+    seg1d* query_tree(int node, int start, int end, cint y) {
+        if(start==end) return &trees[node];
+        if(y<=(start+end)/2) return query_tree(node*2, start, (start+end)/2, y);
+        else return query_tree(node*2+1, (start+end)/2+1, end, y);
+    }
+    void init(int node, int start, int end, const v2<int> &arr, cint sz) {
+        if(start==end) {
+            trees[node] = seg1d(arr[start-1], sz);
+            return;
+        }
+        init(node*2, start, (start+end)/2, arr, sz);
+        init(node*2+1, (start+end)/2+1, end, arr, sz);
+        int ts = (int) trees[node].tree.size();
+        forn(i, ts) trees[node].tree[i] = trees[node*2].tree[i] + trees[node*2+1].tree[i];
+    }
+    void update(int node, int start, int end, cint x, cint y, cint val, cint t) {
+        if(y < start || end < y) return;
+        if(start==end) {
+            trees[node].update(x, val);
+            return;
+        }
+        update(node*2, start, (start+end)/2, x, y, val, t);
+        update(node*2+1, (start+end)/2+1, end, x, y, val, t);
+        trees[node].update(x, trees[node*2].tree[t] + trees[node*2+1].tree[t]);
+    }
+    int query(int node, cint start, cint end, cint x1, cint x2, cint y1, cint y2) {
+        if(end<y1 || y2<start) return 0;
+        if(y1 <= start && end <= y2) return trees[node].query(x1, x2);
+        return query(node*2, start, (start+end)/2, x1, x2, y1, y2) +
+               query(node*2+1, (start+end)/2+1, end, x1, x2, y1, y2);
+    }
+};
+
+class pst {
+    class pnd {
+    public:
+        pnd *l = nullptr, *r = nullptr;
+        bool deleteL = false, deleteR = false;
+        int val = 0;
+        pnd()=default;
+        pnd(bool ldel, bool rdel) : deleteL(ldel), deleteR(rdel) {}
+        ~pnd(){ if(deleteL) delete l; if(deleteR) delete r; }
+    };
+public:
+    explicit pst(cint treeSize) : pst() {
+        n = treeSize;
+        init(cur, 1, n);
+        end_update();
+    }
+    pst(cint treeSize, const v<int> &arr) : pst() {
+        n = treeSize;
+        assert(arr.size() == treeSize);
+        init(cur, 1, n, arr);
+        end_update();
+    }
+    ~pst() { for(auto &p : root) delete p; }
+    void update(cint tar, cint val) {
+        assert(tar>0);
+        update(pre, cur, 1, n, tar, val);
+    }
+    void singleUpdate(cint tar, cint val) { update(tar, val); end_update(); }
+    void end_update() {
+        if(!cur->l) { cur->l = pre->l; cur->deleteL = false; cur->val += cur->l->val; }
+        if(!cur->r) { cur->r = pre->r; cur->deleteR = false; cur->val += cur->r->val; }
+        pre = cur; cur = new pnd();
+        root.push_back(cur); treeCnt++;
+    }
+    int query(cint rootN, cint left, cint right) {
+        assert(0<=rootN && rootN<treeCnt); assert(left <= right && left > 0);
+        return query(root[rootN], 1, n, left, right);
+    }
+private:
+    explicit pst() {
+        root.push_back(new pnd());
+        pre = nullptr; cur = root[0];
+    }
+    v<pnd*> root; int n = -1, treeCnt = 0;
+    pnd *pre, *cur;
+    void init(pnd *node, int start, int end, const v<int> &arr) {
+        if(start == end) { node->val = arr[start-1]; return; }
+        node->l = new pnd(); node->r = new pnd();
+        node->deleteL = true; node->deleteR = true;
+        init(node->l, start, (start+end)/2, arr);
+        init(node->r, (start+end)/2+1, end, arr);
+        node->val = node->l->val + node->r->val;
+    }
+    void init(pnd *node, int start, int end) {
+        if(start == end) { node->val = 0; return; }
+        node->l = new pnd(); node->r = new pnd();
+        node->deleteL = true; node->deleteR = true;
+        init(node->l, start, (start+end)/2);
+        init(node->r, (start+end)/2+1, end);
+        node->val = node->l->val + node->r->val;
+    }
+    void update(pnd *prev, pnd *now, int start, int end, cint tar, cint val) {
+        if(start==end) { now->val += val; return; }
+        if(tar <= (start+end)/2) {
+            if(!now->l || now->l == prev->l) {
+                now->l = new pnd();
+                now->l->val = prev->l->val;
+            }
+            if(!now->r) now->r = prev->r;
+            now->deleteL = true;
+            update(prev->l, now->l, start, (start+end)/2, tar, val);
+        } else {
+            if(!now->l) now->l = prev->l;
+            if(!now->r || now->r == prev->r) {
+                now->r = new pnd();
+                now->r->val = prev->r->val;
+            }
+            now->deleteR = true;
+            update(prev->r, now->r, (start+end)/2+1, end, tar, val);
+        }
+        now->val = now->l->val + now->r->val;
+    }
+    int query(pnd *node, int start, int end, cint left, cint right) {
+        if(right < start || end < left) return 0;
+        if(left <= start && end <= right) return node->val;
+        return query(node->l, start, (start+end)/2, left, right) +
+               query(node->r, (start+end)/2+1, end, left, right);
+    }
+};
+
+class segbeats {
+public:
+    struct Node {
+        int mx, mx2, mxcnt, sum;
+        Node()=default;
+        Node(int a, int b, int c, int d) : mx(a), mx2(b), mxcnt(c), sum(d){};
+    };
+    explicit segbeats(int treeSize) {
+        lazy = tree = v<Node>(4*treeSize);
+        n = treeSize;
+    }
+    explicit segbeats(const v<int> &a) : segbeats((int)a.size()) {
+        init(a, 1, 1, n);
+    }
+    segbeats(const v<int> &a, int treeSize) : segbeats(treeSize) {
+        init(a, 1, 1, n);
+        assert(a.size() == treeSize);
+    }
+    void update(int tar, int diff) { update(tar, tar, diff); }
+    void update(int left, int right, int diff) { update(1, left, right, 1, n, diff); }
+    Node query(int left, int right) { return query(1, left, right, 1, n); }
+    int query_sum(int left, int right) { return query_sum(1, left, right, 1, n); }
+    int query_max(int left, int right) { return query_max(1, left, right, 1, n); }
+protected:
+    vector<Node> tree, lazy;
+    int n;
+    void update_lazy(int node, int start, int end) {
+        if(start==end) return;
+        for(int i : {node*2, node*2+1}) {
+            if(tree[node].mx < tree[i].mx) {
+                tree[i].sum -= tree[i].mxcnt * (tree[i].mx - tree[node].mx);
+                tree[i].mx = tree[node].mx;
+            }
+        }
+    }
+    static Node merge_node(const Node &a, const Node &b) {
+        Node ret(a.mx, a.mx2, a.mxcnt, a.sum + b.sum);
+        if(ret.mx == b.mx) ret.mxcnt += b.mxcnt;
+        for(const int &i : {b.mx, b.mx2}) {
+            if(ret.mx < i) {
+                ret.mx2 = ret.mx;
+                ret.mx = i;
+                ret.mxcnt = b.mxcnt;
+            } else if (ret.mx > i && ret.mx2 < i) {
+                ret.mx2 = i;
+            }
+        }
+        return ret;
+    }
+    void init(const v<int> &a, int node, int start, int end) {
+        if(start==end) {
+            tree[node] = {a[start-1], -1, 1, a[start-1]};
+        } else {
+            init(a, node*2, start, (start+end)/2);
+            init(a, node*2+1, (start+end)/2+1, end);
+            tree[node] = merge_node(tree[node*2], tree[node*2+1]);
+        }
+    }
+    void update(int node, int left, int right, int start, int end, int diff) {
+        update_lazy(node, start, end);
+        if((end<left || right < start) || tree[node].mx <= diff) return; //break condition
+        if(left <= start && end <= right && tree[node].mx2 < diff) { // tag condition
+            tree[node].sum -= tree[node].mxcnt * (tree[node].mx - diff);
+            tree[node].mx = diff;
+            update_lazy(node, start, end);
+            return;
+        }
+        update(node*2, left, right, start, (start+end)/2, diff);
+        update(node*2+1, left, right, (start+end)/2+1, end, diff);
+        tree[node] = merge_node(tree[node*2], tree[node*2+1]);
+    }
+    Node query(int node, int left, int right, int start, int end) {
+        update_lazy(node, start, end);
+        if(right < start || end < left) return {-1, -1, -1, 0};
+        if(left <= start && end <= right) return tree[node];
+        return merge_node(query(node*2, left, right, start, (start+end)/2),
+                          query(node*2+1, left, right, (start+end)/2+1, end));
+    }
+    int query_sum(int node, int left, int right, int start, int end) {
+        update_lazy(node, start, end);
+        if(right < start || end < left) return 0;
+        if(left <= start && end <= right) return tree[node].sum;
+        return query_sum(node*2, left, right, start, (start+end)/2) +
+               query_sum(node*2+1, left, right, (start+end)/2+1, end);
+    }
+    int query_max(int node, int left, int right, int start, int end) {
+        update_lazy(node, start, end);
+        if(right < start || end < left) return -1;
+        if(left <= start && end <= right) return tree[node].mx;
+        return max(query_max(node*2, left, right, start, (start+end)/2),
+                   query_max(node*2+1, left, right, (start+end)/2+1, end));
+    }
+};
+
+class dynamicSeg {
+    class pnd { // pointer_based_node
+    public:
+        pnd *l = nullptr, *r = nullptr;
+        int val = 0;
+        pnd()=default;
+        ~pnd(){ delete l; delete r; }
+    };
+public:
+    explicit dynamicSeg(int treeSize) : dynamicSeg() { n = treeSize; }
+    ~dynamicSeg() { delete root; }
+    void update(cint tar, cint val) {
+        assert(tar>0);
+        update(root, 1, n, tar, val);
+    }
+    int query(const int &left, const int &right) {
+        assert(left <= right && left > 0);
+        return query(root, 1, n, left, right);
+    }
+private:
+    explicit dynamicSeg() { root = new pnd(); }
+    pnd *root; int n = -1;
+    void update(pnd *node, int start, int end, cint tar, cint val) {
+        if(start==end) {
+            node->val = val; return;
+        }
+        if(tar <= (start+end)/2) {
+            if(!node->l) node->l = new pnd();
+            update(node->l, start, (start+end)/2, tar, val);
+        } else {
+            if(!node->r) node->r = new pnd();
+            update(node->r, (start+end)/2+1, end, tar, val);
+        }
+        int lv = node->l ? node->l->val : 0;
+        int rv = node->r ? node->r->val : 0;
+        node->val = lv + rv;
+    }
+    int query(pnd *node, int start, int end, cint left, cint right) {
+        if(!node) return 0;
+        if(right < start || end < left) return 0;
+        if(left <= start && end <= right) return node->val;
+        return query(node->l, start, (start+end)/2, left, right) +
+               query(node->r, (start+end)/2+1, end, left, right);
+    }
+};
+
+class sparseSeg {
+public:
+    class lpnd {
+    public:
+        lpnd *l = nullptr, *r = nullptr;
+        int val = 0, lazy = 0;
+        lpnd()=default;
+        ~lpnd(){ delete l; delete r; }
+    };
+    explicit sparseSeg(int treeSize) : sparseSeg() { n = treeSize; }
+    ~sparseSeg() { delete root; }
+    void update(cint left, cint right, cint val) {
+        assert(left <= right && left > 0);
+        update(root, 1, n, left, right, val);
+    }
+    int query(cint left, cint right) {
+        assert(left <= right && left > 0);
+        return query(root, 1, n, left, right);
+    }
+private:
+    explicit sparseSeg() { root = new lpnd(); }
+    lpnd *root; int n = -1;
+    static void push(lpnd *node, cint start, cint end) {
+        node->val += (end-start+1) * node->lazy;
+        if(start != end) {
+            if(!node->l) node->l = new lpnd();
+            node->l->lazy += node->lazy;
+            if(!node->r) node->r = new lpnd();
+            node->r->lazy += node->lazy;
+        }
+        node->lazy = 0;
+    }
+    void update(lpnd *node, int start, int end, cint left, cint right, cint val) {
+        push(node, start, end);
+        if(right < start || end < left) return;
+        if(left <= start && end <= right) {
+            node->lazy += val;
+            push(node, start, end);
+            return;
+        }
+        int mid = (start+end)/2;
+        if(node->l || left <= mid) {
+            if (!node->l) node->l = new lpnd();
+            update(node->l, start, mid, left, right, val);
+        }
+        if(node->r || mid+1 <= right) {
+            if (!node->r) node->r = new lpnd();
+            update(node->r, mid + 1, end, left, right, val);
+        }
+        int lv = node->l ? node->l->val : 0;
+        int rv = node->r ? node->r->val : 0;
+        node->val = lv + rv;
+    }
+    int query(lpnd *node, int start, int end, cint left, cint right) {
+        if(!node) return 0;
+        if(right < start || end < left) return 0;
+        push(node, start, end);
+        if(left <= start && end <= right) return node->val;
+        return query(node->l, start, (start+end)/2, left, right) +
+               query(node->r, (start+end)/2+1, end, left, right);
+    }
 };
 
 signed main() {
