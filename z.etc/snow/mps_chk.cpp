@@ -10,7 +10,6 @@ using namespace std;
 #endif
 
 #define int long long
-#define uint unsigned int
 #define double long double
 #define cint const int &
 
@@ -62,9 +61,43 @@ template <typename T> T pow_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)a
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 #pragma endregion
 
-// prob
-// #tags
-
+lint snow[50000010];
 signed main() {
-
+    filein;
+    int l, n, m, a, b, k, t; cin >> l >> n >> m;
+    // 쿼리들을 저장하는 배열
+    // [0] : 쿼리의 순서, [1] : 쿼리의 종류 (1 또는 2)
+    // 쿼리 1인 경우 a, b, k / 쿼리 2인 경우 a, b, 주어진 순서(0~m-1)
+    // (a, b는 압축되지 않은 값)
+    vector<array<int, 5>> queries;
+    // 쿼리 1 입력
+    for(int i=1; i<=n; i++) {
+        a = input(); b = input(); k = input();
+        queries.push_back({i, 1, a, b, k});
+    }
+    // 쿼리 2 입력
+    for(int i=1; i<=m; i++) {
+        t = input(); a = input(); b = input();
+        queries.push_back({t, 2, a, b, i-1});
+    }
+    sort(queries.begin(), queries.end());
+    v<__float128> answer(m);
+    int cnt = 0;
+    for(const auto &q : queries) {
+        cout << ++cnt << "/" << n+m << endl;
+        if(q[1] == 1) {
+            forf(qi, q[2], q[3]) snow[qi] += q[4];
+        } else {
+            lint sum = 0, wsum = 0;
+            forf(q2, q[2], q[3]) {
+                sum += snow[q2];
+                wsum += snow[q2] * q2;
+            }
+            if(sum==0) answer[q[4]] = -1;
+            else answer[q[4]] = abs((__float128)wsum / (__float128) sum - (q[2]+q[3])/2.0Q);
+        }
+    }
+    fileout; fastio;
+    cout.precision(8); cout << fixed;
+    for(const __float128 &i : answer) cout << (double) i << '\n';
 }

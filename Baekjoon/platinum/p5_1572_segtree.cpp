@@ -1,91 +1,135 @@
 #pragma region macros
+#define GCC_OPTIMIZE_ENABLE false
+
 #include <bits/stdc++.h>
+using namespace std;
+
+#if GCC_OPTIMIZE_ENABLE
+#pragma GCC optimize("Ofast")
+#pragma GCC optimize("unroll-loops")
+#endif
+
 #define int long long
 #define double long double
-#define llmax 9223372036854775807
-#define INF 1000000000000000000
-#define inf 3000000000
+#define cint const int &
+
+#define llmax 9223372036854775807 // 2^63-1
+#define INF 1000000000000000000 // INF * INF > 2^63
+#define inf 3000000000 // inf > 2^31, inf * inf < 2^63
 #define fastio ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr)
-#define all(vec) (vec).begin(), (vec).end()
 #define forn(name, val) for(int name = 0; name < val; name++)
 #define forf(name, start, end) for(int name = start; name <= end; name++)
-using namespace std;
+
+#define pass {cout << "";} // do nothing
+#define filein freopen("C:/Users/ryans/Desktop/Coding/Baekjoon/input.txt", "r", stdin)
+#define fileout freopen("C:/Users/ryans/Desktop/Coding/Baekjoon/output.txt", "w", stdout)
+
 template <typename T> using v = vector<T>;
 template <typename T> using v2 = v<v<T>>;
 template <typename T> using pq = priority_queue<T>;
 using ii = array<int, 2>;
 using iii = array<int, 3>;
 
-template <typename T> void compress(v<T> &v, const bool &autosort=true) { if(autosort) sort(all(v)); v.erase(unique(all(v)), v.end()); }
-template <typename T> T idx(const T &val, const v<T> &compressed) { return lower_bound(all(compressed), val) - compressed.begin(); }
-template <typename T> T input() {T t; cin >> t; return t;}
-int input() { int t; cin >> t; return t;}
+#ifndef int
+#define intmax 2147483647
+#else
+#define intmax llmax
+#endif
+
+#pragma region lint
+#define lint __int128
+#define ll long long
+lint LINTMAX = ((lint(1)<<126)-1)*2+1;
+string lint2str(const lint &i) {string ret,bs;if(i==-LINTMAX-1)return lint2str(i/10)+"8";if(!i)return "0";if(i<0)return "-"+lint2str(-i);
+    lint t=1; forn(as, 18)t*=10;lint a=i/(t*t);if(a){ret += to_string((ll) a);bs = to_string((ll) (i / t % (t * 10) + t));
+        forn(j, 18) ret += bs[j + 1];bs = to_string((ll) ((i % t) + t));forn(j, 18) ret += bs[j + 1];
+    } else {lint b = i / t % (t * 10);if (b) {ret += to_string((ll) b);bs = to_string((ll) ((i % t) + t));
+            forn(j, 18) ret += bs[j + 1];} else { ret += to_string((ll) (i % t)); }}return ret;}
+istream &operator>>(istream &in, lint &l) {string s;in>>s;lint t=l=0,size=s.size(),k=1;if(s[0]=='-')t=1;
+    for(lint i=size-1;i>=t;i--){if(!t)l+=(s[i]-'0')*k;else l-=(s[i]-'0')*k;k*=10;}return in;}
+ostream &operator<<(ostream &out,const lint &i){ out << lint2str(i); return out; }
 #pragma endregion
 
-template <typename T = int>
+template <typename T = int> T input() {T t; cin >> t; return t;}
+
+#define all(vec) (vec).begin(), (vec).end()
+template <typename T> void compress(v<T> &v, const bool &autosort=true) { if(autosort) sort(all(v)); v.erase(unique(all(v)), v.end()); }
+template <typename T> T idx(const T &val, const v<T> &compressed) { return lower_bound(all(compressed), val) - compressed.begin(); }
+
+template <typename T> T pow_(T a, T b) { return pow_(a, b, intmax); }
+template <typename T> T pow_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)ans=ans*a%mod;b>>=1;a=a*a%mod;} return ans; }
+template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
+#pragma endregion
+
 class segtree {
-protected:
+#define MID ((start+end)/2)
+public:
+    class T {
+    public:
+        int val = 0;
+        T()=default;
+        explicit T(int v) : val(v) {}
+        T operator+(const T &t2) const { return T(val + t2.val); }
+        T operator+(const int &i) const { return T(val + i); }
+        void operator+=(const T &i) { val += i.val; }
+        void operator+=(const int &i) { val += i; }
+        T& operator=(cint i) { val = i; return *this; }
+        T& operator=(const T &i) = default;
+    };
     vector<T> tree;
     int n;
-public:
     explicit segtree(int treeSize) {
-        tree = v<T>(4*treeSize, 0);
+        tree = v<T>(4*treeSize, T());
         n = treeSize;
     }
-    explicit segtree(const v<T> &a) : segtree(a.size()) {
+    template <typename t = T>
+    explicit segtree(const v<int> &a) : segtree((int) a.size()) {
         init(a, 1, 1, n);
     }
-    segtree(const v<T> &a, int treeSize) : segtree(treeSize) {
+    template <typename t = T>
+    segtree(const v<int> &a, int treeSize) : segtree(treeSize) {
+        init(a, 1, 1, n);
         assert(a.size() == treeSize);
-        init(a, 1, 1, n);
     }
-    void update(int tar, T diff) { update(tar, tar, diff); }
-    T query(int tar) { return query(tar, tar); }
-    T query(int left, int right) { return query(1, left, right, 1, n); }
+    void update(int tar, int diff) { update(tar, tar, diff); }
+    int query(int k) { return query(1, k, 1, n); }
 protected:
-    void update(int left, int right, T diff) { update(1, left, right, 1, n, diff); }
-    void init(const v<T> &a, int node, int start, int end) {
-        if(start==end) {
-            tree[node] = a[start-1];
-        } else {
-            init(a, node*2, start, (start+end)/2);
-            init(a, node*2+1, (start+end)/2+1, end);
-            tree[node] = tree[node*2] + tree[node*2+1];
-        }
+    void update(int left, int right, int diff) { update(1, left, right, 1, n, diff); }
+    T init(const v<int> &a, int node, int start, int end) {
+        if (start == end) return tree[node] = a[start - 1];
+        return tree[node] = init(a, node * 2, start, MID) +
+        init(a, node * 2 + 1, MID + 1, end);
     }
-    void update(int node, int left, int right, int start, int end, T diff) {
+    void update(int node, int left, int right, int start, int end, int diff) {
         if(end<left || right < start) return;
-        if(left <= start && end <= right) {
-            tree[node] += diff;
-            return;
-        }
-        update(node*2, left, right, start, (start+end)/2, diff);
-        update(node*2+1, left, right, (start+end)/2+1, end, diff);
+        if(left <= start && end <= right) { tree[node] += diff; return; }
+        update(node*2, left, right, start, MID, diff);
+        update(node*2+1, left, right, MID+1, end, diff);
         tree[node] = tree[node*2] + tree[node*2+1];
     }
-    T query(int node, int left, int right, int start, int end) {
-        if(right < start || end < left) return 0;
-        if(left <= start && end <= right) return tree[node];
-        return query(node*2, left, right, start, (start+end)/2) +
-               query(node*2+1, left, right, (start+end)/2+1, end);
+    int query(int node, int tar, int start, int end) {
+        if(start==end) return start;
+        if(tar <= tree[node*2].val) return query(node*2, tar, start, MID);
+        return query(node*2+1, tar-tree[node*2].val, MID+1, end);
     }
 };
 
 signed main() {
-    segtree st(65540);
-    int n, k, t, ans=0; cin >> n >> k;
-    queue<int> q;
+    fastio;
+    int n, k, t; cin >> n >> k;
+    int k1 = (k+1)/2;
+    queue<int> del;
+    int ans = 0;
+    segtree seg(66666);
     forn(i, k) {
-        cin >> t;
-        q.push(t);
-        st.update(t+1, 1);
+        cin >> t; t++; seg.update(t, 1); del.push(t);
     }
-    if(k&1) ans += st.query(k/2+1);
-    else ans += st.query(k/2);
+    ans += seg.query(k1)-1; // << seg.query(k1) << ' ';
     forn(i, n-k) {
-        cin >> t; q.push(t);
-        st.update(t+1, 1);
-        t = q.front(); q.pop();
-        st.update(t+1, -1);
+        cin >> t; t++; seg.update(t, 1); del.push(t);
+        seg.update(del.front(), -1); del.pop();
+        ans += seg.query(k1)-1; //cout << seg.query(k1) << ' ';
     }
+    //cout << endl;
+    cout << ans;
 }

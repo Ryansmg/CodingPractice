@@ -10,7 +10,6 @@ using namespace std;
 #endif
 
 #define int long long
-#define uint unsigned int
 #define double long double
 #define cint const int &
 
@@ -22,7 +21,7 @@ using namespace std;
 #define forf(name, start, end) for(int name = start; name <= end; name++)
 
 #define pass {cout << "";} // do nothing
-#define filein freopen("C:/Users/ryans/Desktop/Coding/Baekjoon/input.txt", "r", stdin)
+#define filein freopen("C:/Users/ryans/Desktop/Coding/Baekjoon/output.txt", "r", stdin)
 #define fileout freopen("C:/Users/ryans/Desktop/Coding/Baekjoon/output.txt", "w", stdout)
 
 template <typename T> using v = vector<T>;
@@ -62,9 +61,14 @@ template <typename T> T pow_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)a
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 #pragma endregion
 
-// prob
-// #tags
-
 signed main() {
-
+    v<string> ans;
+    forn(i, 25000) ans.push_back(input<string>());
+    filein;
+    forn(i, 25000) {
+        string t = input<string>();
+        if(ans[i] != t) {
+            cout << ans[i] << ' ' << t << '\n';
+        }
+    }
 }

@@ -10,7 +10,6 @@ using namespace std;
 #endif
 
 #define int long long
-#define uint unsigned int
 #define double long double
 #define cint const int &
 
@@ -62,9 +61,63 @@ template <typename T> T pow_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)a
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 #pragma endregion
 
-// prob
-// #tags
+// 14858. GCD 테이블과 연속 부분 수열
+// #crt
+
+lint lcm_(lint a, lint b) {
+    return a / gcd_(a, b) * b;
+}
+
+pair<lint, pair<lint, lint>> choi(lint a, lint b) {
+    if (b == 0) return {a, {1, 0}};
+    pair<lint, pair<lint, lint>> ret = choi(b, a % b);
+    lint g, x, y;
+    g = ret.first;
+    tie(x, y) = ret.second;
+    return {g, {y, x - (a / b) * y}};
+}
+#define NO_ {cout << "NO"; return 0;}
+#define YES_ {cout << "YES"; return 0;}
+pair<lint, lint> CRT(v<lint> &A, v<lint> &B) {
+    if (A.size() != B.size()) return {-1, -1};
+
+    lint a1 = A[0], m1 = B[0];
+
+    for (lint i = 1; i < A.size(); i++) {
+        lint a2 = A[i], m2 = B[i];
+        a2 %= m2;
+        lint g = gcd(m1, m2);
+        if (a1 % g != a2 % g) {
+            cout << "NO";
+            exit(0);
+        }
+
+        lint p, q;
+        auto res = choi(m1 / g, m2 / g);
+        tie(p, q) = res.second;
+
+        lint mod = m1 / g * m2;
+        a1 = (a1 * (m2 / g) % mod) * q % mod + (a2 * (m1 / g) % mod) * p % mod;
+        a1 = (a1 + mod) % mod;
+        m1 = mod;
+    }
+
+    return { a1, m1 };
+}
+
 
 signed main() {
-
+    lint n, m, k; cin >> n >> m >> k;
+    lint l = 1;
+    v<lint> arr, arr2;
+    forn(i, k) arr.push_back(input());
+    forn(i, k) arr2.push_back((-i-1-((-i-1)/arr[i]*arr[i])+arr[i])%arr[i]);
+    forn(i, k) {
+        l = lcm_(l, arr[i]);
+        if(l>n) NO_
+    }
+    auto p = CRT(arr2, arr);
+    if(p.first+k > m || p.first <= -1) NO_
+    forn(i, k) if(gcd_(p.second, p.first+i+1) != arr[i]) NO_
+    YES_
 }

@@ -78,15 +78,18 @@ public:
     };
     vector<T> tree;
     int n;
-    explicit segtree(int treeSize) {
-        tree = v<T>(4*treeSize, T());
+    explicit segtree(int treeSize, bool inputInit = false) {
         n = treeSize;
+        tree = v<T>(4*treeSize, T());
+        if(inputInit) {
+            v<int> a;
+            forn(i, treeSize) a.push_back(input());
+            init(a, 1, 1, n);
+        }
     }
-    template <typename t = T>
     explicit segtree(const v<int> &a) : segtree((int) a.size()) {
         init(a, 1, 1, n);
     }
-    template <typename t = T>
     segtree(const v<int> &a, int treeSize) : segtree(treeSize) {
         init(a, 1, 1, n);
         assert(a.size() == treeSize);
@@ -121,7 +124,7 @@ class iterSeg {
 public:
     v<int> tree; int n;
     explicit iterSeg(const v<int> &arr) { n = (int) arr.size(); init(arr); }
-    explicit iterSeg(cint i) { tree = v<int>(i, 0); n = i; }
+    explicit iterSeg(cint i) { tree = v<int>(i*4, 0); n = i; }
     void inputInit() {
         tree = v<int>(4*n, 0);
         forf(i, n, 2*n-1) cin >> tree[i];
@@ -145,12 +148,12 @@ public:
         return ans;
     }
 private:
+    void init() { for(int i=n-1; i>0; i--) tree[i] = tree[i<<1] + tree[i<<1|1]; }
     void init(const v<int> &arr) {
         tree = v<int>(4*n, 0);
         for(int i=n, j=0; i<2*n; i++, j++) tree[i] = arr[j];
         init();
     }
-    void init() { for(int i=n-1; i>0; i--) tree[i] = tree[i<<1] + tree[i<<1|1]; }
 };
 
 class lazyprop {
@@ -162,12 +165,13 @@ public:
         explicit T(int v) : val(v) {}
         T operator+(const T &t2) const { return T(val + t2.val); }
         T operator+(const int &i) const { return T(val + i); }
-        T operator*(const int &i) const { return T(val * i); }
         void operator+=(const T &i) { val += i.val; }
         void operator+=(const int &i) { val += i; }
+        T& operator=(cint i) { val = i; return *this; }
+        T& operator=(const T &i) = default;
     };
 protected:
-    vector<T> tree, lazy;
+    v<T> tree; v<int> lazy;
     int n;
     void update_lazy(int node, int start, int end) {
         tree[node] += lazy[node] * (end-start+1);
@@ -178,14 +182,19 @@ protected:
         lazy[node] = {};
     }
 public:
-    explicit lazyprop(int treeSize) {
-        lazy = tree = v<T>(4*treeSize, T());
+    explicit lazyprop(int treeSize, bool inputInit = false) {
+        lazy = v<int>(4*treeSize, 0);
+        tree = v<T>(4*treeSize, T());
         n = treeSize;
+        if(inputInit) {
+            v<int> a; forn(i, n) a.push_back(input());
+            init(a, 1, 1, n);
+        }
     }
-    explicit lazyprop(const v<T> &a) : lazyprop((int) a.size()) {
+    explicit lazyprop(const v<int> &a) : lazyprop((int) a.size()) {
         init(a, 1, 1, n);
     }
-    lazyprop(const v<T> &a, int treeSize) : lazyprop(treeSize) {
+    lazyprop(const v<int> &a, int treeSize) : lazyprop(treeSize) {
         init(a, 1, 1, n);
         assert(a.size() == treeSize);
     }
@@ -194,7 +203,7 @@ public:
     T query(int tar) { return query(tar, tar); }
     T query(int left, int right) { return query(1, left, right, 1, n); }
 protected:
-    void init(const v<T> &a, int node, int start, int end) {
+    void init(const v<int> &a, int node, int start, int end) {
         if(start==end) {
             tree[node] = a[start-1];
         } else {
@@ -499,6 +508,23 @@ public:
         int mx, mx2, mxcnt, sum;
         Node()=default;
         Node(int a, int b, int c, int d) : mx(a), mx2(b), mxcnt(c), sum(d){};
+        Node operator+(const Node &a) const {
+            return merge_node(*this, a);
+        }
+        static Node merge_node(const Node &a, const Node &b) {
+            Node ret(a.mx, a.mx2, a.mxcnt, a.sum + b.sum);
+            if(ret.mx == b.mx) ret.mxcnt += b.mxcnt;
+            for(const int &i : {b.mx, b.mx2}) {
+                if(ret.mx < i) {
+                    ret.mx2 = ret.mx;
+                    ret.mx = i;
+                    ret.mxcnt = b.mxcnt;
+                } else if (ret.mx > i && ret.mx2 < i) {
+                    ret.mx2 = i;
+                }
+            }
+            return ret;
+        }
     };
     explicit segbeats(int treeSize) {
         lazy = tree = v<Node>(4*treeSize);
@@ -514,8 +540,6 @@ public:
     void update(int tar, int diff) { update(tar, tar, diff); }
     void update(int left, int right, int diff) { update(1, left, right, 1, n, diff); }
     Node query(int left, int right) { return query(1, left, right, 1, n); }
-    int query_sum(int left, int right) { return query_sum(1, left, right, 1, n); }
-    int query_max(int left, int right) { return query_max(1, left, right, 1, n); }
 protected:
     vector<Node> tree, lazy;
     int n;
@@ -528,27 +552,13 @@ protected:
             }
         }
     }
-    static Node merge_node(const Node &a, const Node &b) {
-        Node ret(a.mx, a.mx2, a.mxcnt, a.sum + b.sum);
-        if(ret.mx == b.mx) ret.mxcnt += b.mxcnt;
-        for(const int &i : {b.mx, b.mx2}) {
-            if(ret.mx < i) {
-                ret.mx2 = ret.mx;
-                ret.mx = i;
-                ret.mxcnt = b.mxcnt;
-            } else if (ret.mx > i && ret.mx2 < i) {
-                ret.mx2 = i;
-            }
-        }
-        return ret;
-    }
     void init(const v<int> &a, int node, int start, int end) {
         if(start==end) {
             tree[node] = {a[start-1], -1, 1, a[start-1]};
         } else {
             init(a, node*2, start, (start+end)/2);
             init(a, node*2+1, (start+end)/2+1, end);
-            tree[node] = merge_node(tree[node*2], tree[node*2+1]);
+            tree[node] = tree[node*2] + tree[node*2+1];
         }
     }
     void update(int node, int left, int right, int start, int end, int diff) {
@@ -562,28 +572,14 @@ protected:
         }
         update(node*2, left, right, start, (start+end)/2, diff);
         update(node*2+1, left, right, (start+end)/2+1, end, diff);
-        tree[node] = merge_node(tree[node*2], tree[node*2+1]);
+        tree[node] = tree[node*2] + tree[node*2+1];
     }
     Node query(int node, int left, int right, int start, int end) {
         update_lazy(node, start, end);
         if(right < start || end < left) return {-1, -1, -1, 0};
         if(left <= start && end <= right) return tree[node];
-        return merge_node(query(node*2, left, right, start, (start+end)/2),
-                          query(node*2+1, left, right, (start+end)/2+1, end));
-    }
-    int query_sum(int node, int left, int right, int start, int end) {
-        update_lazy(node, start, end);
-        if(right < start || end < left) return 0;
-        if(left <= start && end <= right) return tree[node].sum;
-        return query_sum(node*2, left, right, start, (start+end)/2) +
-               query_sum(node*2+1, left, right, (start+end)/2+1, end);
-    }
-    int query_max(int node, int left, int right, int start, int end) {
-        update_lazy(node, start, end);
-        if(right < start || end < left) return -1;
-        if(left <= start && end <= right) return tree[node].mx;
-        return max(query_max(node*2, left, right, start, (start+end)/2),
-                   query_max(node*2+1, left, right, (start+end)/2+1, end));
+        return query(node*2, left, right, start, (start+end)/2) +
+                          query(node*2+1, left, right, (start+end)/2+1, end);
     }
 };
 
@@ -695,7 +691,3 @@ private:
                query(node->r, (start+end)/2+1, end, left, right);
     }
 };
-
-signed main() {
-
-}

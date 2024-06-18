@@ -1,5 +1,6 @@
 #include <bits/stdc++.h>
 #define int __int128
+#define lf __float128
 #define double long double
 #define filein freopen("C:/Users/ryans/Desktop/Coding/Baekjoon/input.txt", "r", stdin)
 #define fileout freopen("C:/Users/ryans/Desktop/Coding/Baekjoon/output.txt", "w", stdout)
@@ -113,7 +114,7 @@ int input() { long long a; cin >> a; return (int) a; }
 
 signed main() {
     auto startTime = clock(); // 실행 시간 측정을 위한 시작 시간 측정
-    // filein; fileout; // 파일 입출력 활성화
+    filein; fileout; // 파일 입출력 활성화
     ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr); // 빠른 입출력
     cout.precision(8); cout << fixed; // 소수점 아래 8자리까지 출력
     int l, n, m; l = input(); n = input(); m = input();
@@ -137,7 +138,7 @@ signed main() {
         comp.push_back(a);
         comp.push_back(b);
     }
-    vector<double> answers(m); // 정답을 쿼리가 주어진 순서대로 저장하는 배열
+    vector<lf> answers(m); // 정답을 쿼리가 주어진 순서대로 저장하는 배열
     sort(comp.begin(), comp.end()); // 좌표 압축
     comp.erase(unique(comp.begin(), comp.end()), comp.end()); // 좌표 압축
     tl = (int) comp.size(); // 좌표의 개수 (중복 제외)
@@ -170,11 +171,11 @@ signed main() {
             int sum = query_sum(1, 1, tl, query[2]*2+1, query[3]*2+1);
             int weight = query_weight(1, 1, tl, query[2]*2+1, query[3]*2+1);
             if(sum==0) answers[query[4]] = -1; // 질량 중심을 구할 수 없는 경우
-            else answers[query[4]] = abs(((double)weight / ((double) sum))
-                    - ((double)(comp[query[2]]+comp[query[3]])/((double)2))); // |질량 중심 - 중심 좌표|
+            else answers[query[4]] = abs(((lf)weight / ((lf) sum))
+                    - ((lf)(comp[query[2]]+comp[query[3]])/((lf)2))); // |질량 중심 - 중심 좌표|
         }
     }
-    for(const double& i : answers) cout << i << '\n'; // 정답 출력
+    for(const lf& i : answers) cout << (double)i << '\n'; // 정답 출력
     auto time = clock()-startTime;
     if(printTime) cout << time; // breakpoint를 지정하거나 printTime을 true로 설정해 걸린 시간을 측정하기 위함
 }

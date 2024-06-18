@@ -10,7 +10,6 @@ using namespace std;
 #endif
 
 #define int long long
-#define uint unsigned int
 #define double long double
 #define cint const int &
 
@@ -61,10 +60,54 @@ template <typename T> T pow_(T a, T b) { return pow_(a, b, intmax); }
 template <typename T> T pow_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)ans=ans*a%mod;b>>=1;a=a*a%mod;} return ans; }
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 #pragma endregion
+class iterSeg {
+public:
+    v<int> tree; int n;
+    explicit iterSeg(const v<int> &arr) { n = (int) arr.size(); init(arr); }
+    explicit iterSeg(cint i) { tree = v<int>(i, 0); n = i; }
+    void inputInit() {
+        tree = v<int>(4*n, 0);
+        forf(i, n, 2*n-1) cin >> tree[i], tree[i]&=1;
+        init();
+    }
+    /// 0 <= tar < n
+    void update(int tar, int val) {
+        assert(0 <= tar && tar < n);
+        tree[n+tar] = val&1;
+        for(int i = n+tar; i>1; i>>=1)
+            tree[i>>1] = tree[i] + tree[i^1];
+    }
+    /// [l, r)
+    int query(int left, int right) {
+        assert(0 <= left && right <= n);
+        int l = n+left, r = n+right, ans = 0;
+        for(; l<r; l>>=1, r>>=1) {
+            if(l&1) ans += tree[l++];
+            if(r&1) ans += tree[--r];
+        }
+        return ans;
+    }
+private:
+    void init(const v<int> &arr) {
+        tree = v<int>(4*n, 0);
+        for(int i=n, j=0; i<2*n; i++, j++) tree[i] = arr[j];
+        init();
+    }
+    void init() { for(int i=n-1; i>0; i--) tree[i] = tree[i<<1] + tree[i<<1|1]; }
+};
 
-// prob
-// #tags
+// 수열과 쿼리 37
+// #segtree
 
 signed main() {
-
+    fastio;
+    iterSeg seg(input());
+    seg.inputInit();
+    int m = input();
+    forn(i, m) {
+        int a, b, c; cin >> a >> b >> c;
+        if(a==1) seg.update(b-1, c);
+        if(a==2) cout << (c-b+1) - seg.query(b-1, c) << '\n';
+        if(a==3) cout << seg.query(b-1, c) << '\n';
+    }
 }
