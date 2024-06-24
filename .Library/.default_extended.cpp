@@ -10,13 +10,14 @@ using namespace std;
 #endif
 
 #define int long long
-#define uint unsigned int
+using uint = unsigned int;
 #define double long double
 #define cint const int &
 
-#define llmax 9223372036854775807 // 2^63-1
-#define INF 1000000000000000000 // INF * INF > 2^63
-#define inf 3000000000 // inf > 2^31, inf * inf < 2^63
+const long long llmax = 9223372036854775807; // 2^63-1
+const long long INF = 1000000000000000000; // INF * INF > 2^63
+const long long inf = 3000000000; // inf > 2^31, inf * inf < 2^63
+const signed smax = 2147483647;
 #define fastio ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr)
 #define forn(name, val) for(int name = 0; name < val; name++)
 #define forf(name, start, end) for(int name = start; name <= end; name++)
@@ -40,7 +41,7 @@ using iii = array<int, 3>;
 #pragma region lint
 #define lint __int128
 #define ll long long
-lint LINTMAX = ((lint(1)<<126)-1)*2+1;
+const lint LINTMAX = ((lint(1)<<126)-1)*2+1;
 string lint2str(const lint &i) {string ret,bs;if(i==-LINTMAX-1)return lint2str(i/10)+"8";if(!i)return "0";if(i<0)return "-"+lint2str(-i);
 	lint t=1; forn(as, 18)t*=10;lint a=i/(t*t);if(a){ret += to_string((ll) a);bs = to_string((ll) (i / t % (t * 10) + t));
 		forn(j, 18) ret += bs[j + 1];bs = to_string((ll) ((i % t) + t));forn(j, 18) ret += bs[j + 1];

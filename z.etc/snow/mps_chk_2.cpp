@@ -71,4 +71,5 @@ signed main() {
             cout << ans[i] << ' ' << t << '\n';
         }
     }
+    cout << "finished.";
 }

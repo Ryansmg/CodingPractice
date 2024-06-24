@@ -61,47 +61,26 @@ template <typename T> T pow_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)a
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 #pragma endregion
 
-class lazyprop {
-protected:
-    v<int> tree, lazy; int n;
-    void push(int node, int start, int end) {
-        tree[node] += lazy[node] * (end-start+1);
-        if(start!=end) {
-            lazy[node*2] += lazy[node];
-            lazy[node*2+1] += lazy[node];
+
+signed main() {
+    fastio;
+    int t = input();
+    int cnt = 0;
+    while(t--) {
+        int a = input();
+        v<int> arr, ans;
+        forn(i, 2*a) arr.push_back(input());
+        sort(all(arr));
+        while(!arr.empty()) {
+            int b = arr.back();
+            b = b/4*3;
+            ans.push_back(b);
+            arr.erase(arr.end()-1);
+            arr.erase(find(arr.begin(), arr.end(), b));
         }
-        lazy[node] = 0;
+        sort(all(ans));
+        cout << "Case #" << ++cnt << ": ";
+        for(int i : ans) cout << i << ' ';
+        cout << '\n';
     }
-public:
-    explicit lazyprop(int treeSize, bool inputInit = false) {
-        lazy = tree = v<int>(4*treeSize, 0); n = treeSize;
-        if(inputInit) { v<int> a; forn(i, n) a.push_back(input()); init(a, 1, 1, n); }
-    }
-    explicit lazyprop(const v<int> &a) : lazyprop((int) a.size()) { init(a, 1, 1, n); }
-    lazyprop(const v<int> &a, int treeSize) : lazyprop(treeSize) { init(a, 1, 1, n); assert(a.size() == treeSize); }
-    void update(int left, int right, int diff) { update(1, left, right, 1, n, diff); }
-    int query(int left, int right) { return query(1, left, right, 1, n); }
-protected:
-    int init(const v<int> &a, int node, int start, int end) {
-        if(start==end) return tree[node] = a[start-1];
-        else return tree[node] = init(a, node*2, start, (start+end)/2) + init(a, node*2+1, (start+end)/2+1, end);
-    }
-    int update(int node, int left, int right, int start, int end, int diff) {
-        push(node, start, end);
-        if(end < left || right < start) return 0;
-        if(left <= start && end <= right) {
-            lazy[node] += diff;
-            push(node, start, end);
-            return tree[node];
-        }
-        return tree[node] = update(node*2, left, right, start, (start+end)/2, diff) +
-                            update(node*2+1, left, right, (start+end)/2+1, end, diff);
-    }
-    int query(int node, int left, int right, int start, int end) {
-        push(node, start, end);
-        if(right < start || end < left) return 0;
-        if(left <= start && end <= right) return tree[node];
-        return query(node*2, left, right, start, (start+end)/2) + query(node*2+1, left, right, (start+end)/2+1, end);
-    }
-};
-signed main() { lazyprop lp(10, true); }
+}

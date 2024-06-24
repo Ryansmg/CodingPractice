@@ -61,47 +61,86 @@ template <typename T> T pow_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)a
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 #pragma endregion
 
-class lazyprop {
-protected:
-    v<int> tree, lazy; int n;
-    void push(int node, int start, int end) {
-        tree[node] += lazy[node] * (end-start+1);
-        if(start!=end) {
-            lazy[node*2] += lazy[node];
-            lazy[node*2+1] += lazy[node];
-        }
-        lazy[node] = 0;
-    }
+class segtree {
+#define MID ((start+end)/2)
 public:
-    explicit lazyprop(int treeSize, bool inputInit = false) {
-        lazy = tree = v<int>(4*treeSize, 0); n = treeSize;
-        if(inputInit) { v<int> a; forn(i, n) a.push_back(input()); init(a, 1, 1, n); }
-    }
-    explicit lazyprop(const v<int> &a) : lazyprop((int) a.size()) { init(a, 1, 1, n); }
-    lazyprop(const v<int> &a, int treeSize) : lazyprop(treeSize) { init(a, 1, 1, n); assert(a.size() == treeSize); }
-    void update(int left, int right, int diff) { update(1, left, right, 1, n, diff); }
-    int query(int left, int right) { return query(1, left, right, 1, n); }
-protected:
-    int init(const v<int> &a, int node, int start, int end) {
-        if(start==end) return tree[node] = a[start-1];
-        else return tree[node] = init(a, node*2, start, (start+end)/2) + init(a, node*2+1, (start+end)/2+1, end);
-    }
-    int update(int node, int left, int right, int start, int end, int diff) {
-        push(node, start, end);
-        if(end < left || right < start) return 0;
-        if(left <= start && end <= right) {
-            lazy[node] += diff;
-            push(node, start, end);
-            return tree[node];
+    class T {
+    public:
+        int val = 0;
+        T()=default;
+        explicit T(int v) : val(v) {}
+        T operator+(const T &t2) const { return T(val + t2.val); }
+        T operator+(const int &i) const { return T(val + i); }
+        void operator+=(const T &i) { val += i.val; }
+        void operator+=(const int &i) { val += i; }
+        T& operator=(cint i) { val = i; return *this; }
+        T& operator=(const T &i) = default;
+    };
+    vector<T> tree;
+    int n;
+    explicit segtree(int treeSize, bool inputInit = false) {
+        n = treeSize;
+        tree = v<T>(4*treeSize, T());
+        if(inputInit) {
+            v<int> a;
+            forn(i, treeSize) a.push_back(input());
+            init(a, 1, 1, n);
         }
-        return tree[node] = update(node*2, left, right, start, (start+end)/2, diff) +
-                            update(node*2+1, left, right, (start+end)/2+1, end, diff);
     }
-    int query(int node, int left, int right, int start, int end) {
-        push(node, start, end);
-        if(right < start || end < left) return 0;
+    explicit segtree(const v<int> &a) : segtree((int) a.size()) {
+        init(a, 1, 1, n);
+    }
+    segtree(const v<int> &a, int treeSize) : segtree(treeSize) {
+        init(a, 1, 1, n);
+        assert(a.size() == treeSize);
+    }
+    void update(int tar, int diff) { update(tar, tar, diff); }
+    T query_node(int tar) { return query(tar, tar); }
+    int query(int tar) { return query(tar, tar).val; }
+    T query(int left, int right) { return query(1, left, right, 1, n); }
+protected:
+    void update(int left, int right, int diff) { update(1, left, right, 1, n, diff); }
+    T init(const v<int> &a, int node, int start, int end) {
+        if (start == end) return tree[node] = a[start - 1];
+        return tree[node] = init(a, node * 2, start, MID) +
+                            init(a, node * 2 + 1, MID + 1, end);
+    }
+    void update(int node, int left, int right, int start, int end, int diff) {
+        if(end<left || right < start) return;
+        if(left <= start && end <= right) { tree[node] += diff; return; }
+        update(node*2, left, right, start, MID, diff);
+        update(node*2+1, left, right, MID+1, end, diff);
+        tree[node] = tree[node*2] + tree[node*2+1];
+    }
+    T query(int node, int left, int right, int start, int end) {
+        if(right < start || end < left) return {};
         if(left <= start && end <= right) return tree[node];
-        return query(node*2, left, right, start, (start+end)/2) + query(node*2+1, left, right, (start+end)/2+1, end);
+        return query(node*2, left, right, start, MID) +
+               query(node*2+1, left, right, MID+1, end);
     }
 };
-signed main() { lazyprop lp(10, true); }
+
+// 3770. 대한민국
+// #segtree
+
+signed main() {
+    fastio;
+    int T = input();
+    forf(ti, 1, T) {
+        cout << "Test case " << ti << ": ";
+        int n, m, k, ans=0;
+        cin >> n >> m >> k;
+        v<ii> arr;
+        forn(i, k) {
+            int a, b; cin >> a >> b;
+            arr.push_back({a, b});
+        }
+        sort(all(arr));
+        segtree seg(1010);
+        for(ii q : arr) {
+            ans += seg.query(q[1]+1, 1010).val;
+            seg.update(q[1], 1);
+        }
+        cout << ans << '\n';
+    }
+}

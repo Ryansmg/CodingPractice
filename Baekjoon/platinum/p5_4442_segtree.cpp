@@ -61,47 +61,68 @@ template <typename T> T pow_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)a
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 #pragma endregion
 
-class lazyprop {
+class segtree {
 protected:
-    v<int> tree, lazy; int n;
-    void push(int node, int start, int end) {
-        tree[node] += lazy[node] * (end-start+1);
-        if(start!=end) {
-            lazy[node*2] += lazy[node];
-            lazy[node*2+1] += lazy[node];
-        }
-        lazy[node] = 0;
-    }
+    vector<int> tree;
+    int n;
 public:
-    explicit lazyprop(int treeSize, bool inputInit = false) {
-        lazy = tree = v<int>(4*treeSize, 0); n = treeSize;
-        if(inputInit) { v<int> a; forn(i, n) a.push_back(input()); init(a, 1, 1, n); }
+    explicit segtree(const int& treeSize) {
+        tree = v<int>(4*treeSize, 0);
+        n = treeSize;
     }
-    explicit lazyprop(const v<int> &a) : lazyprop((int) a.size()) { init(a, 1, 1, n); }
-    lazyprop(const v<int> &a, int treeSize) : lazyprop(treeSize) { init(a, 1, 1, n); assert(a.size() == treeSize); }
-    void update(int left, int right, int diff) { update(1, left, right, 1, n, diff); }
+    explicit segtree(const v<int> &a) : segtree((int)a.size()) {
+        init(a, 1, 1, n);
+    }
+    segtree(const v<int> &a, int treeSize) : segtree(treeSize) {
+        assert(a.size() == treeSize);
+        init(a, 1, 1, n);
+    }
+    void update(int tar, int diff) { update(tar, tar, diff); }
+    int query(int tar) { return query(tar, tar); }
     int query(int left, int right) { return query(1, left, right, 1, n); }
 protected:
-    int init(const v<int> &a, int node, int start, int end) {
-        if(start==end) return tree[node] = a[start-1];
-        else return tree[node] = init(a, node*2, start, (start+end)/2) + init(a, node*2+1, (start+end)/2+1, end);
-    }
-    int update(int node, int left, int right, int start, int end, int diff) {
-        push(node, start, end);
-        if(end < left || right < start) return 0;
-        if(left <= start && end <= right) {
-            lazy[node] += diff;
-            push(node, start, end);
-            return tree[node];
+    void update(int left, int right, int diff) { update(1, left, right, 1, n, diff); }
+    void init(const v<int> &a, int node, int start, int end) {
+        if(start==end) {
+            tree[node] = a[start-1];
+        } else {
+            init(a, node*2, start, (start+end)/2);
+            init(a, node*2+1, (start+end)/2+1, end);
+            tree[node] = tree[node*2] + tree[node*2+1];
         }
-        return tree[node] = update(node*2, left, right, start, (start+end)/2, diff) +
-                            update(node*2+1, left, right, (start+end)/2+1, end, diff);
+    }
+    void update(int node, int left, int right, int start, int end, int diff) {
+        if(end<left || right < start) return;
+        if(left <= start && end <= right) {
+            tree[node] += diff;
+            return;
+        }
+        update(node*2, left, right, start, (start+end)/2, diff);
+        update(node*2+1, left, right, (start+end)/2+1, end, diff);
+        tree[node] = tree[node*2] + tree[node*2+1];
     }
     int query(int node, int left, int right, int start, int end) {
-        push(node, start, end);
         if(right < start || end < left) return 0;
         if(left <= start && end <= right) return tree[node];
-        return query(node*2, left, right, start, (start+end)/2) + query(node*2+1, left, right, (start+end)/2+1, end);
+        return query(node*2, left, right, start, (start+end)/2) +
+               query(node*2+1, left, right, (start+end)/2+1, end);
     }
 };
-signed main() { lazyprop lp(10, true); }
+
+signed main() {
+    fastio;
+    while(true) {
+        int n = input();
+        if(!n) break;
+        segtree seg(n);
+        unordered_map<string, int> m;
+        int ans = 0;
+        forf(i, 1, n) m.insert({input<string>(), i});
+        forn(i, n) {
+            int k = m[input<string>()];
+            ans += seg.query(k+1, n);
+            seg.update(k, 1);
+        }
+        cout << ans << '\n';
+    }
+}

@@ -61,47 +61,87 @@ template <typename T> T pow_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)a
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 #pragma endregion
 
-class lazyprop {
-protected:
-    v<int> tree, lazy; int n;
-    void push(int node, int start, int end) {
-        tree[node] += lazy[node] * (end-start+1);
-        if(start!=end) {
-            lazy[node*2] += lazy[node];
-            lazy[node*2+1] += lazy[node];
-        }
-        lazy[node] = 0;
-    }
+class Flow {
 public:
-    explicit lazyprop(int treeSize, bool inputInit = false) {
-        lazy = tree = v<int>(4*treeSize, 0); n = treeSize;
-        if(inputInit) { v<int> a; forn(i, n) a.push_back(input()); init(a, 1, 1, n); }
-    }
-    explicit lazyprop(const v<int> &a) : lazyprop((int) a.size()) { init(a, 1, 1, n); }
-    lazyprop(const v<int> &a, int treeSize) : lazyprop(treeSize) { init(a, 1, 1, n); assert(a.size() == treeSize); }
-    void update(int left, int right, int diff) { update(1, left, right, 1, n, diff); }
-    int query(int left, int right) { return query(1, left, right, 1, n); }
+    int maxFlow = 0;
+    int source, sink;
 protected:
-    int init(const v<int> &a, int node, int start, int end) {
-        if(start==end) return tree[node] = a[start-1];
-        else return tree[node] = init(a, node*2, start, (start+end)/2) + init(a, node*2+1, (start+end)/2+1, end);
+    int maxNodeN;
+    int edgeCount = -1;
+    v<int> capacity = v<int>(), edgeFlow = v<int>(), revEdge = v<int>();
+    v<iii> edges = v<iii>();
+    v2<int> con = v2<int>();
+    v<int> visited = v<int>();
+public:
+    Flow(int MaxNodeN, int Source, int Sink) {
+        maxNodeN = MaxNodeN;
+        source = Source;
+        sink = Sink;
+        con=v2<int>(maxNodeN+10, v<int>());
+        visited = v<int>(maxNodeN+10, -1);
+        assert(Source <= MaxNodeN && Sink <= MaxNodeN);
     }
-    int update(int node, int left, int right, int start, int end, int diff) {
-        push(node, start, end);
-        if(end < left || right < start) return 0;
-        if(left <= start && end <= right) {
-            lazy[node] += diff;
-            push(node, start, end);
-            return tree[node];
+    void addEdge(int start, int end, int Capacity, int Dist = 0) {
+        assert(start <= maxNodeN && end <= maxNodeN);
+        assert(Capacity >= 0);
+        edgeCount++;
+        edges.push_back({start, end, Dist});
+        capacity.push_back(Capacity);
+        edgeFlow.push_back(0);
+        revEdge.push_back(edgeCount+1);
+        con[start].push_back(edgeCount);
+        edgeCount++;
+        edges.push_back({end, start, -Dist});
+        capacity.push_back(0);
+        edgeFlow.push_back(0);
+        con[end].push_back(edgeCount);
+        revEdge.push_back(edgeCount-1);
+    }
+
+    /// returns true if successes
+    virtual bool run() {
+        while(true) {
+            fill(all(visited), -1);
+            queue<int> bfs;
+            bfs.push(source);
+            while (!bfs.empty()) {
+                int cur = bfs.front(); bfs.pop();
+                for (int edge: con[cur]) {
+                    if (capacity[edge] - edgeFlow[edge] > 0 && visited[edges[edge][1]] == -1) {
+                        bfs.push(edges[edge][1]);
+                        visited[edges[edge][1]] = edge;
+                        if (edges[edge][1] == sink) break;
+                    }
+                }
+                if (visited[sink] != -1) break;
+            }
+            if (visited[sink] == -1) break;
+
+            int tempFlow = llmax;
+            for (int i = sink; i != source; i = edges[visited[i]][0])
+                tempFlow = min(tempFlow, capacity[visited[i]] - edgeFlow[visited[i]]);
+
+            for (int i = sink; i != source; i = edges[visited[i]][0]) {
+                edgeFlow[visited[i]] += tempFlow;
+                edgeFlow[revEdge[visited[i]]] -= tempFlow;
+            }
+            maxFlow += tempFlow;
         }
-        return tree[node] = update(node*2, left, right, start, (start+end)/2, diff) +
-                            update(node*2+1, left, right, (start+end)/2+1, end, diff);
-    }
-    int query(int node, int left, int right, int start, int end) {
-        push(node, start, end);
-        if(right < start || end < left) return 0;
-        if(left <= start && end <= right) return tree[node];
-        return query(node*2, left, right, start, (start+end)/2) + query(node*2+1, left, right, (start+end)/2+1, end);
+        return true;
     }
 };
-signed main() { lazyprop lp(10, true); }
+
+signed main() {
+    int n, m; cin >> n >> m;
+    //source:0, sink:1111
+    //학생:1~1000, 과목:1001~1100
+    Flow flow(1112, 0, 1111);
+    forf(i, 1, n) {
+        flow.addEdge(0, i, 1);
+        int t = input();
+        forn(j, t) flow.addEdge(i, input()+1000, 1);
+    }
+    forf(i, 1, m) flow.addEdge(i+1000, 1111, input());
+    flow.run();
+    cout << flow.maxFlow;
+}

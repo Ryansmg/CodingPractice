@@ -62,6 +62,38 @@ template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a 
 #pragma endregion
 
 class segtree {
+protected:
+    vector<int> tree; int n;
+public:
+    explicit segtree(const int& treeSize, bool inputInit = false) {
+        tree = v<int>(4*treeSize, 0); n = treeSize;
+        if(inputInit) { v<int> arr; forn(i, n) arr.push_back(input()); init(arr, 1, 1, n); }
+    }
+    explicit segtree(const v<int> &a) : segtree((int)a.size()) { init(a, 1, 1, n); }
+    segtree(const v<int> &a, int treeSize) : segtree(treeSize) { assert(a.size() == treeSize); init(a, 1, 1, n); }
+    void update(int tar, int diff) { update(tar, tar, diff); }
+    int query(int left, int right) { return query(1, left, right, 1, n); }
+protected:
+    void update(int left, int right, int diff) { update(1, left, right, 1, n, diff); }
+    int init(const v<int> &a, int node, int start, int end) {
+        if(start==end) return tree[node] = a[start-1];
+        else return tree[node] = init(a, node*2, start, (start+end)/2) + init(a, node*2+1, (start+end)/2+1, end);
+    }
+    int update(int node, int left, int right, int start, int end, int diff) {
+        if(end<left || right < start) return 0;
+        if(left <= start && end <= right) return tree[node] += diff;
+        return tree[node] = update(node*2, left, right, start, (start+end)/2, diff) +
+                update(node*2+1, left, right, (start+end)/2+1, end, diff);
+    }
+    int query(int node, int left, int right, int start, int end) {
+        if(right < start || end < left) return 0;
+        if(left <= start && end <= right) return tree[node];
+        return query(node*2, left, right, start, (start+end)/2) +
+               query(node*2+1, left, right, (start+end)/2+1, end);
+    }
+};
+
+class segtree_ {
 #define MID ((start+end)/2)
 public:
     class T {
@@ -78,7 +110,7 @@ public:
     };
     vector<T> tree;
     int n;
-    explicit segtree(int treeSize, bool inputInit = false) {
+    explicit segtree_(int treeSize, bool inputInit = false) {
         n = treeSize;
         tree = v<T>(4*treeSize, T());
         if(inputInit) {
@@ -87,10 +119,10 @@ public:
             init(a, 1, 1, n);
         }
     }
-    explicit segtree(const v<int> &a) : segtree((int) a.size()) {
+    explicit segtree_(const v<int> &a) : segtree_((int) a.size()) {
         init(a, 1, 1, n);
     }
-    segtree(const v<int> &a, int treeSize) : segtree(treeSize) {
+    segtree_(const v<int> &a, int treeSize) : segtree_(treeSize) {
         init(a, 1, 1, n);
         assert(a.size() == treeSize);
     }
@@ -118,24 +150,19 @@ protected:
         return query(node*2, left, right, start, MID) +
                query(node*2+1, left, right, MID+1, end);
     }
-};
+}; //custom node
 
 class iterSeg {
 public:
     v<int> tree; int n;
     explicit iterSeg(const v<int> &arr) { n = (int) arr.size(); init(arr); }
     explicit iterSeg(cint i) { tree = v<int>(i*4, 0); n = i; }
-    void inputInit() {
-        tree = v<int>(4*n, 0);
-        forf(i, n, 2*n-1) cin >> tree[i];
-        init();
-    }
+    void inputInit() { tree = v<int>(4*n, 0); forf(i, n, 2*n-1) cin >> tree[i]; init(); }
     /// 0 <= tar < n
     void update(int tar, int val) {
         assert(0 <= tar && tar < n);
         tree[n+tar] = val;
-        for(int i = n+tar; i>1; i>>=1)
-            tree[i>>1] = tree[i] + tree[i^1];
+        for(int i = n+tar; i>1; i>>=1) tree[i>>1] = tree[i] + tree[i^1];
     }
     /// [l, r)
     int query(int left, int right) {
@@ -157,6 +184,50 @@ private:
 };
 
 class lazyprop {
+protected:
+    v<int> tree, lazy; int n;
+    void push(int node, int start, int end) {
+        tree[node] += lazy[node] * (end-start+1);
+        if(start!=end) {
+            lazy[node*2] += lazy[node];
+            lazy[node*2+1] += lazy[node];
+        }
+        lazy[node] = 0;
+    }
+public:
+    explicit lazyprop(int treeSize, bool inputInit = false) {
+        lazy = tree = v<int>(4*treeSize, 0); n = treeSize;
+        if(inputInit) { v<int> a; forn(i, n) a.push_back(input()); init(a, 1, 1, n); }
+    }
+    explicit lazyprop(const v<int> &a) : lazyprop((int) a.size()) { init(a, 1, 1, n); }
+    lazyprop(const v<int> &a, int treeSize) : lazyprop(treeSize) { init(a, 1, 1, n); assert(a.size() == treeSize); }
+    void update(int left, int right, int diff) { update(1, left, right, 1, n, diff); }
+    int query(int left, int right) { return query(1, left, right, 1, n); }
+protected:
+    int init(const v<int> &a, int node, int start, int end) {
+        if(start==end) return tree[node] = a[start-1];
+        else return tree[node] = init(a, node*2, start, (start+end)/2) + init(a, node*2+1, (start+end)/2+1, end);
+    }
+    int update(int node, int left, int right, int start, int end, int diff) {
+        push(node, start, end);
+        if(end < left || right < start) return 0;
+        if(left <= start && end <= right) {
+            lazy[node] += diff;
+            push(node, start, end);
+            return tree[node];
+        }
+        return tree[node] = update(node*2, left, right, start, (start+end)/2, diff) +
+            update(node*2+1, left, right, (start+end)/2+1, end, diff);
+    }
+    int query(int node, int left, int right, int start, int end) {
+        push(node, start, end);
+        if(right < start || end < left) return 0;
+        if(left <= start && end <= right) return tree[node];
+        return query(node*2, left, right, start, (start+end)/2) + query(node*2+1, left, right, (start+end)/2+1, end);
+    }
+};
+
+class lazyprop_ {
 public:
     class T {
     public:
@@ -182,7 +253,7 @@ protected:
         lazy[node] = {};
     }
 public:
-    explicit lazyprop(int treeSize, bool inputInit = false) {
+    explicit lazyprop_(int treeSize, bool inputInit = false) {
         lazy = v<int>(4*treeSize, 0);
         tree = v<T>(4*treeSize, T());
         n = treeSize;
@@ -191,10 +262,10 @@ public:
             init(a, 1, 1, n);
         }
     }
-    explicit lazyprop(const v<int> &a) : lazyprop((int) a.size()) {
+    explicit lazyprop_(const v<int> &a) : lazyprop_((int) a.size()) {
         init(a, 1, 1, n);
     }
-    lazyprop(const v<int> &a, int treeSize) : lazyprop(treeSize) {
+    lazyprop_(const v<int> &a, int treeSize) : lazyprop_(treeSize) {
         init(a, 1, 1, n);
         assert(a.size() == treeSize);
     }
@@ -234,7 +305,7 @@ protected:
         return query(node*2, left, right, start, (start+end)/2) +
                query(node*2+1, left, right, (start+end)/2+1, end);
     }
-};
+}; // custom node
 
 class goldmineSeg {
 public:

@@ -61,47 +61,32 @@ template <typename T> T pow_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)a
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 #pragma endregion
 
-class lazyprop {
-protected:
-    v<int> tree, lazy; int n;
-    void push(int node, int start, int end) {
-        tree[node] += lazy[node] * (end-start+1);
-        if(start!=end) {
-            lazy[node*2] += lazy[node];
-            lazy[node*2+1] += lazy[node];
+signed main() {
+    fastio;
+    ifstream ans, chk;
+    ans.open("C:/Users/ryans/Desktop/Coding/Baekjoon/ruby/20000/challenge6.out");
+    chk.open("C:/Users/ryans/Desktop/Coding/Baekjoon/output.txt");
+    string as, cs;
+    int line = 0;
+    while(true) {
+        line++;
+        if(ans.eof() && chk.eof()) break;
+        else if(ans.eof() || chk.eof()) {
+            cout << "line count is different";
+            return 0;
         }
-        lazy[node] = 0;
-    }
-public:
-    explicit lazyprop(int treeSize, bool inputInit = false) {
-        lazy = tree = v<int>(4*treeSize, 0); n = treeSize;
-        if(inputInit) { v<int> a; forn(i, n) a.push_back(input()); init(a, 1, 1, n); }
-    }
-    explicit lazyprop(const v<int> &a) : lazyprop((int) a.size()) { init(a, 1, 1, n); }
-    lazyprop(const v<int> &a, int treeSize) : lazyprop(treeSize) { init(a, 1, 1, n); assert(a.size() == treeSize); }
-    void update(int left, int right, int diff) { update(1, left, right, 1, n, diff); }
-    int query(int left, int right) { return query(1, left, right, 1, n); }
-protected:
-    int init(const v<int> &a, int node, int start, int end) {
-        if(start==end) return tree[node] = a[start-1];
-        else return tree[node] = init(a, node*2, start, (start+end)/2) + init(a, node*2+1, (start+end)/2+1, end);
-    }
-    int update(int node, int left, int right, int start, int end, int diff) {
-        push(node, start, end);
-        if(end < left || right < start) return 0;
-        if(left <= start && end <= right) {
-            lazy[node] += diff;
-            push(node, start, end);
-            return tree[node];
+        getline(ans, as);
+        getline(chk, cs);
+        if(as!=cs) {
+            cout << "Mismatch at line " << line << endl;
+            int i=0;
+            while(as[i]==cs[i])i++;
+            if(as.size()>98)as="too long, substr:"+as.substr(i>4?i-5:0,98);
+            if(cs.size()>98)cs="too long, substr:"+cs.substr(i>4?i-5:0,98);
+            cout << "wa: " << cs << endl;
+            cout << "ac: " << as << endl;
+            return 0;
         }
-        return tree[node] = update(node*2, left, right, start, (start+end)/2, diff) +
-                            update(node*2+1, left, right, (start+end)/2+1, end, diff);
     }
-    int query(int node, int left, int right, int start, int end) {
-        push(node, start, end);
-        if(right < start || end < left) return 0;
-        if(left <= start && end <= right) return tree[node];
-        return query(node*2, left, right, start, (start+end)/2) + query(node*2+1, left, right, (start+end)/2+1, end);
-    }
-};
-signed main() { lazyprop lp(10, true); }
+    cout << "AC!!";
+}

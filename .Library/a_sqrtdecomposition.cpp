@@ -28,19 +28,23 @@ class sqrtArray {
     int n, sq;
     v<int> arr, bucket;
 public:
-    explicit sqrtArray(int size) :
-        n(size), sq((int)sqrt(size)){
+    explicit sqrtArray(int size, int bucketSize=-1) :
+        n(size), sq(bucketSize==-1?(int)sqrt(size):bucketSize){
         arr = v<int>(n+1,0);
         bucket = v<int>(n/sq+2,0);
     }
-    explicit sqrtArray(const v<int>& vec) :
-        n((int)vec.size()), sq((int)sqrt(n)){
+    explicit sqrtArray(const v<int>& vec, int bucketSize=-1) :
+        n((int)vec.size()), sq(bucketSize==-1?(int)sqrt(n):bucketSize){
         arr = v<int>(n+1, 0);
         bucket = v<int>(n/sq+2, 0);
         forn(i, n) set(i, vec[i]);
     }
     void set(int pos, int val) {
         bucket[pos/sq] += val - arr[pos];
+        arr[pos] = val;
+    }
+    void add(int pos, int val) {
+        bucket[pos/sq] += val;
         arr[pos] = val;
     }
     int query(int l, int r) {
@@ -52,35 +56,35 @@ public:
     }
 };
 
-class sa {
+class sqrtArr {
     struct san {
-        int val, pos=-1; sa &s;
-        san(int v, sa &S) : val(v), s(S) {}
-        san& operator=(int v) {
-            s.set(pos, v);
-            return *this;
-        }
-        int operator[](int r) {
-            assert(pos<=r);
-            return s.query(pos, r);
-        }
+        int val; unsigned pos=-1; sqrtArr &s;
+        san(int v, unsigned p, sqrtArr &S) : val(v), pos(p), s(S) {}
+        san& operator=(cint v) { s.set(pos, v); return *this; }
+        san& operator+=(cint v) { s.add(pos, v); return *this; }
+        san& operator-=(cint v) { s.add(pos, -v); return *this; }
+        int operator[](cint r) { assert(pos<=r); return s.query(pos, r); }
     };
     int n, sq;
     v<san> arr; v<int> bucket;
 public:
-    explicit sa(int size) :
-            n(size), sq((int)sqrt(size)){
-        arr = v<san>(n+1,san(0, *this));
+    explicit sqrtArr(int size, int bucketSize=-1) : n(size), sq(bucketSize==-1?(int)sqrt(size):bucketSize){
+        arr = v<san>();
+        forn(i, n) arr.emplace_back(0, i, *this);
         bucket = v<int>(n/sq+2,0);
     }
-    explicit sa(const v<int>& vec) :
-            n((int)vec.size()), sq((int)sqrt(n)){
-        arr = v<san>(n+1,san(0, *this));
+    explicit sqrtArr(const v<int>& vec, int bucketSize=-1) : n((int)vec.size()), sq(bucketSize==-1?(int)sqrt(n):bucketSize){
+        arr = v<san>();
+        forn(i, n) arr.emplace_back(0, i, *this);
         bucket = v<int>(n/sq+2, 0);
         forn(i, n) set(i, vec[i]);
     }
-    san& operator[](int pos) {
-        assert(0<=pos && pos<n);
+    void push(int val) {
+        if(n%sq) bucket.push_back(0);
+        arr.emplace_back(0, n++, *this);
+        set(n-1, val);
+    }
+    san& operator[](unsigned pos) {
         arr[pos].pos=pos;
         return arr[pos];
     }
@@ -88,6 +92,10 @@ private:
     void set(int pos, int val) {
         bucket[pos/sq] += val - arr[pos].val;
         arr[pos].val = val;
+    }
+    void add(int pos, int val) {
+        bucket[pos/sq] += val;
+        arr[pos].val += val;
     }
     int query(int l, int r) {
         int ret = 0;
@@ -101,9 +109,8 @@ private:
 signed main() {
     fastio; // 구간 합 구하기
     int n, m; cin >> n >> m; m+=input();
-    v<int> in;
-    forn(i, n) in.push_back(input());
-    sa arr(in);
+    sqrtArr arr(0, 1000);
+    forn(i, n) arr.push(input());
     forn(i, m) {
         int a, b, c; cin >> a >> b >> c;
         if(a==1) arr[b-1] = c;
