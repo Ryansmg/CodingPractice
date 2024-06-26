@@ -41,12 +41,12 @@ using iii = array<int, 3>;
 #define ll long long
 lint LINTMAX = ((lint(1)<<126)-1)*2+1;
 string lint2str(const lint &i) {string ret,bs;if(i==-LINTMAX-1)return lint2str(i/10)+"8";if(!i)return "0";if(i<0)return "-"+lint2str(-i);
-    lint t=1; forn(as, 18)t*=10;lint a=i/(t*t);if(a){ret += to_string((ll) a);bs = to_string((ll) (i / t % (t * 10) + t));
-        forn(j, 18) ret += bs[j + 1];bs = to_string((ll) ((i % t) + t));forn(j, 18) ret += bs[j + 1];
-    } else {lint b = i / t % (t * 10);if (b) {ret += to_string((ll) b);bs = to_string((ll) ((i % t) + t));
-            forn(j, 18) ret += bs[j + 1];} else { ret += to_string((ll) (i % t)); }}return ret;}
+	lint t=1; forn(as, 18)t*=10;lint a=i/(t*t);if(a){ret += to_string((ll) a);bs = to_string((ll) (i / t % (t * 10) + t));
+		forn(j, 18) ret += bs[j + 1];bs = to_string((ll) ((i % t) + t));forn(j, 18) ret += bs[j + 1];
+	} else {lint b = i / t % (t * 10);if (b) {ret += to_string((ll) b);bs = to_string((ll) ((i % t) + t));
+			forn(j, 18) ret += bs[j + 1];} else { ret += to_string((ll) (i % t)); }}return ret;}
 istream &operator>>(istream &in, lint &l) {string s;in>>s;lint t=l=0,size=s.size(),k=1;if(s[0]=='-')t=1;
-    for(lint i=size-1;i>=t;i--){if(!t)l+=(s[i]-'0')*k;else l-=(s[i]-'0')*k;k*=10;}return in;}
+	for(lint i=size-1;i>=t;i--){if(!t)l+=(s[i]-'0')*k;else l-=(s[i]-'0')*k;k*=10;}return in;}
 ostream &operator<<(ostream &out,const lint &i){ out << lint2str(i); return out; }
 #pragma endregion
 
@@ -60,6 +60,235 @@ template <typename T> T pow_(T a, T b) { return pow_(a, b, intmax); }
 template <typename T> T pow_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)ans=ans*a%mod;b>>=1;a=a*a%mod;} return ans; }
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 #pragma endregion
+
+// 최대 유량
+class Flow {
+public:
+    int maxFlow = 0;
+    int source, sink;
+protected:
+    int maxNodeN;
+    int edgeCount = -1;
+    v<int> capacity = v<int>(), edgeFlow = v<int>(), revEdge = v<int>();
+    v<iii> edges = v<iii>();
+    v2<int> con = v2<int>();
+    v<int> visited = v<int>();
+public:
+    Flow(int MaxNodeNum, int Source, int Sink) {
+        maxNodeN = MaxNodeNum;
+        source = Source;
+        sink = Sink;
+        con=v2<int>(maxNodeN+10, v<int>());
+        visited = v<int>(maxNodeN+10, -1);
+        assert(Source <= MaxNodeNum && Sink <= MaxNodeNum);
+    }
+    void addEdge(int start, int end, int Capacity, int Dist = 0) {
+        assert(start <= maxNodeN && end <= maxNodeN);
+        assert(Capacity >= 0);
+        edgeCount++;
+        edges.push_back({start, end, Dist});
+        capacity.push_back(Capacity);
+        edgeFlow.push_back(0);
+        revEdge.push_back(edgeCount+1);
+        con[start].push_back(edgeCount);
+        edgeCount++;
+        edges.push_back({end, start, -Dist});
+        capacity.push_back(0);
+        edgeFlow.push_back(0);
+        con[end].push_back(edgeCount);
+        revEdge.push_back(edgeCount-1);
+    }
+
+    /// returns true if successes
+    virtual bool run() {
+        while(true) {
+            fill(all(visited), -1);
+            queue<int> bfs;
+            bfs.push(source);
+            while (!bfs.empty()) {
+                int cur = bfs.front(); bfs.pop();
+                for (int edge: con[cur]) {
+                    if (capacity[edge] - edgeFlow[edge] > 0 && visited[edges[edge][1]] == -1) {
+                        bfs.push(edges[edge][1]);
+                        visited[edges[edge][1]] = edge;
+                        if (edges[edge][1] == sink) break;
+                    }
+                }
+                if (visited[sink] != -1) break;
+            }
+            if (visited[sink] == -1) break;
+
+            int tempFlow = llmax;
+            for (int i = sink; i != source; i = edges[visited[i]][0])
+                tempFlow = min(tempFlow, capacity[visited[i]] - edgeFlow[visited[i]]);
+
+            for (int i = sink; i != source; i = edges[visited[i]][0]) {
+                edgeFlow[visited[i]] += tempFlow;
+                edgeFlow[revEdge[visited[i]]] -= tempFlow;
+            }
+            maxFlow += tempFlow;
+        }
+        return true;
+    }
+};
+
+class Mcmf : public Flow {
+protected:
+    v<int> dist = v<int>();
+public:
+    int distSum = 0;
+    Mcmf(int MaxNodeNum, int Source, int Sink) : Flow(MaxNodeNum, Source, Sink) {
+        dist = v<int>(MaxNodeNum+10);
+    }
+    /// returns true if succeeds
+    bool run() override {
+        while(true) {
+            fill(all(visited), -1);
+            fill(all(dist), INF);
+            v<bool> inQueue(maxNodeN+10, false);
+            v<int> cycle(maxNodeN+10, 0);
+            queue<int> spfa;
+            spfa.push(source);
+            dist[source] = 0;
+            while (!spfa.empty()) {
+                int cur = spfa.front(); spfa.pop();
+                inQueue[cur] = false;
+                cycle[cur]++;
+                if(cycle[cur] >= maxNodeN) return false;
+                for (int edge: con[cur]) {
+                    if (capacity[edge] - edgeFlow[edge] > 0 &&
+                        dist[edges[edge][1]] > dist[cur] + edges[edge][2]) {
+                        dist[edges[edge][1]] = dist[cur] + edges[edge][2];
+                        visited[edges[edge][1]] = edge;
+                        if(!inQueue[edges[edge][1]]) {
+                            spfa.push(edges[edge][1]);
+                            inQueue[edges[edge][1]] = true;
+                        }
+                    }
+                }
+            }
+            if (visited[sink] == -1) break;
+
+            int tempFlow = llmax;
+            for (int i = sink; i != source; i = edges[visited[i]][0])
+                tempFlow = min(tempFlow, capacity[visited[i]] - edgeFlow[visited[i]]);
+
+            for (int i = sink; i != source; i = edges[visited[i]][0]) {
+                edgeFlow[visited[i]] += tempFlow;
+                edgeFlow[revEdge[visited[i]]] -= tempFlow;
+            }
+            maxFlow += tempFlow;
+            distSum += dist[sink] * tempFlow;
+        }
+        return true;
+    }
+};
+
+// 폴라드 로
+class pollard_rho {
+public:
+    explicit pollard_rho() {
+        base = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41};
+        gen = mt19937(random_device()());
+    }
+    bool isPrime(lint n) {
+        if(n<=1) return false;
+        for(const lint &a: base) if (!_isPrime(n, a)) return false;
+        return true;
+    }
+    lint factorize(lint n) {
+        assert(n>=2);
+        if (n % 2 == 0) return 2;
+        if (isPrime(n)) return n;
+        lint x = dis(gen) % (n - 2) + 2, y = x, c = dis(gen) % 10 + 1, g = 1;
+        while (g == 1) {
+            x = (x * x % n + c) % n;
+            y = (y * y % n + c) % n;
+            y = (y * y % n + c) % n;
+            g = gcd(x - y > 0 ? x - y : y - x, n);
+            if (g == n) return factorize(n);
+        }
+        if (isPrime(g)) return g;
+        else return factorize(g);
+    }
+    static lint pow(lint a, lint b) {
+        return pow(a, b, LINTMAX);
+    }
+    static lint pow(lint a, lint b, lint mod) {
+        a %= mod;
+        lint ans = 1;
+        while (b) {
+            if (b & 1) ans = ans * a % mod;
+            b >>= 1;
+            a = a * a % mod;
+        }
+        return ans;
+    }
+    static lint gcd(lint a, lint b) {
+        if (a < b) swap(a, b);
+        while (b != 0) {
+            lint r = a % b;
+            a = b;
+            b = r;
+        }
+        return a;
+    }
+private:
+    v<lint> base;
+    mt19937 gen;
+    uniform_int_distribution<lint> dis;
+    static bool _isPrime(lint n, lint a) {
+        if (a % n == 0) return true;
+        lint d = n - 1;
+        while (true) {
+            lint temp = pow(a, d, n);
+            if (temp == n - 1) return true;
+            if (d % 2 == 1) return (temp == 1 || temp == n - 1);
+            d /= 2;
+        }
+    }
+};
+
+// 트리들
+class fenwick {
+public:
+    v<int> tree; int n;
+    explicit fenwick(int treeSize) {
+        n = treeSize;
+        tree = v<int>(treeSize+10, 0);
+    }
+    fenwick(const v<int>& arr, int treeSize) : fenwick(treeSize){
+        forn(i, n) update(i+1, arr[i]);
+    }
+    void update(int tar, cint val) {
+        assert(tar>0);
+        while(tar < n) {
+            tree[tar] += val; tar += (tar & -tar);
+        }
+    }
+    void update(cint left, cint right, cint val) {
+        if(rq) { cout << "\nCannot use range_update and range_query at the same time.\n"; assert(false); }
+        ru = true;
+        assert(0<left && left<=right);
+        update(left, val); update(right+1, -val);
+    }
+    int query(int left, int right) {
+        if(ru) { cout << "\nCannot use range_update and range_query at the same time.\n"; assert(false); }
+        rq = true;
+        assert(0<left && left<=right);
+        if(left==1) return query(right);
+        return query(right) - query(left-1);
+    }
+    int query(int tar) {
+        int ans = 0;
+        while(tar > 0) {
+            ans += tree[tar]; tar -= (tar & -tar);
+        }
+        return ans;
+    }
+private:
+    bool ru = false, rq = false;
+};
 
 class segtree {
 protected:
@@ -79,13 +308,13 @@ protected:
     int init(const v<int> &a, int node, int start, int end) {
         if(start==end) return tree[node] = a[start-1];
         else return tree[node] = init(a, node*2, start, (start+end)/2)
-                + init(a, node*2+1, (start+end)/2+1, end);
+                                 + init(a, node*2+1, (start+end)/2+1, end);
     }
     int update(int node, int tar, int start, int end, int diff) {
         if(end < tar || tar < start) return tree[node];
         if(start == end) return tree[node] += diff;
         return tree[node] = update(node*2, tar, start, (start+end)/2, diff)
-                + update(node*2+1, tar, (start+end)/2+1, end, diff);
+                            + update(node*2+1, tar, (start+end)/2+1, end, diff);
     }
     int query(int node, int left, int right, int start, int end) {
         if(right < start || end < left) return 0;
@@ -94,65 +323,6 @@ protected:
                query(node*2+1, left, right, (start+end)/2+1, end);
     }
 };
-
-class segtree_ {
-#define MID ((start+end)/2)
-public:
-    class T {
-    public:
-        int val = 0;
-        T()=default;
-        explicit T(int v) : val(v) {}
-        T operator+(const T &t2) const { return T(val + t2.val); }
-        T operator+(const int &i) const { return T(val + i); }
-        void operator+=(const T &i) { val += i.val; }
-        void operator+=(const int &i) { val += i; }
-        T& operator=(cint i) { val = i; return *this; }
-        T& operator=(const T &i) = default;
-    };
-    vector<T> tree;
-    int n;
-    explicit segtree_(int treeSize, bool inputInit = false) {
-        n = treeSize;
-        tree = v<T>(4*treeSize, T());
-        if(inputInit) {
-            v<int> a;
-            forn(i, treeSize) a.push_back(input());
-            init(a, 1, 1, n);
-        }
-    }
-    explicit segtree_(const v<int> &a) : segtree_((int) a.size()) {
-        init(a, 1, 1, n);
-    }
-    segtree_(const v<int> &a, int treeSize) : segtree_(treeSize) {
-        init(a, 1, 1, n);
-        assert(a.size() == treeSize);
-    }
-    void update(int tar, int diff) { update(tar, tar, diff); }
-    T query_node(int tar) { return query(tar, tar); }
-    int query(int tar) { return query(tar, tar).val; }
-    T query(int left, int right) { return query(1, left, right, 1, n); }
-protected:
-    void update(int left, int right, int diff) { update(1, left, right, 1, n, diff); }
-    T init(const v<int> &a, int node, int start, int end) {
-        if (start == end) return tree[node] = a[start - 1];
-        return tree[node] = init(a, node * 2, start, MID) +
-        init(a, node * 2 + 1, MID + 1, end);
-    }
-    void update(int node, int left, int right, int start, int end, int diff) {
-        if(end<left || right < start) return;
-        if(left <= start && end <= right) { tree[node] += diff; return; }
-        update(node*2, left, right, start, MID, diff);
-        update(node*2+1, left, right, MID+1, end, diff);
-        tree[node] = tree[node*2] + tree[node*2+1];
-    }
-    T query(int node, int left, int right, int start, int end) {
-        if(right < start || end < left) return {};
-        if(left <= start && end <= right) return tree[node];
-        return query(node*2, left, right, start, MID) +
-               query(node*2+1, left, right, MID+1, end);
-    }
-}; //custom node
 
 class iterSeg {
 public:
@@ -219,7 +389,7 @@ protected:
             return tree[node];
         }
         return tree[node] = update(node*2, left, right, start, (start+end)/2, diff) +
-            update(node*2+1, left, right, (start+end)/2+1, end, diff);
+                            update(node*2+1, left, right, (start+end)/2+1, end, diff);
     }
     int query(int node, int left, int right, int start, int end) {
         push(node, start, end);
@@ -228,86 +398,6 @@ protected:
         return query(node*2, left, right, start, (start+end)/2) + query(node*2+1, left, right, (start+end)/2+1, end);
     }
 };
-
-class lazyprop_ {
-public:
-    class T {
-    public:
-        int val = 0;
-        T()=default;
-        explicit T(int v) : val(v) {}
-        T operator+(const T &t2) const { return T(val + t2.val); }
-        T operator+(const int &i) const { return T(val + i); }
-        void operator+=(const T &i) { val += i.val; }
-        void operator+=(const int &i) { val += i; }
-        T& operator=(cint i) { val = i; return *this; }
-        T& operator=(const T &i) = default;
-    };
-protected:
-    v<T> tree; v<int> lazy;
-    int n;
-    void update_lazy(int node, int start, int end) {
-        tree[node] += lazy[node] * (end-start+1);
-        if(start!=end) {
-            lazy[node*2] += lazy[node];
-            lazy[node*2+1] += lazy[node];
-        }
-        lazy[node] = {};
-    }
-public:
-    explicit lazyprop_(int treeSize, bool inputInit = false) {
-        lazy = v<int>(4*treeSize, 0);
-        tree = v<T>(4*treeSize, T());
-        n = treeSize;
-        if(inputInit) {
-            v<int> a; forn(i, n) a.push_back(input());
-            init(a, 1, 1, n);
-        }
-    }
-    explicit lazyprop_(const v<int> &a) : lazyprop_((int) a.size()) {
-        init(a, 1, 1, n);
-    }
-    lazyprop_(const v<int> &a, int treeSize) : lazyprop_(treeSize) {
-        init(a, 1, 1, n);
-        assert(a.size() == treeSize);
-    }
-    void update(int tar, int diff) { update(tar, tar, diff); }
-    void update(int left, int right, int diff) { update(1, left, right, 1, n, diff); }
-    T query(int tar) { return query(tar, tar); }
-    T query(int left, int right) { return query(1, left, right, 1, n); }
-protected:
-    void init(const v<int> &a, int node, int start, int end) {
-        if(start==end) {
-            tree[node] = a[start-1];
-        } else {
-            init(a, node*2, start, (start+end)/2);
-            init(a, node*2+1, (start+end)/2+1, end);
-            tree[node] = tree[node*2] + tree[node*2+1];
-        }
-    }
-    void update(int node, int left, int right, int start, int end, int diff) {
-        update_lazy(node, start, end);
-        if(end<left || right < start) return;
-        if(left <= start && end <= right) {
-            tree[node] += diff * (end-start+1);
-            if(start!=end) {
-                lazy[node*2] += diff;
-                lazy[node*2+1] += diff;
-            }
-            return;
-        }
-        update(node*2, left, right, start, (start+end)/2, diff);
-        update(node*2+1, left, right, (start+end)/2+1, end, diff);
-        tree[node] = tree[node*2] + tree[node*2+1];
-    }
-    T query(int node, int left, int right, int start, int end) {
-        update_lazy(node, start, end);
-        if(right < start || end < left) return {};
-        if(left <= start && end <= right) return tree[node];
-        return query(node*2, left, right, start, (start+end)/2) +
-               query(node*2+1, left, right, (start+end)/2+1, end);
-    }
-}; // custom node
 
 class goldmineSeg {
 public:
@@ -652,7 +742,7 @@ protected:
         if(right < start || end < left) return {-1, -1, -1, 0};
         if(left <= start && end <= right) return tree[node];
         return query(node*2, left, right, start, (start+end)/2) +
-                          query(node*2+1, left, right, (start+end)/2+1, end);
+               query(node*2+1, left, right, (start+end)/2+1, end);
     }
 };
 
@@ -765,3 +855,35 @@ private:
     }
 };
 
+// 제곱근 분할법
+class sqrtArray {
+    int n, sq;
+    v<int> arr, bucket;
+public:
+    explicit sqrtArray(int size, int bucketSize=-1) :
+            n(size), sq(bucketSize==-1?(int)sqrt(size):bucketSize){
+        arr = v<int>(n+1,0);
+        bucket = v<int>(n/sq+2,0);
+    }
+    explicit sqrtArray(const v<int>& vec, int bucketSize=-1) :
+            n((int)vec.size()), sq(bucketSize==-1?(int)sqrt(n):bucketSize){
+        arr = v<int>(n+1, 0);
+        bucket = v<int>(n/sq+2, 0);
+        forn(i, n) set(i, vec[i]);
+    }
+    void set(int pos, int val) {
+        bucket[pos/sq] += val - arr[pos];
+        arr[pos] = val;
+    }
+    void add(int pos, int val) {
+        bucket[pos/sq] += val;
+        arr[pos] += val;
+    }
+    int query(int l, int r) {
+        int ret = 0;
+        for(; l%sq && l<=r; l++) ret += arr[l];
+        for(; (r+1)%sq && l<=r; r--) ret += arr[r];
+        for(; l<=r; l += sq) ret += bucket[l/sq];
+        return ret;
+    }
+};

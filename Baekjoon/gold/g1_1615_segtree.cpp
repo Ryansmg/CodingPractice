@@ -49,8 +49,8 @@ istream &operator>>(istream &in, lint &l) {string s;in>>s;lint t=l=0,size=s.size
 	for(lint i=size-1;i>=t;i--){if(!t)l+=(s[i]-'0')*k;else l-=(s[i]-'0')*k;k*=10;}return in;}
 ostream &operator<<(ostream &out,const lint &i){ out << lint2str(i); return out; }
 #pragma endregion
-template <typename T = int> T input() {T t; cin >> t; return t;}
 
+template <typename T = int> T input() {T t; cin >> t; return t;}
 
 #define all(vec) (vec).begin(), (vec).end()
 template <typename T> void compress(v<T> &v, const bool &autosort=true) { if(autosort) sort(all(v)); v.erase(unique(all(v)), v.end()); }
@@ -61,79 +61,82 @@ template <typename T> T pow_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)a
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 #pragma endregion
 
-class pollard_rho {
+class segtree {
+#define MID ((start+end)/2)
 public:
-    explicit pollard_rho() {
-        base = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41};
-        gen = mt19937(random_device()());
-    }
-    bool isPrime(lint n) {
-        if(n<=1) return false;
-        for(const lint &a: base) if (!_isPrime(n, a)) return false;
-        return true;
-    }
-    lint factorize(lint n) {
-        assert(n>=2);
-        if (n % 2 == 0) return 2;
-        if (isPrime(n)) return n;
-        lint x = dis(gen) % (n - 2) + 2, y = x, c = dis(gen) % 10 + 1, g = 1;
-        while (g == 1) {
-            x = (x * x % n + c) % n;
-            y = (y * y % n + c) % n;
-            y = (y * y % n + c) % n;
-            g = gcd(x - y > 0 ? x - y : y - x, n);
-            if (g == n) return factorize(n);
+    class T {
+    public:
+        int val = 0;
+        T()=default;
+        explicit T(int v) : val(v) {}
+        T operator+(const T &t2) const { return T(val + t2.val); }
+        T operator+(const int &i) const { return T(val + i); }
+        void operator+=(const T &i) { val += i.val; }
+        void operator+=(const int &i) { val += i; }
+        T& operator=(cint i) { val = i; return *this; }
+        T& operator=(const T &i) = default;
+    };
+    vector<T> tree;
+    int n;
+    explicit segtree(int treeSize, bool inputInit = false) {
+        n = treeSize;
+        tree = v<T>(4*treeSize, T());
+        if(inputInit) {
+            v<int> a;
+            forn(i, treeSize) a.push_back(input());
+            init(a, 1, 1, n);
         }
-        if (isPrime(g)) return g;
-        else return factorize(g);
     }
-    static lint pow(lint a, lint b) {
-        return pow(a, b, LINTMAX);
+    explicit segtree(const v<int> &a) : segtree((int) a.size()) {
+        init(a, 1, 1, n);
     }
-    static lint pow(lint a, lint b, lint mod) {
-        a %= mod;
-        lint ans = 1;
-        while (b) {
-            if (b & 1) ans = ans * a % mod;
-            b >>= 1;
-            a = a * a % mod;
-        }
-        return ans;
+    segtree(const v<int> &a, int treeSize) : segtree(treeSize) {
+        init(a, 1, 1, n);
+        assert(a.size() == treeSize);
     }
-    static lint gcd(lint a, lint b) {
-        if (a < b) swap(a, b);
-        while (b != 0) {
-            lint r = a % b;
-            a = b;
-            b = r;
-        }
-        return a;
+    void update(int tar, int diff) { update(tar, tar, diff); }
+    T query_node(int tar) { return query(tar, tar); }
+    int query(int tar) { return query(tar, tar).val; }
+    T query(int left, int right) { return query(1, left, right, 1, n); }
+protected:
+    void update(int left, int right, int diff) { update(1, left, right, 1, n, diff); }
+    T init(const v<int> &a, int node, int start, int end) {
+        if (start == end) return tree[node] = a[start - 1];
+        return tree[node] = init(a, node * 2, start, MID) +
+                            init(a, node * 2 + 1, MID + 1, end);
     }
-private:
-    v<lint> base;
-    mt19937 gen;
-    uniform_int_distribution<lint> dis;
-    static bool _isPrime(lint n, lint a) {
-        if (a % n == 0) return true;
-        lint d = n - 1;
-        while (true) {
-            lint temp = pow(a, d, n);
-            if (temp == n - 1) return true;
-            if (d % 2 == 1) return (temp == 1 || temp == n - 1);
-            d /= 2;
-        }
+    void update(int node, int left, int right, int start, int end, int diff) {
+        if(end<left || right < start) return;
+        if(left <= start && end <= right) { tree[node] += diff; return; }
+        update(node*2, left, right, start, MID, diff);
+        update(node*2+1, left, right, MID+1, end, diff);
+        tree[node] = tree[node*2] + tree[node*2+1];
+    }
+    T query(int node, int left, int right, int start, int end) {
+        if(right < start || end < left) return {};
+        if(left <= start && end <= right) return tree[node];
+        return query(node*2, left, right, start, MID) +
+               query(node*2+1, left, right, MID+1, end);
     }
 };
 
-//short
-struct prs{
-prs(){B={2,3,5,7,11,13,17,19,23,29,31,37,41};E=mt19937(random_device()());}bool isPrime(lint n){if(n<=1)return 0;for(const lint &a:B)if(!_(n,a))return 0;return 1;}
-lint factorize(const lint&n){if(n%2==0)return 2;if(isPrime(n))return n;lint x=D(E)%(n-2)+2,y=x,c=D(E)%10+1,g=1;while(g==1){x=(x*x%n+c)%n;y=(y*y%n+c)%n;y=(y*y%n
-+c)%n;g=G(x-y>0?x-y:y-x,n);if(g==n)return factorize(n);}if(isPrime(g))return g;else return factorize(g);}lint p(lint a,lint b,lint m){a%=m;lint z=1;while(
-b){if(b&1)z=z*a%m;b>>=1;a=a*a%m;}return z;}lint G(lint a,lint b) {if(a<b)swap(a,b);while(b){lint r=a%b;a=b;b=r;}return a;}v<lint>B;mt19937 E;uniform_int_distribution
-<lint>D;bool _(lint n,lint a){if(a%n==0)return 1;lint d=n-1;while(1){lint t=p(a,d,n);if(t==n-1)return 1;if(d%2)return(t==1||t==n-1);d/=2;}}
-};
+// 1615. 교차개수세기
+// #segtree
 
 signed main() {
-
+    fastio;
+        int n, m, k, ans=0;
+        cin >> n >> k;
+        v<ii> arr;
+        forn(i, k) {
+            int a, b; cin >> a >> b;
+            arr.push_back({a, b});
+        }
+        sort(all(arr));
+        segtree seg(n+10);
+        for(ii q : arr) {
+            ans += seg.query(q[1]+1, n+10).val;
+            seg.update(q[1], 1);
+        }
+        cout << ans << '\n';
 }

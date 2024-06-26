@@ -32,13 +32,13 @@ protected:
     v2<int> con = v2<int>();
     v<int> visited = v<int>();
 public:
-    Flow(int MaxNodeN, int Source, int Sink) {
-        maxNodeN = MaxNodeN;
+    Flow(int MaxNodeNum, int Source, int Sink) {
+        maxNodeN = MaxNodeNum;
         source = Source;
         sink = Sink;
         con=v2<int>(maxNodeN+10, v<int>());
         visited = v<int>(maxNodeN+10, -1);
-        assert(Source <= MaxNodeN && Sink <= MaxNodeN);
+        assert(Source <= MaxNodeNum && Sink <= MaxNodeNum);
     }
     void addEdge(int start, int end, int Capacity, int Dist = 0) {
         assert(start <= maxNodeN && end <= maxNodeN);
@@ -95,8 +95,8 @@ protected:
     v<int> dist = v<int>();
 public:
     int distSum = 0;
-    Mcmf(int MaxNodeN, int Source, int Sink) : Flow(MaxNodeN, Source, Sink) {
-        dist = v<int>(MaxNodeN+10);
+    Mcmf(int MaxNodeNum, int Source, int Sink) : Flow(MaxNodeNum, Source, Sink) {
+        dist = v<int>(MaxNodeNum+10);
     }
     /// returns true if succeeds
     bool run() override {

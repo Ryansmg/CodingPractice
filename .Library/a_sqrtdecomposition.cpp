@@ -45,7 +45,7 @@ public:
     }
     void add(int pos, int val) {
         bucket[pos/sq] += val;
-        arr[pos] = val;
+        arr[pos] += val;
     }
     int query(int l, int r) {
         int ret = 0;
