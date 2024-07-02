@@ -177,7 +177,7 @@ signed main() {
     board[4][4].row = board[4][4].column = 4;
     room.emplace_back(4, 4);
     int room_gen_cnt = 0;
-//    auto getRoom = [&](Point p)-> Room& { return board[p.row][p.column]; };
+
     while(true) {
         if(room_gen_cnt == N) break;
         queue<Point> Q;

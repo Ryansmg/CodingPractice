@@ -324,6 +324,65 @@ protected:
     }
 };
 
+class segtree_ {
+#define MID ((start+end)/2)
+public:
+    class T {
+    public:
+        int val = 0;
+        T()=default;
+        explicit T(int v) : val(v) {}
+        T operator+(const T &t2) const { return T(val + t2.val); }
+        T operator+(const int &i) const { return T(val + i); }
+        void operator+=(const T &i) { val += i.val; }
+        void operator+=(const int &i) { val += i; }
+        T& operator=(cint i) { val = i; return *this; }
+        T& operator=(const T &i) = default;
+    };
+    vector<T> tree;
+    int n;
+    explicit segtree_(int treeSize, bool inputInit = false) {
+        n = treeSize;
+        tree = v<T>(4*treeSize, T());
+        if(inputInit) {
+            v<int> a;
+            forn(i, treeSize) a.push_back(input());
+            init(a, 1, 1, n);
+        }
+    }
+    explicit segtree_(const v<int> &a) : segtree_((int) a.size()) {
+        init(a, 1, 1, n);
+    }
+    segtree_(const v<int> &a, int treeSize) : segtree_(treeSize) {
+        init(a, 1, 1, n);
+        assert(a.size() == treeSize);
+    }
+    void update(int tar, int diff) { update(tar, tar, diff); }
+    T query_node(int tar) { return query(tar, tar); }
+    int query(int tar) { return query(tar, tar).val; }
+    T query(int left, int right) { return query(1, left, right, 1, n); }
+protected:
+    void update(int left, int right, int diff) { update(1, left, right, 1, n, diff); }
+    T init(const v<int> &a, int node, int start, int end) {
+        if (start == end) return tree[node] = a[start - 1];
+        return tree[node] = init(a, node * 2, start, MID) +
+                            init(a, node * 2 + 1, MID + 1, end);
+    }
+    void update(int node, int left, int right, int start, int end, int diff) {
+        if(end<left || right < start) return;
+        if(left <= start && end <= right) { tree[node] += diff; return; }
+        update(node*2, left, right, start, MID, diff);
+        update(node*2+1, left, right, MID+1, end, diff);
+        tree[node] = tree[node*2] + tree[node*2+1];
+    }
+    T query(int node, int left, int right, int start, int end) {
+        if(right < start || end < left) return {};
+        if(left <= start && end <= right) return tree[node];
+        return query(node*2, left, right, start, MID) +
+               query(node*2+1, left, right, MID+1, end);
+    }
+}; //custom node
+
 class iterSeg {
 public:
     v<int> tree; int n;
@@ -398,6 +457,86 @@ protected:
         return query(node*2, left, right, start, (start+end)/2) + query(node*2+1, left, right, (start+end)/2+1, end);
     }
 };
+
+class lazyprop_ {
+public:
+    class T {
+    public:
+        int val = 0;
+        T()=default;
+        explicit T(int v) : val(v) {}
+        T operator+(const T &t2) const { return T(val + t2.val); }
+        T operator+(const int &i) const { return T(val + i); }
+        void operator+=(const T &i) { val += i.val; }
+        void operator+=(const int &i) { val += i; }
+        T& operator=(cint i) { val = i; return *this; }
+        T& operator=(const T &i) = default;
+    };
+protected:
+    v<T> tree; v<int> lazy;
+    int n;
+    void update_lazy(int node, int start, int end) {
+        tree[node] += lazy[node] * (end-start+1);
+        if(start!=end) {
+            lazy[node*2] += lazy[node];
+            lazy[node*2+1] += lazy[node];
+        }
+        lazy[node] = {};
+    }
+public:
+    explicit lazyprop_(int treeSize, bool inputInit = false) {
+        lazy = v<int>(4*treeSize, 0);
+        tree = v<T>(4*treeSize, T());
+        n = treeSize;
+        if(inputInit) {
+            v<int> a; forn(i, n) a.push_back(input());
+            init(a, 1, 1, n);
+        }
+    }
+    explicit lazyprop_(const v<int> &a) : lazyprop_((int) a.size()) {
+        init(a, 1, 1, n);
+    }
+    lazyprop_(const v<int> &a, int treeSize) : lazyprop_(treeSize) {
+        init(a, 1, 1, n);
+        assert(a.size() == treeSize);
+    }
+    void update(int tar, int diff) { update(tar, tar, diff); }
+    void update(int left, int right, int diff) { update(1, left, right, 1, n, diff); }
+    T query(int tar) { return query(tar, tar); }
+    T query(int left, int right) { return query(1, left, right, 1, n); }
+protected:
+    void init(const v<int> &a, int node, int start, int end) {
+        if(start==end) {
+            tree[node] = a[start-1];
+        } else {
+            init(a, node*2, start, (start+end)/2);
+            init(a, node*2+1, (start+end)/2+1, end);
+            tree[node] = tree[node*2] + tree[node*2+1];
+        }
+    }
+    void update(int node, int left, int right, int start, int end, int diff) {
+        update_lazy(node, start, end);
+        if(end<left || right < start) return;
+        if(left <= start && end <= right) {
+            tree[node] += diff * (end-start+1);
+            if(start!=end) {
+                lazy[node*2] += diff;
+                lazy[node*2+1] += diff;
+            }
+            return;
+        }
+        update(node*2, left, right, start, (start+end)/2, diff);
+        update(node*2+1, left, right, (start+end)/2+1, end, diff);
+        tree[node] = tree[node*2] + tree[node*2+1];
+    }
+    T query(int node, int left, int right, int start, int end) {
+        update_lazy(node, start, end);
+        if(right < start || end < left) return {};
+        if(left <= start && end <= right) return tree[node];
+        return query(node*2, left, right, start, (start+end)/2) +
+               query(node*2+1, left, right, (start+end)/2+1, end);
+    }
+}; // custom node
 
 class goldmineSeg {
 public:

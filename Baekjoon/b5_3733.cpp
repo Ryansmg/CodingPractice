@@ -21,8 +21,8 @@ const signed smax = 2147483647;
 #define fastio ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr)
 #define forn(name, val) for(int name = 0; name < val; name++)
 #define forf(name, start, end) for(int name = start; name <= end; name++)
-#define pass {cout << "";} // do nothing
 
+#define pass {cout << "";} // do nothing
 #ifndef ONLINE_JUDGE
 #define filein freopen("C:/Users/ryans/Desktop/Coding/Baekjoon/input.txt", "r", stdin)
 #define fileout freopen("C:/Users/ryans/Desktop/Coding/Baekjoon/output.txt", "w", stdout)
@@ -30,8 +30,6 @@ const signed smax = 2147483647;
 #define filein cout << ""
 #define fileout filein
 #endif
-#define fileio filein; fileout
-
 template <typename T> using v = vector<T>;
 template <typename T> using v2 = v<v<T>>;
 template <typename T> using pq = priority_queue<T>;
@@ -76,9 +74,11 @@ template <typename T> T pow_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)a
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 #pragma endregion
 
-// prob
-// #tags
-
 signed main() {
-
+    filein; fileout;
+    int a, b;
+    while(cin>>a) {
+        cin>>b;
+        cout << b/(a+1) << '\n';
+    }
 }

@@ -1,3 +1,6 @@
 #include <bits/stdc++.h>
-#define f(i,a,b) for(z i=a;i<=b;i++)
-using namespace std;using z=long long;using v=vector<z>;v D;z n;void s(z i){n=i;D=v(4*n, 0);f(k,n,2*n-1)cin>>D[k];for(z x=n-1;x>0;x--)D[x]=D[x<<1]+D[x<<1|1];}void u(z T,z V){D[n+T]=V;for(z i=n+T;i>1;i>>=1)D[i>>1]=D[i]+D[i^1];}z q(z L,z R){z l=n+L,r=n+R,S=0;for(;l<r;l>>=1,r>>=1){if(l&1)S+=D[l++];if(r&1)S+=D[--r];}return S;}int main(){ios_base::sync_with_stdio(0);cin.tie(0);cout.tie(0);z N,m,a,b,c;cin>>N>>m>>a;m+=a;s(N);f(i,1,m){cin>>a>>b>>c;if(a&1)u(b-1,c);else cout<<q(b-1,c)<<'\n';}}
+#define str(t)#t;
+std::string p = str(Hello World!)
+int main() {
+    std::cout<<p;
+}
