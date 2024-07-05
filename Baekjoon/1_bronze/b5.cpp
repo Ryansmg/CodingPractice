@@ -76,8 +76,10 @@ template <typename T> T pow_(T a, T b) { return pow_(a, b, intmax); }
 template <typename T> T pow_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)ans=ans*a%mod;b>>=1;a=a*a%mod;} return ans; }
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 
-template <typename T> v<T> inputArr(int sz) { v<T> a; forn(i,sz)a.push_back(input()); return a; }
-template <typename T> v<T>& sorted(v<T>& arr) { sort(all(arr)); return arr; }
+template <typename T=int> v<T> inputArr(int sz) { v<T> a; forn(i,sz)a.push_back(input()); return a; }
+template <typename T> v<T> sorted(v<T> arr) { sort(all(arr)); return arr; }
+template <typename T> v<T> compressed(v<T> arr) { compress(arr); return arr; }
+
 //@formatter:on
 #pragma endregion
 
@@ -85,5 +87,6 @@ template <typename T> v<T>& sorted(v<T>& arr) { sort(all(arr)); return arr; }
 // #tags
 
 signed main() {
-
+    int n = input();
+    cerr << (n*(n+1)/2) << '\n' << (n*(n+1)/2)*(n*(n+1)/2) << '\n' << (n*(n+1)/2)*(n*(n+1)/2);
 }

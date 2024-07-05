@@ -998,6 +998,11 @@ private:
 class sqrtArray {
     int n, sq;
     v<int> arr, bucket;
+    static sqrtArray inputInit(int size) {
+        v<int> arr;
+        forn(i, size) arr.push_back(input());
+        return sqrtArray(arr);
+    }
 public:
     explicit sqrtArray(int size, int bucketSize=-1) :
             n(size), sq(bucketSize==-1?(int)sqrt(size):bucketSize){
