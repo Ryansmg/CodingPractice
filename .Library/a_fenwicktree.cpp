@@ -108,7 +108,6 @@ struct Fenwick {
     int query(int tar) { int ans = 0; while(tar > 0) ans += tree[tar], tar -= (tar & -tar);  return ans; }
 };
 
-
 signed main() {
 
 }

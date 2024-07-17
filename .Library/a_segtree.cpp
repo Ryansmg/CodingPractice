@@ -764,4 +764,3 @@ private:
                query(node->r, (start+end)/2+1, end, left, right);
     }
 };
-

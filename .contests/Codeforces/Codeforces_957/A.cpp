@@ -1,5 +1,4 @@
 #pragma region macros
-//@formatter:off
 #define GCC_OPTIMIZE_ENABLE false
 
 #include <bits/stdc++.h>
@@ -22,8 +21,8 @@ const signed smax = 2147483647;
 #define fastio ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr)
 #define forn(name, val) for(int name = 0; name < val; name++)
 #define forf(name, start, end) for(int name = start; name <= end; name++)
-#define pass {cout << "";} // do nothing
 
+#define pass {cout << "";} // do nothing
 #ifndef ONLINE_JUDGE
 #define filein freopen("C:/Users/ryans/Desktop/Coding/Baekjoon/input.txt", "r", stdin)
 #define fileout freopen("C:/Users/ryans/Desktop/Coding/Baekjoon/output.txt", "w", stdout)
@@ -31,8 +30,6 @@ const signed smax = 2147483647;
 #define filein cout << ""
 #define fileout filein
 #endif
-#define fileio filein; fileout
-
 template <typename T> using v = vector<T>;
 template <typename T> using v2 = v<v<T>>;
 template <typename T> using pq = priority_queue<T>;
@@ -75,21 +72,20 @@ template <typename T> T idx(const T &val, const v<T> &compressed) { return lower
 template <typename T> T pow_(T a, T b) { return pow_(a, b, intmax); }
 template <typename T> T pow_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)ans=ans*a%mod;b>>=1;a=a*a%mod;} return ans; }
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
-
-template <typename T=int> v<T> inputArr(int sz) { v<T> a; forn(i,sz)a.push_back(input()); return a; }
-template <typename T> v<T> sorted(v<T> arr) { sort(all(arr)); return arr; }
-template <typename T> v<T> compressed(v<T> arr) { compress(arr); return arr; }
-
-//@formatter:on
 #pragma endregion
 
 // prob
 // #tags
 
 signed main() {
-    int n = input();
-    for(int i=n; i>0; i--) {
-        forn(j, i) cout << '*';
-        cout << '\n';
+    fastio;
+    int T = input();
+    while(T--) {
+        v<int> arr;
+        forn(i, 3) arr.push_back(input());
+        forn(i, 5) sort(all(arr)), arr[0]++;
+        int ans = 1;
+        for(int i : arr) ans *= i;
+        cout << ans << '\n';
     }
 }
