@@ -18,3 +18,5 @@ add_executable(z.etc_IntegerClass z.etc/IntegerClass.cpp)
 add_executable(.Library_iterative_lazyprop .Library/iterative_lazyprop.cpp)
 add_executable(.Library_BigInt BigInt.cpp)
 add_executable(test test.c)
+
+add_executable(Baekjoon_p1_13309_hld Baekjoon/4_platinum/p1_13309_hld.cpp)

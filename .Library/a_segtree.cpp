@@ -157,6 +157,7 @@ protected:
 class iterSeg {
 public:
     v<int> tree; int n;
+    iterSeg() = default;
     explicit iterSeg(const v<int> &arr) { n = (int) arr.size(); init(arr); }
     explicit iterSeg(cint i) { tree = v<int>(i*4, 0); n = i; }
     void inputInit() { tree = v<int>(4*n, 0); forf(i, n, 2*n-1) cin >> tree[i]; init(); }
