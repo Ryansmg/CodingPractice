@@ -123,14 +123,16 @@ void println(A a=null_, B b=null_, C c=null_, D d=null_, E e=null_, F f=null_, G
 //@formatter:on
 #pragma endregion
 
-// 트리
+// 남극 탐험
 // #hld #segtree
 
 class iterSeg {
 public:
     v<int> tree; int n=-1;
     iterSeg() = default;
-    explicit iterSeg(cint i) { tree = v<int>(i*4, 0); n = i; }
+    explicit iterSeg(const v<int> &arr) { n = (int) arr.size(); init(arr); }
+//    explicit iterSeg(cint i) { tree = v<int>(i*4, 0); n = i; }
+//    void inputInit() { tree = v<int>(4*n, 0); forf(i, n, 2*n-1) cin >> tree[i]; init(); }
     /// 0 <= tar < n
     void update(int tar, int val) {
         assert(0 <= tar && tar < n);
@@ -148,6 +150,13 @@ public:
         }
         return ans;
     }
+private:
+    void init() { for(int i=n-1; i>0; i--) tree[i] = tree[i<<1] + tree[i<<1|1]; }
+    void init(const v<int> &arr) {
+        tree = v<int>(4*n, 0);
+        for(int i=n, j=0; i<2*n; i++, j++) tree[i] = arr[j];
+        init();
+    }
 };
 
 #pragma region disable c-style types
@@ -159,11 +168,21 @@ public:
 #pragma endregion
 
 iterSeg seg;
-v<i64> par, sz, in, out, top, dep;
-v2<i64> con;
+v<i64> par, sz, in, out, top, dep, uf, vis;
+v2<i64> con, conRaw;
 i64 ini = 0;
 
-void dfs1(i64 v=1) {
+void dfs0(i64 v) {
+    vis[v] = true;
+    for(i64 &i : conRaw[v]) {
+        if(vis[i]) continue;
+        con[v].push_back(i);
+        vis[i] = true;
+        dfs0(i);
+    }
+}
+
+void dfs1(i64 v) {
     sz[v] = 1;
     for(i64 &i : con[v]) {
         dep[i] = dep[v] + 1; par[i] = v;
@@ -174,7 +193,7 @@ void dfs1(i64 v=1) {
     }
 }
 
-void dfs2(i64 v=1) {
+void dfs2(i64 v) {
     in[v] = ++ini;
     for(i64 &i : con[v]) {
         top[i] = i==con[v][0] ? top[v] : i;
@@ -183,40 +202,95 @@ void dfs2(i64 v=1) {
     out[v] = ini;
 }
 
-bool query(i64 a, i64 b) {
+void initHld(i64 v) {
+    top[v] = v; dep[v] = 0; par[v] = v;
+    dfs0(v); dfs1(v); dfs2(v);
+}
+
+i64 query(i64 a, i64 b) {
+    i64 ret = 0;
     while(top[a] != top[b]) {
         if (dep[top[a]] < dep[top[b]]) swap(a, b);
-        if (seg.query(in[top[a]], in[a])) return true;
+        ret += seg.query(in[top[a]]-1, in[a]-1);
         a = par[top[a]];
     }
     if(dep[a] > dep[b]) swap(a, b);
-    return seg.query(in[a]+1, in[b]);
+    return ret + seg.query(in[a]-1, in[b]-1);
+}
+
+i64 findUf(i64 v) {
+    if(v==uf[v]) return v;
+    return uf[v] = findUf(uf[v]);
+}
+
+bool ufEq(i64 v1, i64 v2) {
+    return findUf(v1) == findUf(v2);
+}
+
+void mergeUf(i64 v1, i64 v2) {
+    uf[findUf(v1)] = findUf(v2);
 }
 
 i32 main() {
     fastio;
-    i64 n, q; input(n, q);
-    par = sz = in = out = top = dep = v<i64>(n+1);
-    con = v2<i64>(n+1, v<i64>());
-    forf(i, 2, n) {
-        i64 t = input();
-        par[i] = t;
-        con[t].push_back(i);
-    }
-    dep[1] = 0; par[1] = 1; top[1] = 1;
-    dfs1(); dfs2();
-    seg = iterSeg(n+1);
+    i64 n = input();
+    // 펭귄의 수
+    v<i64> arr(1, -1); inputArr(arr, n);
+    par = sz = in = out = top = dep = uf = vis = v<i64>(n+1);
+    iota(all(uf), 0); // => 0, 1, ... n
+    con = conRaw = v2<i64>(n+1, v<i64>());
+    i64 q = input();
+    v<string> ans(q, "");
+    // 0 a b => seg.update(in[a], b);
+    // a b c => ans[c] = query(a, b);
+    stack<iii> queries;
     forn(qi, q) {
-        i64 b, c, d; input(b, c, d);
-        if(!d) println(query(b, c) ? "NO" : "YES");
-        else {
-            if(query(b, c)) {
-                println("NO");
-                seg.update(in[c], 1);
+        string s; i64 a, b;
+        cin >> s >> a >> b;
+        if(s[0]=='b') {
+            if(ufEq(a, b)) ans[qi] = "no";
+            else {
+                ans[qi] = "yes";
+                conRaw[a].push_back(b);
+                conRaw[b].push_back(a);
+                mergeUf(a, b);
+            }
+        } else if(s[0] == 'p') {
+            queries.push({0, a, arr[a]});
+            arr[a] = b;
+        } else {
+            if(ufEq(a, b)) {
+                queries.push({a, b, qi});
             } else {
-                println("YES");
-                seg.update(in[b], 1);
+                ans[qi] = "impossible";
             }
         }
+    }
+    set<i64> roots;
+    for(i64 &i:uf) {
+        if(i==0) continue;
+        if(!roots.contains(findUf(i))) roots.insert(findUf(i));
+    }
+    for(i64 i : roots) {
+        initHld(i);
+    }
+    v<i64> arr2(n);
+    for(i64 i=1; i<=n; i++) {
+        if(!in[i]) continue;
+        arr2[in[i]-1] = arr[i];
+    }
+    seg = iterSeg(arr2);
+    while(!queries.empty()) {
+        iii t = queries.top(); queries.pop();
+        if(t[0]) {
+            ans[t[2]] = to_string(query(t[0], t[1]));
+        } else {
+            if(!in[t[1]]) continue;
+            seg.update(in[t[1]]-1, t[2]);
+        }
+    }
+    for(string &s : ans) {
+        if(s.empty()) continue;
+        println(s);
     }
 }

@@ -123,33 +123,6 @@ void println(A a=null_, B b=null_, C c=null_, D d=null_, E e=null_, F f=null_, G
 //@formatter:on
 #pragma endregion
 
-// 트리
-// #hld #segtree
-
-class iterSeg {
-public:
-    v<int> tree; int n=-1;
-    iterSeg() = default;
-    explicit iterSeg(cint i) { tree = v<int>(i*4, 0); n = i; }
-    /// 0 <= tar < n
-    void update(int tar, int val) {
-        assert(0 <= tar && tar < n);
-        tree[n+tar] = val;
-        for(int i = n+tar; i>1; i>>=1) tree[i>>1] = tree[i] + tree[i^1];
-    }
-    /// [l, r]
-    int query(int left, int right) {
-        assert(0 <= left && right <= n);
-        right++;
-        int l = n+left, r = n+right, ans = 0;
-        for(; l<r; l>>=1, r>>=1) {
-            if(l&1) ans += tree[l++];
-            if(r&1) ans += tree[--r];
-        }
-        return ans;
-    }
-};
-
 #pragma region disable c-style types
 #define float
 #undef int
@@ -157,66 +130,18 @@ public:
 #undef double
 #define double
 #pragma endregion
-
-iterSeg seg;
-v<i64> par, sz, in, out, top, dep;
-v2<i64> con;
-i64 ini = 0;
-
-void dfs1(i64 v=1) {
-    sz[v] = 1;
-    for(i64 &i : con[v]) {
-        dep[i] = dep[v] + 1; par[i] = v;
-        dfs1(i);
-        sz[v] += sz[i];
-        if(sz[con[v][0]] < sz[i])
-            swap(i, con[v][0]);
-    }
-}
-
-void dfs2(i64 v=1) {
-    in[v] = ++ini;
-    for(i64 &i : con[v]) {
-        top[i] = i==con[v][0] ? top[v] : i;
-        dfs2(i);
-    }
-    out[v] = ini;
-}
-
-bool query(i64 a, i64 b) {
-    while(top[a] != top[b]) {
-        if (dep[top[a]] < dep[top[b]]) swap(a, b);
-        if (seg.query(in[top[a]], in[a])) return true;
-        a = par[top[a]];
-    }
-    if(dep[a] > dep[b]) swap(a, b);
-    return seg.query(in[a]+1, in[b]);
-}
-
 i32 main() {
-    fastio;
-    i64 n, q; input(n, q);
-    par = sz = in = out = top = dep = v<i64>(n+1);
-    con = v2<i64>(n+1, v<i64>());
-    forf(i, 2, n) {
-        i64 t = input();
-        par[i] = t;
-        con[t].push_back(i);
-    }
-    dep[1] = 0; par[1] = 1; top[1] = 1;
-    dfs1(); dfs2();
-    seg = iterSeg(n+1);
-    forn(qi, q) {
-        i64 b, c, d; input(b, c, d);
-        if(!d) println(query(b, c) ? "NO" : "YES");
-        else {
-            if(query(b, c)) {
-                println("NO");
-                seg.update(in[c], 1);
-            } else {
-                println("YES");
-                seg.update(in[b], 1);
-            }
+    fastio; i64 T = input();
+    forf(tci, 1, T) {
+        i64 len = input();
+        string s1, s2; cin >> s1 >> s2;
+        forn(i, len) {
+            if(s1[i]=='0' && s2[i] == '1') {
+                println("NO"); goto a;
+            } else if(s1[i]=='1') break;
         }
+        println("YES");
+        a:
+        print();
     }
 }

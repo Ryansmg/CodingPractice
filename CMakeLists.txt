@@ -20,3 +20,7 @@ add_executable(.Library_BigInt BigInt.cpp)
 add_executable(test test.c)
 
 add_executable(Baekjoon_p1_13309_hld Baekjoon/4_platinum/p1_13309_hld.cpp)
+add_executable(Baekjoon_d5_2927_hld_offq Baekjoon/d5_2927_hld_offq.cpp)
+add_executable(.contests_Codeforces_Codeforces_959_A .contests/Codeforces/Codeforces_959/A.cpp)
+add_executable(.contests_Codeforces_Codeforces_959_B .contests/Codeforces/Codeforces_959/B.cpp)
+add_executable(.contests_Codeforces_Codeforces_959_C .contests/Codeforces/Codeforces_959/C.cpp)

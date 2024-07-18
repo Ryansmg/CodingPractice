@@ -156,7 +156,7 @@ protected:
 
 class iterSeg {
 public:
-    v<int> tree; int n;
+    v<int> tree; int n=-1;
     iterSeg() = default;
     explicit iterSeg(const v<int> &arr) { n = (int) arr.size(); init(arr); }
     explicit iterSeg(cint i) { tree = v<int>(i*4, 0); n = i; }
