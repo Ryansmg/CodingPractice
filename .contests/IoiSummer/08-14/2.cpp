@@ -8,13 +8,6 @@ using namespace std;
 #pragma GCC optimize("Ofast")
 #pragma GCC optimize("unroll-loops")
 #endif
-#ifdef LOCAL
-#define DEBUG_PRINT_ if(c==cdbg) cerr << t; else cout << t;
-#define lfastio print()
-#else
-#define DEBUG_PRINT_
-#define lfastio fastio
-#endif
 using i16 = short; using i32 = signed; using i64 = long long; using i128 = __int128;
 using u16 = unsigned short; using u32 = unsigned; using u64 = unsigned long long; using u128 = unsigned __int128;
 using f32 = float; using f64 = double; using f128 = long double;
@@ -35,8 +28,8 @@ using ii = array<i64, 2>; using iii = array<i64, 3>;
 template <typename T> using lim = std::numeric_limits<T>;
 
 template <typename T = i64> T input() {T t; cin >> t; return t;}
-template <typename T> T::value_type fpop(T &que) { auto t = que.front(); que.pop(); return t; }
-template <typename T> T::value_type tpop(T &st) { auto t = st.top(); st.pop(); return t; }
+template <typename T> i64 fpop(T &que) { auto t = que.front(); que.pop(); return t; }
+template <typename T> i64 tpop(T &st) { auto t = st.top(); st.pop(); return t; }
 template <typename T> void sort(v<T> &v) { sort(all(v)); }
 template <typename T> void compress(v<T> &v, const bool &autosort=true) { if(autosort) sort(all(v)); v.erase(unique(all(v)), v.end()); }
 template <typename T> T idx(const T &val, const v<T> &compressed) { return lower_bound(all(compressed), val) - compressed.begin(); }
@@ -54,7 +47,9 @@ template <typename T> T max(T a, T b, T c, T d, T e=lim<T>::min(), T f=lim<T>::m
 enum Null_{} null_; enum cdbg_{ useCerr, useCout } cdbg=useCerr, cloc=useCout;
 istream& operator>>(istream& i, const Null_&) { return i; } ostream& operator<<(ostream& i, const Null_&) { return i; }
 template <typename T> cdbg_& operator<<(cdbg_& c, const T& t) {
-    DEBUG_PRINT_
+#ifdef LOCAL
+    if(c==cdbg) cerr << t; else cout << t;
+#endif
     return c;
 }
 
@@ -77,10 +72,23 @@ void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") 
 //@formatter:on
 #pragma endregion
 
-// prob
-// #tags
+v<i64> par;
+i64 findPar(i64 v) {
+    if(par[v] == v) return v;
+    return par[v] = findPar(par[v]);
+}
+void unionPar(i64 a, i64 b) {
+    if(findPar(a) == findPar(b)) return;
+    par[findPar(a)] = findPar(b);
+}
 
 i32 main() {
     fastio;
-    
+    i64 n, q; input(n, q);
+    forn(i, n+10) par.push_back(i);
+    forn(i, q) {
+        i64 a, b, c; input(a, b, c);
+        if(!a) unionPar(b, c);
+        else println(findPar(b) == findPar(c));
+    }
 }

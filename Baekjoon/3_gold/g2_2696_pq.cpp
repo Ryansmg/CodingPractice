@@ -8,13 +8,6 @@ using namespace std;
 #pragma GCC optimize("Ofast")
 #pragma GCC optimize("unroll-loops")
 #endif
-#ifdef LOCAL
-#define DEBUG_PRINT_ if(c==cdbg) cerr << t; else cout << t;
-#define lfastio print()
-#else
-#define DEBUG_PRINT_
-#define lfastio fastio
-#endif
 using i16 = short; using i32 = signed; using i64 = long long; using i128 = __int128;
 using u16 = unsigned short; using u32 = unsigned; using u64 = unsigned long long; using u128 = unsigned __int128;
 using f32 = float; using f64 = double; using f128 = long double;
@@ -35,8 +28,8 @@ using ii = array<i64, 2>; using iii = array<i64, 3>;
 template <typename T> using lim = std::numeric_limits<T>;
 
 template <typename T = i64> T input() {T t; cin >> t; return t;}
-template <typename T> T::value_type fpop(T &que) { auto t = que.front(); que.pop(); return t; }
-template <typename T> T::value_type tpop(T &st) { auto t = st.top(); st.pop(); return t; }
+template <typename T> i64 fpop(T &que) { auto t = que.front(); que.pop(); return t; }
+template <typename T> i64 tpop(T &st) { auto t = st.top(); st.pop(); return t; }
 template <typename T> void sort(v<T> &v) { sort(all(v)); }
 template <typename T> void compress(v<T> &v, const bool &autosort=true) { if(autosort) sort(all(v)); v.erase(unique(all(v)), v.end()); }
 template <typename T> T idx(const T &val, const v<T> &compressed) { return lower_bound(all(compressed), val) - compressed.begin(); }
@@ -54,7 +47,9 @@ template <typename T> T max(T a, T b, T c, T d, T e=lim<T>::min(), T f=lim<T>::m
 enum Null_{} null_; enum cdbg_{ useCerr, useCout } cdbg=useCerr, cloc=useCout;
 istream& operator>>(istream& i, const Null_&) { return i; } ostream& operator<<(ostream& i, const Null_&) { return i; }
 template <typename T> cdbg_& operator<<(cdbg_& c, const T& t) {
-    DEBUG_PRINT_
+#ifdef LOCAL
+    if(c==cdbg) cerr << t; else cout << t;
+#endif
     return c;
 }
 
@@ -77,10 +72,34 @@ void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") 
 //@formatter:on
 #pragma endregion
 
-// prob
-// #tags
-
 i32 main() {
     fastio;
-    
+    i64 T = input();
+    while(T--) {
+        i64 n = input();
+        println(n/2+1);
+        pq<i64> small;
+        pq<i64, v<i64>, greater<>> large;
+        large.push(input());
+        print(large.top(), ' ');
+        i64 pcnt = 0;
+        forn(i, n - 1) {
+            i64 in = input();
+            if (in < large.top()) {
+                small.push(in);
+                if (small.size() > large.size()) {
+                    large.push(tpop(small));
+                }
+            } else {
+                large.push(in);
+                if (small.size() + 1 < large.size())
+                    small.push(tpop(large));
+            }
+            if (i & 1) {
+                if(++pcnt == 10) println();
+                print(large.top(), ' ');
+            }
+        }
+        println();
+    }
 }

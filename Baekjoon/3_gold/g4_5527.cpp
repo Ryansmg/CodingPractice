@@ -77,10 +77,25 @@ void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") 
 //@formatter:on
 #pragma endregion
 
-// prob
+// 5527. 전구 장식
 // #tags
 
 i32 main() {
-    fastio;
-    
+    fastio; i64 n = input();
+    v<bool> arr; inputArr(arr, n);
+    v<i64> arr2;
+    bool pre = !arr[0]; i64 sz = 0;
+    for(bool b : arr) {
+        if(pre != b) ++sz;
+        else { arr2.push_back(sz); sz = 1; }
+        pre = b;
+    }
+    arr2.push_back(sz);
+    i64 ans = 0, len = arr2.size();
+    if(len==1) cout << arr2[0];
+    else if(len==2) cout << arr2[0] + arr2[1];
+    else {
+        forf(i, 1, len-2) ans = max(ans, arr2[i-1] + arr2[i] + arr2[i+1]);
+        cout << ans;
+    }
 }

@@ -1,3 +1,27 @@
+
+/*
+i64 lca(i64 a, i64 b) {
+    if(depth[a] > depth[b]) swap(a, b);
+    i64 depDiff = depth[b] - depth[a];
+    for(i64 i = logH; depDiff && i >= 0; i--)
+        if(depDiff & (1<<i)) b = par[b][i], depDiff -= (1<<i);
+
+    for(i64 i = logH; i >= 0; i--)
+        if(par[a][i] != par[b][i])
+            a = par[a][i], b = par[b][i];
+
+    if(a == b) return a;
+    return par[a][0];
+}
+ */
+
+
+
+// ======================================
+
+
+
+
 //11438. LCA 2
 //#lca #trees #sparse_table
 

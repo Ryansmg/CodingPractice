@@ -159,17 +159,18 @@ public:
     v<int> tree; int n=-1;
     iterSeg() = default;
     explicit iterSeg(const v<int> &arr) { n = (int) arr.size(); init(arr); }
-    explicit iterSeg(cint i) { tree = v<int>(i*4, 0); n = i; }
-    void inputInit() { tree = v<int>(4*n, 0); forf(i, n, 2*n-1) cin >> tree[i]; init(); }
+    explicit iterSeg(cint i) { tree = v<int>(i*2+10, 0); n = i; }
+    void inputInit() { tree = v<int>(2*n+10, 0); forf(i, n, 2*n-1) cin >> tree[i]; init(); }
     /// 0 <= tar < n
     void update(int tar, int val) {
         assert(0 <= tar && tar < n);
         tree[n+tar] = val;
         for(int i = n+tar; i>1; i>>=1) tree[i>>1] = tree[i] + tree[i^1];
     }
-    /// [l, r)
+    /// [l, r]
     int query(int left, int right) {
-        assert(0 <= left && right <= n);
+        assert(0 <= left && right < n);
+        right++;
         int l = n+left, r = n+right, ans = 0;
         for(; l<r; l>>=1, r>>=1) {
             if(l&1) ans += tree[l++];
@@ -180,7 +181,7 @@ public:
 private:
     void init() { for(int i=n-1; i>0; i--) tree[i] = tree[i<<1] + tree[i<<1|1]; }
     void init(const v<int> &arr) {
-        tree = v<int>(4*n, 0);
+        tree = v<int>(2*n+10, 0);
         for(int i=n, j=0; i<2*n; i++, j++) tree[i] = arr[j];
         init();
     }
@@ -188,7 +189,7 @@ private:
 
 class lazyprop {
 protected:
-    v<int> tree, lazy; int n;
+    v<int> tree, lazy; int n=-1;
     void push(int node, int start, int end) {
         tree[node] += lazy[node] * (end-start+1);
         if(start!=end) {
@@ -198,6 +199,7 @@ protected:
         lazy[node] = 0;
     }
 public:
+    lazyprop()=default;
     explicit lazyprop(int treeSize, bool inputInit = false) {
         lazy = tree = v<int>(4*treeSize, 0); n = treeSize;
         if(inputInit) { v<int> a; forn(i, n) a.push_back(input()); init(a, 1, 1, n); }
@@ -220,7 +222,7 @@ protected:
             return tree[node];
         }
         return tree[node] = update(node*2, left, right, start, (start+end)/2, diff) +
-            update(node*2+1, left, right, (start+end)/2+1, end, diff);
+                            update(node*2+1, left, right, (start+end)/2+1, end, diff);
     }
     int query(int node, int left, int right, int start, int end) {
         push(node, start, end);

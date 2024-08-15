@@ -77,10 +77,33 @@ void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") 
 //@formatter:on
 #pragma endregion
 
-// prob
+// 10711. 모래성
 // #tags
 
+struct coord { i64 r, c; coord(i64 y, i64 x) : r(y), c(x) {} };
+
 i32 main() {
-    fastio;
-    
+    fastio; i64 h, w, ans = 0; cin >> h >> w;
+    v2<i16> shore(h+2, v<i16>()), cnt(h+2, v<i16>(w+2, 0));
+    i32 dr[] = { -1, -1, -1, 0, 1, 1, 1, 0 }, dc[] = { -1, 0, 1, 1, 1, 0, -1, -1 };
+    forf(i, 1, h) {
+        i64 idx = 0; shore[i].push_back(0);
+        for (const char &c: input<string>()) { ++idx;
+            shore[i].push_back(c == '.' ? 0 : c - '0');
+            if (c == '.') forn(j, 8) cnt[i+dr[j]][idx+dc[j]]++;
+        }
+    }
+    queue<coord> cur, nxt;
+    forf(r, 1, h) forf(c, 1, w) if(shore[r][c] && shore[r][c] <= cnt[r][c]) shore[r][c] = 0, nxt.emplace(r, c);
+    while(!nxt.empty()) {
+        ans++; cur=nxt; nxt=queue<coord>();
+        while(!cur.empty()) {
+            auto [r, c] = fpop(cur);
+            forn(j, 8) {
+                i64 nr = r + dr[j], nc = c + dc[j];
+                if (shore[nr][nc] && shore[nr][nc] <= ++cnt[nr][nc]) shore[nr][nc] = 0, nxt.emplace(nr, nc);
+            }
+        }
+    }
+    cout << ans;
 }

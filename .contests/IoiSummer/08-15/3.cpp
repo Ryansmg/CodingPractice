@@ -8,13 +8,6 @@ using namespace std;
 #pragma GCC optimize("Ofast")
 #pragma GCC optimize("unroll-loops")
 #endif
-#ifdef LOCAL
-#define DEBUG_PRINT_ if(c==cdbg) cerr << t; else cout << t;
-#define lfastio print()
-#else
-#define DEBUG_PRINT_
-#define lfastio fastio
-#endif
 using i16 = short; using i32 = signed; using i64 = long long; using i128 = __int128;
 using u16 = unsigned short; using u32 = unsigned; using u64 = unsigned long long; using u128 = unsigned __int128;
 using f32 = float; using f64 = double; using f128 = long double;
@@ -35,8 +28,8 @@ using ii = array<i64, 2>; using iii = array<i64, 3>;
 template <typename T> using lim = std::numeric_limits<T>;
 
 template <typename T = i64> T input() {T t; cin >> t; return t;}
-template <typename T> T::value_type fpop(T &que) { auto t = que.front(); que.pop(); return t; }
-template <typename T> T::value_type tpop(T &st) { auto t = st.top(); st.pop(); return t; }
+template <typename T, typename T2=i64> T2 fpop(T &que) { auto t = que.front(); que.pop(); return t; }
+template <typename T, typename T2=i64> T2 tpop(T &st) { auto t = st.top(); st.pop(); return t; }
 template <typename T> void sort(v<T> &v) { sort(all(v)); }
 template <typename T> void compress(v<T> &v, const bool &autosort=true) { if(autosort) sort(all(v)); v.erase(unique(all(v)), v.end()); }
 template <typename T> T idx(const T &val, const v<T> &compressed) { return lower_bound(all(compressed), val) - compressed.begin(); }
@@ -54,7 +47,9 @@ template <typename T> T max(T a, T b, T c, T d, T e=lim<T>::min(), T f=lim<T>::m
 enum Null_{} null_; enum cdbg_{ useCerr, useCout } cdbg=useCerr, cloc=useCout;
 istream& operator>>(istream& i, const Null_&) { return i; } ostream& operator<<(ostream& i, const Null_&) { return i; }
 template <typename T> cdbg_& operator<<(cdbg_& c, const T& t) {
-    DEBUG_PRINT_
+#ifdef LOCAL
+    if(c==cdbg) cerr << t; else cout << t;
+#endif
     return c;
 }
 
@@ -77,10 +72,55 @@ void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") 
 //@formatter:on
 #pragma endregion
 
-// prob
-// #tags
+class iterSeg {
+public:
+    v<int> tree; int n=-1;
+    iterSeg() = default;
+    explicit iterSeg(const v<int> &arr) { n = (int) arr.size(); init(arr); }
+    explicit iterSeg(cint i) { tree = v<int>(i*2+10, 0); n = i; }
+    void inputInit() { tree = v<int>(2*n+10, 0); forf(i, n, 2*n-1) cin >> tree[i]; init(); }
+    /// 0 <= tar < n
+    void update(int tar, int val) {
+        assert(0 <= tar && tar < n);
+        tree[n+tar] += val;
+        for(int i = n+tar; i>1; i>>=1) tree[i>>1] = tree[i] + tree[i^1];
+    }
+    /// [l, r]
+    int query(int left, int right) {
+        assert(0 <= left && right < n);
+        right++;
+        int l = n+left, r = n+right, ans = 0;
+        for(; l<r; l>>=1, r>>=1) {
+            if(l&1) ans += tree[l++];
+            if(r&1) ans += tree[--r];
+        }
+        return ans;
+    }
+private:
+    void init() { for(int i=n-1; i>0; i--) tree[i] = tree[i<<1] + tree[i<<1|1]; }
+    void init(const v<int> &arr) {
+        tree = v<int>(2*n+10, 0);
+        for(int i=n, j=0; i<2*n; i++, j++) tree[i] = arr[j];
+        init();
+    }
+};
 
+#pragma region disable c-style types
+#define float
+#undef int
+#define int
+#undef double
+#define double
+#pragma endregion
 i32 main() {
     fastio;
-    
+    i64 n = input();
+    iterSeg seg(n+5);
+    i64 ans = 0;
+    forn(i, n) {
+        i64 j = input();
+        ans += seg.query(j+1, n+1);
+        seg.update(j, 1);
+    }
+    cout << ans;
 }
