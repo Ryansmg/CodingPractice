@@ -78,9 +78,25 @@ void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") 
 //@formatter:on
 #pragma endregion
 
-// prob
-// #tags
+v2l adj;
 
 i32 main() {
     fastio;
+    i64 n = input();
+    adj = v2l(n+1, vl());
+    forn(_, n-1) {
+        i64 a, b; cin >> a >> b;
+        adj[a].push_back(b);
+        adj[b].push_back(a);
+    }
+    i64 m = input();
+    forn(qi, m) {
+        i64 type, v;
+        cin >> type >> v;
+        if(type == 1) {
+
+        } else {
+
+        }
+    }
 }

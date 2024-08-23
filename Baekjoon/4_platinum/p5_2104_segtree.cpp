@@ -78,9 +78,67 @@ void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") 
 //@formatter:on
 #pragma endregion
 
-// prob
-// #tags
+struct nd {
+    i64 sum, min, minIdx;
+    nd(i64 a, i64 b, i64 c) : sum(a), min(b), minIdx(c) {}
+    nd operator+(const nd &other) {
+        nd ret = *this;
+        ret.sum += other.sum;
+        if(ret.min > other.min) {
+            ret.min = other.min;
+            ret.minIdx = other.minIdx;
+        }
+        return ret;
+    }
+};
+class iterSeg {
+public:
+    v<nd> tree; int n=-1;
+    iterSeg() = default;
+    explicit iterSeg(const v<int> &arr) { n = (int) arr.size(); init(arr); }
+    /// [l, r]
+    nd query(int left, int right) {
+        assert(0 <= left && right < n);
+        right++;
+        int l = n+left, r = n+right; nd ans = {0, INF, -1};
+        for(; l<r; l>>=1, r>>=1) {
+            if(l&1) ans = ans + tree[l++];
+            if(r&1) ans = ans + tree[--r];
+        }
+        return ans;
+    }
+private:
+    void init() {
+        for(int i=n-1; i>0; i--) tree[i] = tree[i<<1] + tree[i<<1|1];
+    }
+    void init(const v<int> &arr) {
+        tree = v<nd>(2*n+10, {-1, -1, -1});
+        for(int i=n, j=0; i<2*n; i++, j++) tree[i] = {arr[j], arr[j], j+1};
+        init();
+    }
+};
+
+// 2104. 부분배열 고르기
+// #segtree
 
 i32 main() {
     fastio;
+    i64 n = input();
+    vl arr; inputArr(arr, n);
+    i64 ans = arr[0];
+    iterSeg seg(arr);
+    function<void(i64, i64)> f = [&](i64 l, i64 r) {
+        if(l > r) return;
+        if(l == r) {
+            nd ret = seg.query(l-1, r-1);
+            ans = max(ans, ret.sum*ret.min);
+            return;
+        }
+        nd cur = seg.query(l-1, r-1);
+        ans = max(ans, cur.sum*cur.min);
+        i64 i = cur.minIdx;
+        f(l, i-1), f(i+1, r);
+    };
+    f(1, n);
+    print(ans);
 }

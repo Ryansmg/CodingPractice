@@ -83,4 +83,6 @@ void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") 
 
 i32 main() {
     fastio;
+    i64 n, r, q;
+    cin >> n >> r >> q;
 }

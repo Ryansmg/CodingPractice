@@ -78,9 +78,36 @@ void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") 
 //@formatter:on
 #pragma endregion
 
-// prob
-// #tags
+i64 askIn(ci64 a, ci64 b) {
+    cout << "? " << a << " " << b << endl;
+    return input();
+}
 
 i32 main() {
     fastio;
+    i64 T = input();
+    forn(tci, T) {
+        i64 n = input();
+        unordered_set<i64> chk; chk.insert(1);
+        v2l adj(n+1, vl());
+        i64 found = 1;
+        while(found < n) {
+            i64 rt = 1, fn = 1;
+            while(chk.contains(fn)) fn++;
+            while(true) {
+                i64 ret = askIn(rt, fn);
+                if(ret == -1) exit(0);
+                if(ret == rt) {
+                    adj[rt].push_back(fn);
+                    chk.insert(fn); found++;
+                    break;
+                }
+                if(chk.contains(ret)) rt = ret;
+                else fn = ret;
+            }
+        }
+        cout << "! ";
+        forf(i, 1, n) for(ci64 j : adj[i]) cout << i << ' ' << j << ' ';
+        cout << endl;
+    }
 }

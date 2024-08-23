@@ -1,5 +1,6 @@
 
 /*
+void makePar() { forn(i, logH+1) forf(v, 1, n) par[v].push_back(par[par[v][i]][i]); }
 i64 lca(i64 a, i64 b) {
     if(depth[a] > depth[b]) swap(a, b);
     i64 depDiff = depth[b] - depth[a];

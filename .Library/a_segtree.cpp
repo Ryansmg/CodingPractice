@@ -1,64 +1,81 @@
 #pragma region macros
+//@formatter:off
 #define GCC_OPTIMIZE_ENABLE false
 
 #include <bits/stdc++.h>
 using namespace std;
-
 #if GCC_OPTIMIZE_ENABLE
 #pragma GCC optimize("Ofast")
 #pragma GCC optimize("unroll-loops")
 #endif
-
-#define int long long
-#define double long double
-#define cint const int &
-
-#define llmax 9223372036854775807 // 2^63-1
-#define INF 1000000000000000000 // INF * INF > 2^63
-#define inf 3000000000 // inf > 2^31, inf * inf < 2^63
-#define fastio ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr)
-#define forn(name, val) for(int name = 0; name < val; name++)
-#define forf(name, start, end) for(int name = start; name <= end; name++)
-
-#define pass {cout << "";} // do nothing
-#define filein freopen("C:/Users/ryans/Desktop/Coding/Baekjoon/input.txt", "r", stdin)
-#define fileout freopen("C:/Users/ryans/Desktop/Coding/Baekjoon/output.txt", "w", stdout)
-
-template <typename T> using v = vector<T>;
-template <typename T> using v2 = v<v<T>>;
-template <typename T> using pq = priority_queue<T>;
-using ii = array<int, 2>;
-using iii = array<int, 3>;
-
-#ifndef int
-#define intmax 2147483647
+#ifdef LOCAL
+#define DEBUG_PRINT_ if(c==cdbg) cerr << t; else cout << t;
+#define lfastio print()
 #else
-#define intmax llmax
+#define DEBUG_PRINT_
+#define lfastio fastio
 #endif
+using i16 = short; using i32 = signed; using i64 = long long; using i128 = __int128;
+using u16 = unsigned short; using u32 = unsigned; using u64 = unsigned long long; using u128 = unsigned __int128;
+using f32 = float; using f64 = double; using f128 = long double;
+#define int i64
+#define uint u64
+#define ci64 const i64 &
+#define cint ci64
+#define ci32 const i32 &
+const long long llmax = 9223372036854775807, INF = 1000000000000000000, inf = 3000000000;
 
-#pragma region lint
-#define lint __int128
-#define ll long long
-lint LINTMAX = ((lint(1)<<126)-1)*2+1;
-string lint2str(const lint &i) {string ret,bs;if(i==-LINTMAX-1)return lint2str(i/10)+"8";if(!i)return "0";if(i<0)return "-"+lint2str(-i);
-    lint t=1; forn(as, 18)t*=10;lint a=i/(t*t);if(a){ret += to_string((ll) a);bs = to_string((ll) (i / t % (t * 10) + t));
-        forn(j, 18) ret += bs[j + 1];bs = to_string((ll) ((i % t) + t));forn(j, 18) ret += bs[j + 1];
-    } else {lint b = i / t % (t * 10);if (b) {ret += to_string((ll) b);bs = to_string((ll) ((i % t) + t));
-            forn(j, 18) ret += bs[j + 1];} else { ret += to_string((ll) (i % t)); }}return ret;}
-istream &operator>>(istream &in, lint &l) {string s;in>>s;lint t=l=0,size=s.size(),k=1;if(s[0]=='-')t=1;
-    for(lint i=size-1;i>=t;i--){if(!t)l+=(s[i]-'0')*k;else l-=(s[i]-'0')*k;k*=10;}return in;}
-ostream &operator<<(ostream &out,const lint &i){ out << lint2str(i); return out; }
-#pragma endregion
-
-template <typename T = int> T input() {T t; cin >> t; return t;}
-
+#define fastio ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr)
+#define forn(name, val) for(i64 name = 0; name < val; name++)
+#define forf(name, start, end) for(i64 name = start; name <= end; name++)
 #define all(vec) (vec).begin(), (vec).end()
+template <typename T> using v = vector<T>; template <typename T> using v2 = v<v<T>>;
+using vl = v<i64>; using v2l = v2<i64>;
+template <typename T, typename T2=v<T>, typename T3=less<>> using pq = priority_queue<T, T2, T3>;
+using ii = array<i64, 2>; using iii = array<i64, 3>;
+template <typename T> using lim = std::numeric_limits<T>;
+
+template <typename T = i64> T input() {T t; cin >> t; return t;}
+template <typename T> T::value_type fpop(T &que) { auto t = que.front(); que.pop(); return t; }
+template <typename T> T::value_type tpop(T &st) { auto t = st.top(); st.pop(); return t; }
+template <typename T> void sort(v<T> &v) { sort(all(v)); }
 template <typename T> void compress(v<T> &v, const bool &autosort=true) { if(autosort) sort(all(v)); v.erase(unique(all(v)), v.end()); }
 template <typename T> T idx(const T &val, const v<T> &compressed) { return lower_bound(all(compressed), val) - compressed.begin(); }
-
-template <typename T> T pow_(T a, T b) { return pow_(a, b, intmax); }
-template <typename T> T pow_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)ans=ans*a%mod;b>>=1;a=a*a%mod;} return ans; }
+template <typename T> T pow_(T a, T b, T mod=lim<T>::max()) { a%=mod;T ans=1;while(b){if(b&1)ans=ans*a%mod;b>>=1;a=a*a%mod;} return ans; }
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
+template <typename T> v<T> inputArr(i64 sz) { v<T> a; forn(i,sz)a.push_back(input<T>()); return a; }
+template <typename T> void inputArr(v<T> &arr, i64 sz, bool clear = true) { if(clear) arr.clear(); forn(i,sz) arr.push_back(input<T>()); }
+template <typename T> v<T> sorted_copy(v<T> arr) { sort(all(arr)); return arr; }
+template <typename T> v<T> compressed_copy(v<T> arr, const bool &autosort=true) { compress(arr, autosort); return arr; }
+template <typename T> T min(T a, T b, T c) { return min(a, min(b, c)); }
+template <typename T> T min(T a, T b, T c, T d, T e=lim<T>::max(), T f=lim<T>::max()) { return min(min(a, b), min(c, d), min(e, f)); }
+template <typename T> T max(T a, T b, T c) { return max(a, max(b, c)); }
+template <typename T> T max(T a, T b, T c, T d, T e=lim<T>::min(), T f=lim<T>::min()) { return max(max(a, b), max(c, d), max(e, f)); }
+
+enum Null_{} null_; enum cdbg_{ useCerr, useCout } cdbg=useCerr, cloc=useCout;
+istream& operator>>(istream& i, const Null_&) { return i; } ostream& operator<<(ostream& i, const Null_&) { return i; }
+template <typename T> cdbg_& operator<<(cdbg_& c, const T& t) {
+    DEBUG_PRINT_
+    return c;
+}
+
+template <class A, class B=Null_, class C=Null_, class D=Null_, class E=Null_, class F=Null_, class G=Null_>
+void input(A &a, B &b=null_, C &c=null_, D &d=null_, E &e=null_, F &f=null_, G &g=null_) {
+    cin >> a >> b >> c >> d >> e >> f >> g;
+}
+template <class A=Null_, class B=Null_, class C=Null_, class D=Null_, class E=Null_, class F=Null_, class G=Null_, class H=Null_, class I=Null_, class J=Null_>
+void print(A a=null_, B b=null_, C c=null_, D d=null_, E e=null_, F f=null_, G g=null_, H h=null_, I i=null_, J j=null_) {
+    cout << a << b << c << d << e << f << g << h << i << j;
+}
+template <class A=Null_, class B=Null_, class C=Null_, class D=Null_, class E=Null_, class F=Null_, class G=Null_, class H=Null_, class I=Null_, class J=Null_>
+void println(A a=null_, B b=null_, C c=null_, D d=null_, E e=null_, F f=null_, G g=null_, H h=null_, I i=null_, J j=null_) {
+    print(a, b, c, d, e, f, g, h, i, j); cout << '\n';
+}
+template <typename T>
+void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") {
+    for(T i : v) cout << i << sep; cout << end;
+}
+//@formatter:on
 #pragma endregion
 
 class segtree {
@@ -488,7 +505,62 @@ private:
     }
 };
 
-class pst {
+struct pst {
+    static const i64 n = 100010;
+    pst *l = nullptr, *r = nullptr;
+    pst() = default;
+    i64 val = 0;
+    explicit pst(pst *prev) : pst() {
+        l = prev->l;
+        r = prev->r;
+    }
+    void init(vl *arr = nullptr) {
+        init(this, 1, n, arr);
+    }
+    void add(pst *prv, i64 t, i64 d, i64 s = 1, i64 e = n) {
+        if (s == e) {
+            val += d;
+            return;
+        }
+        i64 m = (s + e) >> 1;
+        if (t <= m) {
+            if (!l || l == prv->l) {
+                l = new pst();
+                l->val = prv->l->val;
+            }
+            if (!r) r = prv->r;
+            l->add(prv->l, t, d, s, m);
+        } else {
+            if (!l) l = prv->l;
+            if (!r || r == prv->r) {
+                r = new pst();
+                r->val = prv->r->val;
+            }
+            r->add(prv->r, t, d, m + 1, e);
+        }
+        val = l->val + r->val;
+    }
+    i64 query(i64 L, i64 R, i64 s = 1, i64 e = n) const {
+        if (R < s || e < L) return 0;
+        if (L <= s && e <= R) return val;
+        i64 m = (s + e) >> 1;
+        return l->query(L, R, s, m) + r->query(L, R, m + 1, e);
+    }
+    static void init(pst *node, i64 s, i64 e, vl *arr) {
+        if (s == e) {
+            node->val = arr ? (*arr)[s - 1] : 0;
+            return;
+        }
+        i64 m = (s + e) >> 1;
+        node->l = new pst();
+        node->r = new pst();
+        init(node->l, s, m, arr);
+        init(node->r, m + 1, e, arr);
+        node->val = node->l->val + node->r->val;
+    }
+};
+
+class pst_old {
     class pnd {
     public:
         pnd *l = nullptr, *r = nullptr;
@@ -499,18 +571,18 @@ class pst {
         ~pnd(){ if(deleteL) delete l; if(deleteR) delete r; }
     };
 public:
-    explicit pst(cint treeSize) : pst() {
+    explicit pst_old(cint treeSize) : pst_old() {
         n = treeSize;
         init(cur, 1, n);
         end_update();
     }
-    pst(cint treeSize, const v<int> &arr) : pst() {
+    pst_old(cint treeSize, const v<int> &arr) : pst_old() {
         n = treeSize;
         assert(arr.size() == treeSize);
         init(cur, 1, n, arr);
         end_update();
     }
-    ~pst() { for(auto &p : root) delete p; }
+    ~pst_old() { for(auto &p : root) delete p; }
     void update(cint tar, cint val) {
         assert(tar>0);
         update(pre, cur, 1, n, tar, val);
@@ -527,7 +599,7 @@ public:
         return query(root[rootN], 1, n, left, right);
     }
 private:
-    pst() {
+    pst_old() {
         root.push_back(new pnd());
         pre = nullptr; cur = root[0];
     }

@@ -79,8 +79,8 @@ signed main() {
         getline(chk, cs);
         if(as!=cs) {
             cout << "Mismatch at line " << line << endl;
-            int i=0;
-            while(as[i]==cs[i])i++;
+            int i = 0;
+            while(as[i]==cs[i]) i++;
             if(as.size()>98)as="too long, substr:"+as.substr(i>4?i-5:0,98);
             if(cs.size()>98)cs="too long, substr:"+cs.substr(i>4?i-5:0,98);
             cout << "wa: " << cs << endl;

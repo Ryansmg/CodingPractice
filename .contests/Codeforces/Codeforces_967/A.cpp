@@ -78,9 +78,14 @@ void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") 
 //@formatter:on
 #pragma endregion
 
-// prob
-// #tags
-
 i32 main() {
     fastio;
+    i64 T = input();
+    forn(tci, T) {
+        i64 n = input();
+        v<i64> arr(n+1, 0);
+        i64 ans = 0;
+        forn(i, n) ans = max(ans, ++arr[input()]);
+        println(n-ans);
+    }
 }

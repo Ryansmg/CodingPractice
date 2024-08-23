@@ -34,7 +34,7 @@ int query(v<int> &tree, int node, int start, int end, const int &left, const int
            + query(tree, node*2+1, (start+end)/2+1, end, left, right);
 }
 
-int curEn = 0;
+int curEn = 0; // visited[top] = true 하고 시작하기
 void dfs(int top, int d, v<bool> &visited, v<int> &en, v<ii> &range, v2<int> &con, v<int> &dist) {
     en[top] = ++curEn;
     dist[top] = d;

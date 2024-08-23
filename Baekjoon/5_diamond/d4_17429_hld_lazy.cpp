@@ -113,10 +113,8 @@ lazyprop seg;
 void dfs0(u32 v=1) {
     vis[v] = true;
     for(const u32 &j : conraw[v]) {
-        if(vis[j]) continue;
-        vis[j] = true;
-        con[v].push_back(j);
-        dfs0(j);
+        if(vis[j]) continue; vis[j] = true;
+        con[v].push_back(j); dfs0(j);
     }
 }
 

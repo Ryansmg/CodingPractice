@@ -78,9 +78,63 @@ void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") 
 //@formatter:on
 #pragma endregion
 
-// prob
-// #tags
+class iterSeg {
+public:
+    v<int> tree; int n=-1;
+    iterSeg() = default;
+    explicit iterSeg(const v<int> &arr) { n = (int) arr.size(); init(arr); }
+    explicit iterSeg(cint i) { tree = v<int>(i*2+10, 0); n = i; }
+    void inputInit() { tree = v<int>(2*n+10, 0); forf(i, n, 2*n-1) cin >> tree[i]; init(); }
+    /// 0 <= tar < n
+    void update(int tar, int val) {
+        assert(0 <= tar && tar < n);
+        tree[n+tar] = val;
+        for(int i = n+tar; i>1; i>>=1) tree[i>>1] = tree[i] * tree[i^1];
+    }
+    /// [l, r]
+    int query(int left, int right) {
+        assert(0 <= left && right < n);
+        right++;
+        int l = n+left, r = n+right, ans = 1;
+        for(; l<r; l>>=1, r>>=1) {
+            if(l&1) ans *= tree[l++];
+            if(r&1) ans *= tree[--r];
+        }
+        return ans;
+    }
+private:
+    void init() { for(int i=n-1; i>0; i--) tree[i] = tree[i<<1] * tree[i<<1|1]; }
+    void init(const v<int> &arr) {
+        tree = v<int>(2*n+10, 0);
+        for(int i=n, j=0; i<2*n; i++, j++) tree[i] = arr[j];
+        init();
+    }
+};
+
+// 5676. 음주 코딩
+// #segtree
 
 i32 main() {
-    fastio;
+    lfastio;
+    i64 n, k;
+    while(cin >> n) {
+        cin >> k;
+        vl arr;
+        forn(i, n) {
+            i64 a = input();
+            arr.push_back(a>0?1:a<0?-1:0);
+        }
+        iterSeg seg(arr);
+        char cs[] = {'-', '0', '+'};
+        forn(iu, k) {
+            char c = input<char>();
+            i64 i, j; cin >> i >> j;
+            if(c == 'C') {
+                j = j>0?1:j<0?-1:0;
+                seg.update(i-1, j);
+            }
+            else print(cs[seg.query(i-1, j-1)+1]);
+        }
+        println();
+    }
 }

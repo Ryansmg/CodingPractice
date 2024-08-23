@@ -31,13 +31,10 @@ const long long llmax = 9223372036854775807, INF = 1000000000000000000, inf = 30
 #define all(vec) (vec).begin(), (vec).end()
 template <typename T> using v = vector<T>; template <typename T> using v2 = v<v<T>>;
 using vl = v<i64>; using v2l = v2<i64>;
-template <typename T, typename T2=v<T>, typename T3=less<>> using pq = priority_queue<T, T2, T3>;
 using ii = array<i64, 2>; using iii = array<i64, 3>;
 template <typename T> using lim = std::numeric_limits<T>;
 
 template <typename T = i64> T input() {T t; cin >> t; return t;}
-template <typename T> T::value_type fpop(T &que) { auto t = que.front(); que.pop(); return t; }
-template <typename T> T::value_type tpop(T &st) { auto t = st.top(); st.pop(); return t; }
 template <typename T> void sort(v<T> &v) { sort(all(v)); }
 template <typename T> void compress(v<T> &v, const bool &autosort=true) { if(autosort) sort(all(v)); v.erase(unique(all(v)), v.end()); }
 template <typename T> T idx(const T &val, const v<T> &compressed) { return lower_bound(all(compressed), val) - compressed.begin(); }
@@ -78,9 +75,25 @@ void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") 
 //@formatter:on
 #pragma endregion
 
-// prob
-// #tags
+struct frac {
+    i32 a, b;
+    frac()=default;
+    frac(i32 A, i32 B) : a(A), b(B) {
+        i64 g = gcd_(a, b);
+        a /= g; b /= g;
+    }
+    frac operator+(const frac& e) const {
+        return {a*e.b+e.a*b, b*e.b};
+    }
+};
 
 i32 main() {
     fastio;
+    frac ans(0, 1);
+    i64 n = input();
+    forn(i, n) {
+        i64 a, b; cin >> a >> b;
+        ans = ans + frac(a, b);
+    }
+    print(ans.a, "/", ans.b);
 }

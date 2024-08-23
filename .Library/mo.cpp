@@ -21,7 +21,6 @@ struct query {
 };
 
 ll sqrtsize; //sqrt(쿼리의 개수)
-
 bool cmp(query a, query b) {
     if(a.i/sqrtsize == b.i/sqrtsize) {
         return a.j < b.j;
