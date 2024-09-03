@@ -10,8 +10,10 @@ using namespace std;
 #pragma GCC optimize("unroll-loops")
 #endif
 #ifdef LOCAL
+#define DEBUG_PRINT_ if(c==cdbg) cerr << t; else cout << t;
 #define lfastio print()
 #else
+#define DEBUG_PRINT_
 #define lfastio fastio
 #endif
 using i16 = short; using i32 = signed; using i64 = long long; using i128 = __int128;
@@ -29,17 +31,9 @@ const long long llmax = 9223372036854775807, INF = 1000000000000000000, inf = 30
 #define forn(name, val) for(i64 name = 0; name < val; name++)
 #define forf(name, start, end) for(i64 name = start; name <= end; name++)
 #define forr(name, start, end) for(i64 name = start; name >= end; name--)
-#define rep(n) forn(bit_Ly_S, n)
-#define rep2(n) forn(la_sh_Discord, n)
-
-i64 inRep_var_, inRep_var_2_;
-#define inRep() input(inRep_var_); forn(inRep_var_3_, inRep_var_)
-#define inRep2() input(inRep_var_2_); forn(inRep_var_4_, inRep_var_2_)
-
 #define all(vec) (vec).begin(), (vec).end()
 template <typename T> using v = vector<T>; template <typename T> using v2 = v<v<T>>;
 using vl = v<i64>; using v2l = v2<i64>;
-using vi = v<i32>;
 using ii = array<i64, 2>; using iii = array<i64, 3>;
 template <typename T> using lim = std::numeric_limits<T>;
 
@@ -59,23 +53,72 @@ template <typename T> void inputArr(v<T> &arr, i64 sz, bool clear = true) { if(c
 template <typename T> v<T> sorted_copy(v<T> arr) { sort(all(arr)); return arr; }
 template <typename T> v<T> compressed_copy(v<T> arr, const bool &autosort=true) { compress(arr, autosort); return arr; }
 
-enum Nl_{} nl_; istream& operator>>(istream& i, const Nl_&) { return i; } ostream& operator<<(ostream& i, const Nl_&) { return i; }
+enum Null_{} nl_; enum cdbg_{ useCerr, useCout } cdbg=useCerr, cloc=useCout;
+istream& operator>>(istream& i, const Null_&) { return i; } ostream& operator<<(ostream& i, const Null_&) { return i; }
+template <typename T> cdbg_& operator<<(cdbg_& c, const T& t) {
+    DEBUG_PRINT_
+    return c;
+}
 
-template <class A, class B=Nl_, class C=Nl_, class D=Nl_, class E=Nl_, class F=Nl_, class G=Nl_>
-void input(A &a, B &b=nl_, C &c=nl_, D &d=nl_, E &e=nl_, F &f=nl_, G &g=nl_) { cin >> a >> b >> c >> d >> e >> f >> g; }
-template <class A=Nl_, class B=Nl_, class C=Nl_, class D=Nl_, class E=Nl_, class F=Nl_, class G=Nl_, class H=Nl_, class I=Nl_, class J=Nl_>
-void print(A a=nl_, B b=nl_, C c=nl_, D d=nl_, E e=nl_, F f=nl_, G g=nl_, H h=nl_, I i=nl_, J j=nl_) { cout << a << b << c << d << e << f << g << h << i << j; }
-template <class A=Nl_, class B=Nl_, class C=Nl_, class D=Nl_, class E=Nl_, class F=Nl_, class G=Nl_, class H=Nl_, class I=Nl_, class J=Nl_>
-void println(A a=nl_, B b=nl_, C c=nl_, D d=nl_, E e=nl_, F f=nl_, G g=nl_, H h=nl_, I i=nl_, J j=nl_) { print(a, b, c, d, e, f, g, h, i, j); cout << '\n'; }
+template <class A, class B=Null_, class C=Null_, class D=Null_, class E=Null_, class F=Null_, class G=Null_>
+void input(A &a, B &b=nl_, C &c=nl_, D &d=nl_, E &e=nl_, F &f=nl_, G &g=nl_) {
+    cin >> a >> b >> c >> d >> e >> f >> g;
+}
+template <class A=Null_, class B=Null_, class C=Null_, class D=Null_, class E=Null_, class F=Null_, class G=Null_, class H=Null_, class I=Null_, class J=Null_>
+void print(A a=nl_, B b=nl_, C c=nl_, D d=nl_, E e=nl_, F f=nl_, G g=nl_, H h=nl_, I i=nl_, J j=nl_) {
+    cout << a << b << c << d << e << f << g << h << i << j;
+}
+template <class A=Null_, class B=Null_, class C=Null_, class D=Null_, class E=Null_, class F=Null_, class G=Null_, class H=Null_, class I=Null_, class J=Null_>
+void println(A a=nl_, B b=nl_, C c=nl_, D d=nl_, E e=nl_, F f=nl_, G g=nl_, H h=nl_, I i=nl_, J j=nl_) {
+    print(a, b, c, d, e, f, g, h, i, j); cout << '\n';
+}
 template <typename T>
-void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") { for(T i : v) cout << i << sep; cout << end; }
+void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") {
+    for(T i : v) cout << i << sep; cout << end;
+}
 //@formatter:on
 #pragma endregion
 
-// prob
-// #tags
-
 i32 main() {
     fastio;
-
+    i64 T = input();
+    while(T--) {
+        i64 n = input();
+        str s = input<str>();
+        if(n==1) {
+            println("1");
+            continue;
+        }
+        if(~n&1) {
+            vl odd(30, 0); i64 oddMax = 0;
+            vl even(30, 0); i64 evenMax = 0;
+            forn(i, n) {
+                if(~i&1) oddMax = max(oddMax, ++odd[s[i]-'a']);
+                else evenMax = max(evenMax, ++even[s[i]-'a']);
+            }
+            println(n-oddMax-evenMax);
+        } else {
+            v2l arr(n, vl(30, 0)), rev(n, vl(30, 0));
+            arr[0][s[0]-'a']++; arr[1][s[1]-'a']++;
+            forf(i, 2, n-1) {
+                arr[i] = arr[i-2];
+                arr[i][s[i]-'a']++;
+            }
+            rev[n-1][s[n-1]-'a']++; rev[n-2][s[n-2]-'a']++;
+            forr(i, n-3, 0) {
+                rev[i] = rev[i+2];
+                rev[i][s[i]-'a']++;
+            }
+            i64 ans = 0;
+            forn(i, n) {
+                i64 temp = 0, temp2 = 0;
+                forn(j, 30) {
+                    temp = max(temp, (i<=0?0:arr[i-1][j]) + (i>=n-2?0:rev[i+2][j]));
+                    temp2 = max(temp2, (i<=1?0:arr[i-2][j]) + (i>=n-1?0:rev[i+1][j]));
+                }
+                ans = max(ans, temp+temp2);
+            }
+            println(n-ans);
+        }
+    }
 }

@@ -52,7 +52,7 @@ template <typename T> T min(T a, T b, T c, T d, T e=lim<T>::max(), T f=lim<T>::m
 template <typename T> T max(T a, T b, T c) { return max(a, max(b, c)); }
 template <typename T> T max(T a, T b, T c, T d, T e=lim<T>::min(), T f=lim<T>::min()) { return max(max(a, b), max(c, d), max(e, f)); }
 
-enum Null_{} null_; enum cdbg_{ useCerr, useCout } cdbg=useCerr, cloc=useCout;
+enum Null_{} nl_; enum cdbg_{ useCerr, useCout } cdbg=useCerr, cloc=useCout;
 istream& operator>>(istream& i, const Null_&) { return i; } ostream& operator<<(ostream& i, const Null_&) { return i; }
 template <typename T> cdbg_& operator<<(cdbg_& c, const T& t) {
     DEBUG_PRINT_
@@ -60,15 +60,15 @@ template <typename T> cdbg_& operator<<(cdbg_& c, const T& t) {
 }
 
 template <class A, class B=Null_, class C=Null_, class D=Null_, class E=Null_, class F=Null_, class G=Null_>
-void input(A &a, B &b=null_, C &c=null_, D &d=null_, E &e=null_, F &f=null_, G &g=null_) {
+void input(A &a, B &b=nl_, C &c=nl_, D &d=nl_, E &e=nl_, F &f=nl_, G &g=nl_) {
     cin >> a >> b >> c >> d >> e >> f >> g;
 }
 template <class A=Null_, class B=Null_, class C=Null_, class D=Null_, class E=Null_, class F=Null_, class G=Null_, class H=Null_, class I=Null_, class J=Null_>
-void print(A a=null_, B b=null_, C c=null_, D d=null_, E e=null_, F f=null_, G g=null_, H h=null_, I i=null_, J j=null_) {
+void print(A a=nl_, B b=nl_, C c=nl_, D d=nl_, E e=nl_, F f=nl_, G g=nl_, H h=nl_, I i=nl_, J j=nl_) {
     cout << a << b << c << d << e << f << g << h << i << j;
 }
 template <class A=Null_, class B=Null_, class C=Null_, class D=Null_, class E=Null_, class F=Null_, class G=Null_, class H=Null_, class I=Null_, class J=Null_>
-void println(A a=null_, B b=null_, C c=null_, D d=null_, E e=null_, F f=null_, G g=null_, H h=null_, I i=null_, J j=null_) {
+void println(A a=nl_, B b=nl_, C c=nl_, D d=nl_, E e=nl_, F f=nl_, G g=nl_, H h=nl_, I i=nl_, J j=nl_) {
     print(a, b, c, d, e, f, g, h, i, j); cout << '\n';
 }
 template <typename T>

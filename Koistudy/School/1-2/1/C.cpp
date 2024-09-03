@@ -1,7 +1,7 @@
 #pragma region macros
 //@formatter:off
 #define GCC_OPTIMIZE_ENABLE false
-#define ENABLE_CPP20_MACRO true
+#define ENABLE_CPP20_MACRO false
 
 #include <bits/stdc++.h>
 using namespace std;
@@ -10,8 +10,10 @@ using namespace std;
 #pragma GCC optimize("unroll-loops")
 #endif
 #ifdef LOCAL
+#define DEBUG_PRINT_ if(c==cdbg) cerr << t; else cout << t;
 #define lfastio print()
 #else
+#define DEBUG_PRINT_
 #define lfastio fastio
 #endif
 using i16 = short; using i32 = signed; using i64 = long long; using i128 = __int128;
@@ -29,17 +31,9 @@ const long long llmax = 9223372036854775807, INF = 1000000000000000000, inf = 30
 #define forn(name, val) for(i64 name = 0; name < val; name++)
 #define forf(name, start, end) for(i64 name = start; name <= end; name++)
 #define forr(name, start, end) for(i64 name = start; name >= end; name--)
-#define rep(n) forn(bit_Ly_S, n)
-#define rep2(n) forn(la_sh_Discord, n)
-
-i64 inRep_var_, inRep_var_2_;
-#define inRep() input(inRep_var_); forn(inRep_var_3_, inRep_var_)
-#define inRep2() input(inRep_var_2_); forn(inRep_var_4_, inRep_var_2_)
-
 #define all(vec) (vec).begin(), (vec).end()
 template <typename T> using v = vector<T>; template <typename T> using v2 = v<v<T>>;
 using vl = v<i64>; using v2l = v2<i64>;
-using vi = v<i32>;
 using ii = array<i64, 2>; using iii = array<i64, 3>;
 template <typename T> using lim = std::numeric_limits<T>;
 
@@ -58,24 +52,48 @@ template <typename T = i64> v<T> inputArr(i64 sz) { v<T> a; forn(i,sz) a.push_ba
 template <typename T> void inputArr(v<T> &arr, i64 sz, bool clear = true) { if(clear) arr.clear(); forn(i,sz) arr.push_back(input<T>()); }
 template <typename T> v<T> sorted_copy(v<T> arr) { sort(all(arr)); return arr; }
 template <typename T> v<T> compressed_copy(v<T> arr, const bool &autosort=true) { compress(arr, autosort); return arr; }
+template <typename T> T min(T a, T b, T c) { return min(a, min(b, c)); }
+template <typename T> T min(T a, T b, T c, T d, T e=lim<T>::max(), T f=lim<T>::max()) { return min(min(a, b), min(c, d), min(e, f)); }
+template <typename T> T max(T a, T b, T c) { return max(a, max(b, c)); }
+template <typename T> T max(T a, T b, T c, T d, T e=lim<T>::min(), T f=lim<T>::min()) { return max(max(a, b), max(c, d), max(e, f)); }
 
-enum Nl_{} nl_; istream& operator>>(istream& i, const Nl_&) { return i; } ostream& operator<<(ostream& i, const Nl_&) { return i; }
+enum Null_{} nl_; enum cdbg_{ useCerr, useCout } cdbg=useCerr, cloc=useCout;
+istream& operator>>(istream& i, const Null_&) { return i; } ostream& operator<<(ostream& i, const Null_&) { return i; }
+template <typename T> cdbg_& operator<<(cdbg_& c, const T& t) {
+    DEBUG_PRINT_
+    return c;
+}
 
-template <class A, class B=Nl_, class C=Nl_, class D=Nl_, class E=Nl_, class F=Nl_, class G=Nl_>
-void input(A &a, B &b=nl_, C &c=nl_, D &d=nl_, E &e=nl_, F &f=nl_, G &g=nl_) { cin >> a >> b >> c >> d >> e >> f >> g; }
-template <class A=Nl_, class B=Nl_, class C=Nl_, class D=Nl_, class E=Nl_, class F=Nl_, class G=Nl_, class H=Nl_, class I=Nl_, class J=Nl_>
-void print(A a=nl_, B b=nl_, C c=nl_, D d=nl_, E e=nl_, F f=nl_, G g=nl_, H h=nl_, I i=nl_, J j=nl_) { cout << a << b << c << d << e << f << g << h << i << j; }
-template <class A=Nl_, class B=Nl_, class C=Nl_, class D=Nl_, class E=Nl_, class F=Nl_, class G=Nl_, class H=Nl_, class I=Nl_, class J=Nl_>
-void println(A a=nl_, B b=nl_, C c=nl_, D d=nl_, E e=nl_, F f=nl_, G g=nl_, H h=nl_, I i=nl_, J j=nl_) { print(a, b, c, d, e, f, g, h, i, j); cout << '\n'; }
+template <class A, class B=Null_, class C=Null_, class D=Null_, class E=Null_, class F=Null_, class G=Null_>
+void input(A &a, B &b=nl_, C &c=nl_, D &d=nl_, E &e=nl_, F &f=nl_, G &g=nl_) {
+    cin >> a >> b >> c >> d >> e >> f >> g;
+}
+template <class A=Null_, class B=Null_, class C=Null_, class D=Null_, class E=Null_, class F=Null_, class G=Null_, class H=Null_, class I=Null_, class J=Null_>
+void print(A a=nl_, B b=nl_, C c=nl_, D d=nl_, E e=nl_, F f=nl_, G g=nl_, H h=nl_, I i=nl_, J j=nl_) {
+    cout << a << b << c << d << e << f << g << h << i << j;
+}
+template <class A=Null_, class B=Null_, class C=Null_, class D=Null_, class E=Null_, class F=Null_, class G=Null_, class H=Null_, class I=Null_, class J=Null_>
+void println(A a=nl_, B b=nl_, C c=nl_, D d=nl_, E e=nl_, F f=nl_, G g=nl_, H h=nl_, I i=nl_, J j=nl_) {
+    print(a, b, c, d, e, f, g, h, i, j); cout << '\n';
+}
 template <typename T>
-void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") { for(T i : v) cout << i << sep; cout << end; }
+void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") {
+    for(T i : v) cout << i << sep; cout << end;
+}
 //@formatter:on
 #pragma endregion
 
-// prob
-// #tags
-
+i64 n, k;
 i32 main() {
-    fastio;
-
+    fastio; input(n, k);
+    struct t {
+        i64 a = 0, b = 0, c = 0; t() { input(a, b, c); }
+        t& operator->*(const v<iii>&) { return *this; }
+        t operator++(i32) const { return *this; }
+        t operator++() const { return *this; }
+        t* operator--(i32) { return this; }
+        t o() { return *this; }
+        void operator()(i64, i64, ii) const { println(((n+a-1)/a)+c*((((n+a-1)/a)+b-1)/b-1)); }
+    };
+    forn(i, k) (++(t()->*v<iii>()))++--->o()(n, k, {n, k});
 }
