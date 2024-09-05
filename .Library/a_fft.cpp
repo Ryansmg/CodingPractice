@@ -82,12 +82,54 @@ void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") 
 //@formatter:on
 #pragma endregion
 
+namespace FFT_SLOW {
+    using cpl = complex<f128>;
+    const f128 pi = 3.14159265358979323846;
+    void fft(v<cpl> &a, bool inv) {
+        i64 n = a.size();
+        for(i64 i = 1, j = 0; i < n; i++) {
+            i64 bit = n >> 1;
+            for(; j >= bit; bit >>= 1) j -= bit;
+            j += bit;
+            if(i < j) swap(a[i], a[j]);
+        }
+        for(i64 len = 2; len <= n; len <<= 1) {
+            f128 ang = 2 * pi / len * (inv ? -1 : 1);
+            cpl wlen(cos(ang), sin(ang));
+            for(i64 i = 0; i < n; i += len) {
+                cpl w(1);
+                forn(j, len / 2) {
+                    cpl u = a[i + j], v = a[i + j + len / 2] * w;
+                    a[i + j] = u + v;
+                    a[i + j + len / 2] = u - v;
+                    w *= wlen;
+                }
+            }
+        }
+        if(inv) forn(i, n) a[i] /= n;
+    }
+
+    template<typename T>
+    v<T> operator*(const v<T> &a, const v<T> &b) {
+        v<cpl> fa(all(a)), fb(all(b));
+        i64 n = 1, m = a.size() + b.size() - 1;
+        while(n < m) n <<= 1;
+        fa.resize(n); fb.resize(n);
+        fft(fa, false); fft(fb, false);
+        forn(i, n) fa[i] *= fb[i];
+        fft(fa, true);
+        v<T> ret(m);
+        forn(i, m) ret[i] = static_cast<T>(llround(fa[i].real()));
+        return ret;
+    }
+}
+
 namespace FFT {
     using cpl = complex<f64>;
-#define sz(v) ((i32)v.size())
+    #define sz(v) ((i32)v.size())
     void fft(v<cpl>& a) {
         i32 n = sz(a), L = 31 - __builtin_clz(n);
-        static vector<complex<f128>> R(2, 1);
+        static v<complex<f128>> R(2, 1);
         static v<cpl> rt(2, 1); // (^ 10% faster if double)
         for(i32 k = 2; k < n; k *= 2) {
             R.resize(n); rt.resize(n);
@@ -128,44 +170,43 @@ namespace FFT {
     }
 }
 
-namespace FFT_SLOW {
-    using cpl = complex<f128>;
-    const f128 pi = 3.14159265358979323846;
-    void fft(v<cpl> &a, bool inv) {
-        i64 n = a.size();
-        for(i64 i = 1, j = 0; i < n; i++) {
-            i64 bit = n >> 1;
-            for(; j >= bit; bit >>= 1) j -= bit;
+namespace NTT {
+    // 3, 998244353
+    // 3, 2281701377
+    void ntt(vl &f, bool inv, i64 w, i64 mod){
+        i64 n = f.size();
+        for(i64 i=1, j=0; i<n; i++) {
+            i64 bit = (n >> 1);
+            while(j >= bit) { j -= bit; bit >>= 1; }
             j += bit;
-            if(i < j) swap(a[i], a[j]);
+            if(i < j) swap(f[i], f[j]);
         }
-        for(i64 len = 2; len <= n; len <<= 1) {
-            f128 ang = 2 * pi / len * (inv ? -1 : 1);
-            cpl wlen(cos(ang), sin(ang));
-            for(i64 i = 0; i < n; i += len) {
-                cpl w(1);
-                forn(j, len / 2) {
-                    cpl u = a[i + j], v = a[i + j + len / 2] * w;
-                    a[i + j] = u + v;
-                    a[i + j + len / 2] = u - v;
-                    w *= wlen;
+        vl root(n >> 1);
+        i64 wp = pow_(w, (mod - 1) / n, mod); if(inv) wp = pow_(wp, mod - 2, mod);
+        root[0] = 1; for(i64 i=1; i < (n >> 1); i++) root[i] = root[i-1] * wp % mod;
+        for(i64 i=2; i<=n; i<<=1){
+            i64 step = n / i;
+            for(i64 j=0; j<n; j+=i){
+                for(i64 k=0; k < (i >> 1); k++){
+                    i64 u = f[j | k], v = f[j | k | i >> 1] * root[step * k] % mod;
+                    f[j | k] = (u + v) % mod;
+                    f[j | k | i >> 1] = (u - v) % mod;
+                    if(f[j | k | i >> 1] < 0) f[j | k | i >> 1] += mod;
                 }
             }
         }
-        if(inv) forn(i, n) a[i] /= n;
+        i64 t = pow_(n, mod - 2, mod);
+        if(inv) forn(i, n) f[i] = f[i] * t % mod;
     }
 
-    template<typename T>
-    v<T> operator*(const v<T> &a, const v<T> &b) {
-        v<cpl> fa(all(a)), fb(all(b));
-        i64 n = 1, m = a.size() + b.size() - 1;
-        while(n < m) n <<= 1;
-        fa.resize(n); fb.resize(n);
-        fft(fa, false); fft(fb, false);
-        forn(i, n) fa[i] *= fb[i];
-        fft(fa, true);
-        v<T> ret(m);
-        forn(i, m) ret[i] = static_cast<T>(llround(fa[i].real()));
-        return ret;
+    vl multiply(const vl &_a, const vl &_b, i64 w, i64 mod){
+        vl a(all(_a)), b(all(_b));
+        i64 n = 2;
+        while(n < a.size() + b.size()) n <<= 1;
+        a.resize(n); b.resize(n);
+        ntt(a, false, w, mod); ntt(b, false, w, mod);
+        forn(i, n) a[i] = a[i] * b[i] % mod;
+        ntt(a, true, w, mod);
+        return a;
     }
 }

@@ -16,14 +16,14 @@ using namespace std;
 #endif
 using i16 = short; using i32 = signed; using i64 = long long; using i128 = __int128;
 using u16 = unsigned short; using u32 = unsigned; using u64 = unsigned long long; using u128 = unsigned __int128;
-using f32 = float; using f64 = double; using f128 = long double;
+using f32 = float; using f64 = double; using f128 = long double; using F128 = __float128;
 using str = string;
 #define int i64
 #define uint u64
 #define ci64 const i64 &
 #define cint ci64
 #define ci32 const i32 &
-const long long llmax = 9223372036854775807, INF = 1000000000000000000, inf = 3000000000;
+constexpr i64 llmax = 9223372036854775807, INF = 1000000000000000000, inf = 3000000000;
 
 #define fastio ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr)
 #define forn(name, val) for(i64 name = 0; name < val; name++)
@@ -38,17 +38,19 @@ i64 inRep_var_, inRep_var_2_;
 
 #define all(vec) (vec).begin(), (vec).end()
 template <typename T> using v = vector<T>; template <typename T> using v2 = v<v<T>>;
-using vl = v<i64>; using v2l = v2<i64>;
-using vi = v<i32>;
+using vl = v<i64>; using v2l = v2<i64>; using vi = v<i32>;
+#define pb push_back
+#define eb emplace_back
 using ii = array<i64, 2>; using iii = array<i64, 3>;
 template <typename T> using lim = std::numeric_limits<T>;
 
-template <typename T = i64> T input() {T t; cin >> t; return t;}
+template <typename T = i64> T input() {T t; cin >> t; return t;} template <typename T = i64> T in() {T t; cin >> t; return t;}
 #if ENABLE_CPP20_MACRO
 template <typename T, typename T2=v<T>, typename T3=less<>> using pq = priority_queue<T, T2, T3>;
 template <typename T> T::value_type fpop(T &que) { auto t = que.front(); que.pop(); return t; }
 template <typename T> T::value_type tpop(T &st) { auto t = st.top(); st.pop(); return t; }
 #endif
+template <typename T> void reverse(v<T> &v) { reverse(all(v)); }
 template <typename T> void sort(v<T> &v) { sort(all(v)); }
 template <typename T> void compress(v<T> &v, const bool &autosort=true) { if(autosort) sort(all(v)); v.erase(unique(all(v)), v.end()); }
 template <typename T> T idx(const T &val, const v<T> &compressed) { return lower_bound(all(compressed), val) - compressed.begin(); }
@@ -63,12 +65,14 @@ enum Nl_{} nl_; istream& operator>>(istream& i, const Nl_&) { return i; } ostrea
 
 template <class A, class B=Nl_, class C=Nl_, class D=Nl_, class E=Nl_, class F=Nl_, class G=Nl_>
 void input(A &a, B &b=nl_, C &c=nl_, D &d=nl_, E &e=nl_, F &f=nl_, G &g=nl_) { cin >> a >> b >> c >> d >> e >> f >> g; }
+template <class A, class B=Nl_, class C=Nl_, class D=Nl_, class E=Nl_, class F=Nl_, class G=Nl_>
+void in(A &a, B &b=nl_, C &c=nl_, D &d=nl_, E &e=nl_, F &f=nl_, G &g=nl_) { cin >> a >> b >> c >> d >> e >> f >> g; }
 template <class A=Nl_, class B=Nl_, class C=Nl_, class D=Nl_, class E=Nl_, class F=Nl_, class G=Nl_, class H=Nl_, class I=Nl_, class J=Nl_>
 void print(A a=nl_, B b=nl_, C c=nl_, D d=nl_, E e=nl_, F f=nl_, G g=nl_, H h=nl_, I i=nl_, J j=nl_) { cout << a << b << c << d << e << f << g << h << i << j; }
 template <class A=Nl_, class B=Nl_, class C=Nl_, class D=Nl_, class E=Nl_, class F=Nl_, class G=Nl_, class H=Nl_, class I=Nl_, class J=Nl_>
 void println(A a=nl_, B b=nl_, C c=nl_, D d=nl_, E e=nl_, F f=nl_, G g=nl_, H h=nl_, I i=nl_, J j=nl_) { print(a, b, c, d, e, f, g, h, i, j); cout << '\n'; }
 template <typename T>
-void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") { for(T i : v) cout << i << sep; cout << end; }
+void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") { for(const T &i : v) cout << i << sep; cout << end; }
 //@formatter:on
 #pragma endregion
 

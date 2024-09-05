@@ -1,8 +1,5 @@
-#include <bits/stdc++.h>
-using namespace std;
-
-int main()
-{
-    cout << __gcd(-4,-6);
-    return 0;
-}
+int a = 1;
+int b = a + a;
+int c = a + a + a + a;
+int d = a + a + a + a + a + a + a + a;
+int e = a + a + a + a + a + a + a + a + a + a + a + a + a + a + a + a;
