@@ -81,79 +81,101 @@ void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") 
 //@formatter:on
 #pragma endregion
 
-class pollard_rho {
+// 13546. 수열과 쿼리 4
+// #mo #sqrt_decomposition
+
+i64 sqrtSize;
+struct query {
+    i64 l, r, x;
+    bool operator<(const query& other) const {
+        if(l/sqrtSize == other.l/sqrtSize)
+            return r/sqrtSize < other.r/sqrtSize;
+        return l/sqrtSize < other.l/sqrtSize;
+    }
+};
+
+class sqrtArray {
+    int n, sq;
+    v<int> arr, bucket;
 public:
-    explicit pollard_rho() {
-        base = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41};
-        gen = mt19937(random_device()());
+    explicit sqrtArray(int size, int bucketSize=-1) :
+            n(size), sq(bucketSize==-1?(int)sqrt(size):bucketSize){
+        arr = v<int>(n+1,0);
+        bucket = v<int>(n/sq+2,0);
     }
-    bool isPrime(i128 n) {
-        if(n<=1) return false;
-        for(const i128 &a: base) if (!_isPrime(n, a)) return false;
-        return true;
+    void add(int pos, int val) {
+        if(!pos) return;
+        bucket[pos/sq] += val;
+        arr[pos] += val;
     }
-    i128 factorize(i128 n) {
-        assert(n>=2);
-        if (n % 2 == 0) return 2;
-        if (isPrime(n)) return n;
-        i128 x = dis(gen) % (n - 2) + 2, y = x, c = dis(gen) % 10 + 1, g = 1;
-        while (g == 1) {
-            x = (x * x % n + c) % n;
-            y = (y * y % n + c) % n;
-            y = (y * y % n + c) % n;
-            g = gcd(x - y > 0 ? x - y : y - x, n);
-            if (g == n) return factorize(n);
+    int query() {
+        forr(i, n/sq+1, 0) {
+            if(bucket[i]) {
+                forr(j, i*sq+sq-1, i*sq) {
+                    if(j > n) continue;
+                    if(arr[j]) return j;
+                }
+            }
         }
-        if (isPrime(g)) return g;
-        else return factorize(g);
-    }
-    static i128 pow(i128 a, i128 b) {
-        return pow(a, b, lim<i128>::max());
-    }
-    static i128 pow(i128 a, i128 b, i128 mod) {
-        a %= mod;
-        i128 ans = 1;
-        while (b) {
-            if (b & 1) ans = ans * a % mod;
-            b >>= 1;
-            a = a * a % mod;
-        }
-        return ans;
-    }
-    static i128 gcd(i128 a, i128 b) {
-        if (a < b) swap(a, b);
-        while (b != 0) {
-            i128 r = a % b;
-            a = b;
-            b = r;
-        }
-        return a;
-    }
-private:
-    v<i128> base;
-    mt19937 gen;
-    uniform_int_distribution<i128> dis;
-    static bool _isPrime(i128 n, i128 a) {
-        if (a % n == 0) return true;
-        i128 d = n - 1;
-        while (true) {
-            i128 temp = pow(a, d, n);
-            if (temp == n - 1) return true;
-            if (d % 2 == 1) return (temp == 1 || temp == n - 1);
-            d /= 2;
-        }
+        return 0;
     }
 };
 
-//short
-struct prs{
-    prs(){B={2,3,5,7,11,13,17,19,23,29,31,37,41};E=mt19937(random_device()());}bool isPrime(i128 n){if(n<=1)return 0;for(const i128 &a:B)if(!_(n,a))return 0;return 1;}
-    i128 factorize(const i128&n){if(n%2==0)return 2;if(isPrime(n))return n;i128 x=D(E)%(n-2)+2,y=x,c=D(E)%10+1,g=1;while(g==1){x=(x*x%n+c)%n;y=(y*y%n+c)%n;y=(y*y%n
-                                                                                                                                                              +c)%n;g=G(x-y>0?x-y:y-x,n);if(g==n)return factorize(n);}if(isPrime(g))return g;else return factorize(g);}i128 p(i128 a,i128 b,i128 m){a%=m;i128 z=1;while(
-                b){if(b&1)z=z*a%m;b>>=1;a=a*a%m;}return z;}i128 G(i128 a,i128 b) {if(a<b)swap(a,b);while(b){i128 r=a%b;a=b;b=r;}return a;}v<i128>B;mt19937 E;uniform_int_distribution
-            <i128>D;bool _(i128 n,i128 a){if(a%n==0)return 1;i128 d=n-1;while(1){i128 t=p(a,d,n);if(t==n-1)return 1;if(d%2)return(t==1||t==n-1);d/=2;}}
-};
+i32 main() {
+    fastio;
+    i64 n, k; in(n, k);
+    vl arr = inArr(n);
+    sqrtSize = sqrt(n);
+    i64 m = in();
+    v<query> queries;
+    vl ans(m);
+    forn(i, m) { i64 a, b; in(a, b); queries.eb(a-1, b-1, i); }
+    sort(queries);
+    v<deque<i64>> indDqs(100001, deque<i64>());
+    sqrtArray sq(100001);
 
-signed main() {
+    auto sub = [&](i64 i) -> i64{
+        if(indDqs[arr[i]].empty()) return 0;
+        return indDqs[arr[i]].back() - indDqs[arr[i]].front();
+    };
 
+    forf(i, queries[0].l, queries[0].r) {
+        sq.add(sub(i), -1);
+        indDqs[arr[i]].eb(i);
+        sq.add(sub(i), 1);
+        ans[queries[0].x] = sq.query();
+    }
+    auto [l, r, _] = queries[0];
+
+    forf(i, 1, m-1) {
+        auto [nl, nr, x] = queries[i];
+        while(l > nl) {
+            l--;
+            sq.add(sub(l), -1);
+            indDqs[arr[l]].ef(l);
+            sq.add(sub(l), 1);
+        }
+        while(r < nr) {
+            r++;
+            sq.add(sub(r), -1);
+            indDqs[arr[r]].eb(r);
+            sq.add(sub(r), 1);
+        }
+        while(l < nl) {
+            assert(indDqs[arr[l]].front() == l);
+            sq.add(sub(l), -1);
+            indDqs[arr[l]].pop_front();
+            sq.add(sub(l), 1);
+            l++;
+        }
+        while(r > nr) {
+            assert(indDqs[arr[r]].back() == r);
+            sq.add(sub(r), -1);
+            indDqs[arr[r]].pop_back();
+            sq.add(sub(r), 1);
+            r--;
+        }
+        ans[x] = sq.query();
+    }
+    printArr(ans, "\n");
 }

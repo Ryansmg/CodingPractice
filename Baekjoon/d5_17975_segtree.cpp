@@ -81,79 +81,113 @@ void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") 
 //@formatter:on
 #pragma endregion
 
-class pollard_rho {
+class nd {
 public:
-    explicit pollard_rho() {
-        base = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41};
-        gen = mt19937(random_device()());
+    int lval, rval, val, allval;
+    nd(int a, int b, int c, int d) : lval(a), rval(b), val(c), allval(d){}
+};
+class goldmineSeg {
+    vector<nd> tree;
+    int n;
+public:
+    explicit goldmineSeg(const int &treeSize) {
+        tree = v<nd>(4*treeSize, {0, 0, 0, 0});
+        n = treeSize;
     }
-    bool isPrime(i128 n) {
-        if(n<=1) return false;
-        for(const i128 &a: base) if (!_isPrime(n, a)) return false;
-        return true;
+    explicit goldmineSeg(const v<int> &a) : goldmineSeg((int) a.size()) {
+        init(a, 1, 1, n);
     }
-    i128 factorize(i128 n) {
-        assert(n>=2);
-        if (n % 2 == 0) return 2;
-        if (isPrime(n)) return n;
-        i128 x = dis(gen) % (n - 2) + 2, y = x, c = dis(gen) % 10 + 1, g = 1;
-        while (g == 1) {
-            x = (x * x % n + c) % n;
-            y = (y * y % n + c) % n;
-            y = (y * y % n + c) % n;
-            g = gcd(x - y > 0 ? x - y : y - x, n);
-            if (g == n) return factorize(n);
-        }
-        if (isPrime(g)) return g;
-        else return factorize(g);
+    goldmineSeg(const v<int> &a, const int &treeSize) : goldmineSeg(treeSize) {
+        assert(a.size() == treeSize);
+        init(a, 1, 1, n);
     }
-    static i128 pow(i128 a, i128 b) {
-        return pow(a, b, lim<i128>::max());
-    }
-    static i128 pow(i128 a, i128 b, i128 mod) {
-        a %= mod;
-        i128 ans = 1;
-        while (b) {
-            if (b & 1) ans = ans * a % mod;
-            b >>= 1;
-            a = a * a % mod;
-        }
-        return ans;
-    }
-    static i128 gcd(i128 a, i128 b) {
-        if (a < b) swap(a, b);
-        while (b != 0) {
-            i128 r = a % b;
-            a = b;
-            b = r;
-        }
-        return a;
-    }
-private:
-    v<i128> base;
-    mt19937 gen;
-    uniform_int_distribution<i128> dis;
-    static bool _isPrime(i128 n, i128 a) {
-        if (a % n == 0) return true;
-        i128 d = n - 1;
-        while (true) {
-            i128 temp = pow(a, d, n);
-            if (temp == n - 1) return true;
-            if (d % 2 == 1) return (temp == 1 || temp == n - 1);
-            d /= 2;
+    void update(const int &tar, const int &diff) { update(1, 1, n, tar, diff); }
+    nd query(const int &left, const int &right) { return query(1, 1, n, left, right); }
+protected:
+    void init(const vector<int> &a, int node, int start, int end) {
+        if(start==end) {
+            tree[node] = {a[start-1], a[start-1], a[start-1], a[start-1]};
+        } else {
+            init(a, node*2, start, (start+end)/2);
+            init(a, node*2+1, (start+end)/2+1, end);
+            tree[node] = {0,0,0,0};
+            tree[node].lval = max(tree[node*2].lval, tree[node*2].allval + tree[node*2+1].lval);
+            tree[node].rval = max(tree[node*2+1].rval, tree[node*2+1].allval + tree[node*2].rval);
+            tree[node].val = max(max(tree[node*2].val, tree[node*2+1].val), tree[node*2].rval + tree[node*2+1].lval);
+            tree[node].allval = tree[node*2].allval + tree[node*2+1].allval;
         }
     }
+    void update(int node, int start, int end, const int &index, const int &diff) {
+        if(index<start || end<index) return;
+        if(start==end) {
+            tree[node].lval += diff;
+            tree[node].rval += diff;
+            tree[node].val += diff;
+            tree[node].allval += diff;
+        } else {
+            update(node*2, start, (start+end)/2, index, diff);
+            update(node*2+1, (start+end)/2+1, end, index, diff);
+            tree[node] = {0,0,0,0};
+            tree[node].lval = max(tree[node*2].lval, tree[node*2].allval + tree[node*2+1].lval);
+            tree[node].rval = max(tree[node*2+1].rval, tree[node*2+1].allval + tree[node*2].rval);
+            tree[node].val = max(max(tree[node*2].val, tree[node*2+1].val), tree[node*2].rval + tree[node*2+1].lval);
+            tree[node].allval = tree[node*2].allval + tree[node*2+1].allval;
+        }
+    }
+    nd query(int node, int start, int end, const int &left, const int &right) {
+        if(end < left || right < start) return {0, -inf, -inf, -inf};
+        if(left <= start && end <= right) return tree[node];
+        nd f = query(node*2, start, (start+end)/2, left, right);
+        nd s = query(node*2+1, (start+end)/2+1, end, left, right);
+        nd c = {0, 0, 0, 0};
+        c.lval = max(f.lval, f.allval + s.lval);
+        c.rval = max(s.rval, s.allval + f.rval);
+        c.val = max(max(f.val, s.val), f.rval + s.lval);
+        c.allval = f.allval + s.allval;
+        return c;
+    }
+
 };
 
-//short
-struct prs{
-    prs(){B={2,3,5,7,11,13,17,19,23,29,31,37,41};E=mt19937(random_device()());}bool isPrime(i128 n){if(n<=1)return 0;for(const i128 &a:B)if(!_(n,a))return 0;return 1;}
-    i128 factorize(const i128&n){if(n%2==0)return 2;if(isPrime(n))return n;i128 x=D(E)%(n-2)+2,y=x,c=D(E)%10+1,g=1;while(g==1){x=(x*x%n+c)%n;y=(y*y%n+c)%n;y=(y*y%n
-                                                                                                                                                              +c)%n;g=G(x-y>0?x-y:y-x,n);if(g==n)return factorize(n);}if(isPrime(g))return g;else return factorize(g);}i128 p(i128 a,i128 b,i128 m){a%=m;i128 z=1;while(
-                b){if(b&1)z=z*a%m;b>>=1;a=a*a%m;}return z;}i128 G(i128 a,i128 b) {if(a<b)swap(a,b);while(b){i128 r=a%b;a=b;b=r;}return a;}v<i128>B;mt19937 E;uniform_int_distribution
-            <i128>D;bool _(i128 n,i128 a){if(a%n==0)return 1;i128 d=n-1;while(1){i128 t=p(a,d,n);if(t==n-1)return 1;if(d%2)return(t==1||t==n-1);d/=2;}}
-};
+// #17975. Strike Zone
+// #coordinate_compression #sweeping #segtree
 
 signed main() {
-
+    fastio;
+    v<int> compx, compy;
+    int a, b, c;
+    queue<ii> p1, p2;
+    i64 n1, n2; cin >> n1;
+    rep(n1) in(a, b), p1.push({a, b});
+    in(n2);
+    rep(n2) in(a, b), p2.push({a, b});
+    i64 c1, c2; in(c1, c2);
+    v<iii> tmines;
+    rep(n1) {
+        auto [A, B] = fpop(p1);
+        tmines.push_back({A, B, c1});
+        compx.push_back(A);
+        compy.push_back(B);
+    }
+    rep(n2) {
+        auto [A, B] = fpop(p2);
+        tmines.push_back({A, B, -c2});
+        compx.push_back(A);
+        compy.push_back(B);
+    }
+    compress(compx); compress(compy);
+    int xsz = (int) compx.size(), ysz = (int) compy.size();
+    v2<ii> mines(ysz, v<ii>());
+    for(iii mine : tmines)
+        mines[idx(mine[1], compy)].push_back({idx(mine[0], compx)+1, mine[2]});
+    int ans = 0;
+    forn(st, ysz) {
+        goldmineSeg gms(xsz);
+        forf(i, st, ysz-1) {
+            for(ii mine : mines[i])
+                gms.update(mine[0], mine[1]);
+            ans = max(ans, gms.query(1, xsz).val);
+        }
+    }
+    cout << ans;
 }

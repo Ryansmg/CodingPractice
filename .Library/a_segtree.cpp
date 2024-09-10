@@ -3,6 +3,8 @@
 #define GCC_OPTIMIZE_ENABLE false
 
 #include <bits/stdc++.h>
+
+#include <algorithm>
 using namespace std;
 #if GCC_OPTIMIZE_ENABLE
 #pragma GCC optimize("Ofast")
@@ -363,7 +365,7 @@ protected:
             tree[node] = {0,0,0,0};
             tree[node].lval = max(tree[node*2].lval, tree[node*2].allval + tree[node*2+1].lval);
             tree[node].rval = max(tree[node*2+1].rval, tree[node*2+1].allval + tree[node*2].rval);
-            tree[node].val = max(max(tree[node*2].val, tree[node*2+1].val), tree[node*2].rval + tree[node*2+1].lval);
+            tree[node].val = max({tree[node*2].val, tree[node*2+1].val, tree[node*2].rval + tree[node*2+1].lval});
             tree[node].allval = tree[node*2].allval + tree[node*2+1].allval;
         }
     }
@@ -377,7 +379,7 @@ protected:
             tree[node] = {0,0,0,0};
             tree[node].lval = max(tree[node*2].lval, tree[node*2].allval + tree[node*2+1].lval);
             tree[node].rval = max(tree[node*2+1].rval, tree[node*2+1].allval + tree[node*2].rval);
-            tree[node].val = max(max(tree[node*2].val, tree[node*2+1].val), tree[node*2].rval + tree[node*2+1].lval);
+            tree[node].val = max({tree[node*2].val, tree[node*2+1].val, tree[node*2].rval + tree[node*2+1].lval});
             tree[node].allval = tree[node*2].allval + tree[node*2+1].allval;
         }
     }
@@ -389,7 +391,7 @@ protected:
         nd c = {0, 0, 0, 0};
         c.lval = max(f.lval, f.allval + s.lval);
         c.rval = max(s.rval, s.allval + f.rval);
-        c.val = max(max(f.val, s.val), f.rval + s.lval);
+        c.val = max({f.val, s.val, f.rval + s.lval});
         c.allval = f.allval + s.allval;
         return c;
     }
@@ -505,19 +507,94 @@ private:
     }
 };
 
-struct pst {
-    static const i64 n = 100010;
-    pst *l = nullptr, *r = nullptr;
-    pst() = default;
+namespace PST {
+    constexpr i64 n = 500010;
+    constexpr i32 null = 0;
+    i64 avail = 1;
+    using ptr = i32;
+    struct pnd { ptr l = null, r = null; i64 val = 0; };
+    pnd mem[15000000];
+
+    class pst {
+    public:
+        ptr pos = null;
+        pst() : pos(avail++) {}
+        static pst newFrom(const pst &prev) {
+            pst t;
+            mem[t.pos].l = mem[prev.pos].l;
+            mem[t.pos].r = mem[prev.pos].r;
+            return t;
+        }
+        void init(vl *arr = nullptr) const {
+            init(pos, 1, n, arr);
+        }
+        void add(pst prv, i64 t, i64 d) const {
+            add(prv.pos, t, d);
+        }
+        void add(ptr prv, i64 t, i64 d) const {
+            add(prv, pos, t, d, 1, n);
+        }
+        i64 query(i64 l, i64 r) const {
+            return query(pos, l, r, 1, n);
+        }
+    private:
+        static void add(ptr prv, ptr cur, i64 t, i64 d, i64 s, i64 e) {
+            if(s == e) {
+                mem[cur].val += d;
+                return;
+            }
+            i64 m = (s + e) >> 1;
+            if(t <= m) {
+                if(!mem[cur].l || mem[cur].l == mem[prv].l) {
+                    mem[cur].l = avail++;
+                    mem[mem[cur].l].val = mem[mem[prv].l].val;
+                }
+                if(!mem[cur].r) mem[cur].r = mem[prv].r;
+                add(mem[prv].l, mem[cur].l, t, d, s, m);
+            } else {
+                if(!mem[cur].l) mem[cur].l = mem[prv].l;
+                if(!mem[cur].r || mem[cur].r == mem[prv].r) {
+                    mem[cur].r = avail++;
+                    mem[mem[cur].r].val = mem[mem[prv].r].val;
+                }
+                add(mem[prv].r, mem[cur].r, t, d, m+1, e);
+            }
+            mem[cur].val = mem[mem[cur].l].val + mem[mem[cur].r].val;
+        }
+        static i64 query(ptr cur, i64 l, i64 r, i64 s, i64 e) {
+            if(r < s || e < l) return 0;
+            if(l <= s && e <= r) return mem[cur].val;
+            i64 m = (s + e) >> 1;
+            return query(mem[cur].l, l, r, s, m) + query(mem[cur].r, l, r, m+1, e);
+        }
+        static void init(ptr node, i64 s, i64 e, vl *arr) {
+            if (s == e) {
+                mem[node].val = arr ? (*arr)[s-1] : 0;
+                return;
+            }
+            i64 m = (s + e) >> 1;
+            mem[node].l = avail++;
+            mem[node].r = avail++;
+            init(mem[node].l, s, m, arr);
+            init(mem[node].r, m+1, e, arr);
+            mem[node].val = mem[mem[node].l].val + mem[mem[node].r].val;
+        }
+    };
+}
+
+struct pst_old {
+    static constexpr i64 n = 100010;
+    pst_old *l = nullptr, *r = nullptr;
+    pst_old() = default;
     i64 val = 0;
-    explicit pst(pst *prev) : pst() {
+    explicit pst_old(pst_old *prev) : pst_old() {
         l = prev->l;
         r = prev->r;
     }
     void init(vl *arr = nullptr) {
         init(this, 1, n, arr);
     }
-    void add(pst *prv, i64 t, i64 d, i64 s = 1, i64 e = n) {
+    void add(pst_old *prv, i64 t, i64 d, i64 s = 1, i64 e = n) {
         if (s == e) {
             val += d;
             return;
@@ -525,7 +602,7 @@ struct pst {
         i64 m = (s + e) >> 1;
         if (t <= m) {
             if (!l || l == prv->l) {
-                l = new pst();
+                l = new pst_old();
                 l->val = prv->l->val;
             }
             if (!r) r = prv->r;
@@ -533,7 +610,7 @@ struct pst {
         } else {
             if (!l) l = prv->l;
             if (!r || r == prv->r) {
-                r = new pst();
+                r = new pst_old();
                 r->val = prv->r->val;
             }
             r->add(prv->r, t, d, m + 1, e);
@@ -546,21 +623,21 @@ struct pst {
         i64 m = (s + e) >> 1;
         return l->query(L, R, s, m) + r->query(L, R, m + 1, e);
     }
-    static void init(pst *node, i64 s, i64 e, vl *arr) {
+    static void init(pst_old *node, i64 s, i64 e, vl *arr) {
         if (s == e) {
             node->val = arr ? (*arr)[s - 1] : 0;
             return;
         }
         i64 m = (s + e) >> 1;
-        node->l = new pst();
-        node->r = new pst();
+        node->l = new pst_old();
+        node->r = new pst_old();
         init(node->l, s, m, arr);
         init(node->r, m + 1, e, arr);
         node->val = node->l->val + node->r->val;
     }
 };
 
-class pst_old {
+class pst_old_2 {
     class pnd {
     public:
         pnd *l = nullptr, *r = nullptr;
@@ -571,18 +648,18 @@ class pst_old {
         ~pnd(){ if(deleteL) delete l; if(deleteR) delete r; }
     };
 public:
-    explicit pst_old(cint treeSize) : pst_old() {
+    explicit pst_old_2(cint treeSize) : pst_old_2() {
         n = treeSize;
         init(cur, 1, n);
         end_update();
     }
-    pst_old(cint treeSize, const v<int> &arr) : pst_old() {
+    pst_old_2(cint treeSize, const v<int> &arr) : pst_old_2() {
         n = treeSize;
         assert(arr.size() == treeSize);
         init(cur, 1, n, arr);
         end_update();
     }
-    ~pst_old() { for(auto &p : root) delete p; }
+    ~pst_old_2() { for(auto &p : root) delete p; }
     void update(cint tar, cint val) {
         assert(tar>0);
         update(pre, cur, 1, n, tar, val);
@@ -599,7 +676,7 @@ public:
         return query(root[rootN], 1, n, left, right);
     }
 private:
-    pst_old() {
+    pst_old_2() {
         root.push_back(new pnd());
         pre = nullptr; cur = root[0];
     }

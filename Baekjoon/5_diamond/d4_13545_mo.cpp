@@ -41,12 +41,16 @@ template <typename T> using v = vector<T>; template <typename T> using v2 = v<v<
 using vl = v<i64>; using v2l = v2<i64>; using vi = v<i32>;
 #define pb push_back
 #define eb emplace_back
+#define pf push_front
+#define ef emplace_front
 using ii = array<i64, 2>; using iii = array<i64, 3>;
 template <typename T> using lim = std::numeric_limits<T>;
+template <typename Signature> using func = function<Signature>;
 
 template <typename T = i64> T input() {T t; cin >> t; return t;} template <typename T = i64> T in() {T t; cin >> t; return t;}
+string readline() { string s; getline(cin, s); return s; }
 #if ENABLE_CPP20_MACRO
-template <typename T, typename T2=v<T>, typename T3=less<>> using pq = priority_queue<T, T2, T3>;
+template <typename T=i64, typename T2=v<T>, typename T3=less<>> using pq = priority_queue<T, T2, T3>;
 template <typename T> T::value_type fpop(T &que) { auto t = que.front(); que.pop(); return t; }
 template <typename T> T::value_type tpop(T &st) { auto t = st.top(); st.pop(); return t; }
 #endif
@@ -57,6 +61,7 @@ template <typename T> T idx(const T &val, const v<T> &compressed) { return lower
 template <typename T> T pow_(T a, T b, T mod=lim<T>::max()) { a%=mod;T ans=1;while(b){if(b&1)ans=ans*a%mod;b>>=1;a=a*a%mod;} return ans; }
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 template <typename T = i64> v<T> inputArr(i64 sz) { v<T> a; forn(i,sz) a.push_back(input<T>()); return a; }
+template <typename T = i64> v<T> inArr(i64 sz) { v<T> a; forn(i,sz) a.push_back(in<T>()); return a; }
 template <typename T> void inputArr(v<T> &arr, i64 sz, bool clear = true) { if(clear) arr.clear(); forn(i,sz) arr.push_back(input<T>()); }
 template <typename T> v<T> sorted_copy(v<T> arr) { sort(all(arr)); return arr; }
 template <typename T> v<T> compressed_copy(v<T> arr, const bool &autosort=true) { compress(arr, autosort); return arr; }
@@ -76,10 +81,102 @@ void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") 
 //@formatter:on
 #pragma endregion
 
-// prob
-// #tags
+// 13546. 수열과 쿼리 0
+// #mo #sqrt_decomposition
+
+i64 sqrtSize;
+struct query {
+    i64 l, r, x;
+    bool operator<(const query& other) const {
+        if(l/sqrtSize == other.l/sqrtSize)
+            return r/sqrtSize < other.r/sqrtSize;
+        return l/sqrtSize < other.l/sqrtSize;
+    }
+};
+
+class sqrtArray {
+    int n, sq;
+    v<int> arr, bucket;
+public:
+    explicit sqrtArray(int size, int bucketSize=-1) :
+            n(size), sq(bucketSize==-1?(int)sqrt(size):bucketSize){
+        arr = v<int>(n+1,0);
+        bucket = v<int>(n/sq+2,0);
+    }
+    void add(int pos, int val) {
+        if(!pos) return;
+        bucket[pos/sq] += val;
+        arr[pos] += val;
+    }
+    int query() {
+        forr(i, n/sq+1, 0) {
+            if(bucket[i]) {
+                forr(j, i*sq+sq-1, i*sq) {
+                    if(j > n) continue;
+                    if(arr[j]) return j;
+                }
+            }
+        }
+        return 0;
+    }
+};
 
 i32 main() {
     fastio;
+    i64 n, k; in(n);
+    vl arr(1, 100001); rep(n) arr.emplace_back(in());
+    forf(i, 1, arr.size()-1) arr[i] += arr[i-1];
+    sqrtSize = sqrt(n);
+    i64 m = in();
+    v<query> queries;
+    vl ans(m);
+    forn(i, m) { i64 a, b; in(a, b); queries.eb(a-1, b, i); }
+    sort(queries);
+    v<deque<i64>> indDqs(200002, deque<i64>());
+    sqrtArray sq(200002);
 
+    auto sub = [&](i64 i) -> i64{
+        if(indDqs[arr[i]].empty()) return 0;
+        return indDqs[arr[i]].back() - indDqs[arr[i]].front();
+    };
+
+    forf(i, queries[0].l, queries[0].r) {
+        sq.add(sub(i), -1);
+        indDqs[arr[i]].eb(i);
+        sq.add(sub(i), 1);
+        ans[queries[0].x] = sq.query();
+    }
+    auto [l, r, _] = queries[0];
+
+    forf(i, 1, m-1) {
+        auto [nl, nr, x] = queries[i];
+        while(l > nl) {
+            l--;
+            sq.add(sub(l), -1);
+            indDqs[arr[l]].ef(l);
+            sq.add(sub(l), 1);
+        }
+        while(r < nr) {
+            r++;
+            sq.add(sub(r), -1);
+            indDqs[arr[r]].eb(r);
+            sq.add(sub(r), 1);
+        }
+        while(l < nl) {
+            assert(indDqs[arr[l]].front() == l);
+            sq.add(sub(l), -1);
+            indDqs[arr[l]].pop_front();
+            sq.add(sub(l), 1);
+            l++;
+        }
+        while(r > nr) {
+            assert(indDqs[arr[r]].back() == r);
+            sq.add(sub(r), -1);
+            indDqs[arr[r]].pop_back();
+            sq.add(sub(r), 1);
+            r--;
+        }
+        ans[x] = sq.query();
+    }
+    printArr(ans, "\n");
 }

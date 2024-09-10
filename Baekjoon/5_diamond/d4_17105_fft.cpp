@@ -41,16 +41,13 @@ template <typename T> using v = vector<T>; template <typename T> using v2 = v<v<
 using vl = v<i64>; using v2l = v2<i64>; using vi = v<i32>;
 #define pb push_back
 #define eb emplace_back
-#define pf push_front
-#define ef emplace_front
 using ii = array<i64, 2>; using iii = array<i64, 3>;
 template <typename T> using lim = std::numeric_limits<T>;
-template <typename Signature> using func = function<Signature>;
 
 template <typename T = i64> T input() {T t; cin >> t; return t;} template <typename T = i64> T in() {T t; cin >> t; return t;}
 string readline() { string s; getline(cin, s); return s; }
 #if ENABLE_CPP20_MACRO
-template <typename T=i64, typename T2=v<T>, typename T3=less<>> using pq = priority_queue<T, T2, T3>;
+template <typename T, typename T2=v<T>, typename T3=less<>> using pq = priority_queue<T, T2, T3>;
 template <typename T> T::value_type fpop(T &que) { auto t = que.front(); que.pop(); return t; }
 template <typename T> T::value_type tpop(T &st) { auto t = st.top(); st.pop(); return t; }
 #endif
@@ -61,7 +58,6 @@ template <typename T> T idx(const T &val, const v<T> &compressed) { return lower
 template <typename T> T pow_(T a, T b, T mod=lim<T>::max()) { a%=mod;T ans=1;while(b){if(b&1)ans=ans*a%mod;b>>=1;a=a*a%mod;} return ans; }
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 template <typename T = i64> v<T> inputArr(i64 sz) { v<T> a; forn(i,sz) a.push_back(input<T>()); return a; }
-template <typename T = i64> v<T> inArr(i64 sz) { v<T> a; forn(i,sz) a.push_back(in<T>()); return a; }
 template <typename T> void inputArr(v<T> &arr, i64 sz, bool clear = true) { if(clear) arr.clear(); forn(i,sz) arr.push_back(input<T>()); }
 template <typename T> v<T> sorted_copy(v<T> arr) { sort(all(arr)); return arr; }
 template <typename T> v<T> compressed_copy(v<T> arr, const bool &autosort=true) { compress(arr, autosort); return arr; }
@@ -81,79 +77,73 @@ void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") 
 //@formatter:on
 #pragma endregion
 
-class pollard_rho {
-public:
-    explicit pollard_rho() {
-        base = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41};
-        gen = mt19937(random_device()());
-    }
-    bool isPrime(i128 n) {
-        if(n<=1) return false;
-        for(const i128 &a: base) if (!_isPrime(n, a)) return false;
-        return true;
-    }
-    i128 factorize(i128 n) {
-        assert(n>=2);
-        if (n % 2 == 0) return 2;
-        if (isPrime(n)) return n;
-        i128 x = dis(gen) % (n - 2) + 2, y = x, c = dis(gen) % 10 + 1, g = 1;
-        while (g == 1) {
-            x = (x * x % n + c) % n;
-            y = (y * y % n + c) % n;
-            y = (y * y % n + c) % n;
-            g = gcd(x - y > 0 ? x - y : y - x, n);
-            if (g == n) return factorize(n);
+namespace FFT {
+    using cpl = complex<f64>;
+    #define sz(v) ((i32)v.size())
+    void fft(v<cpl>& a) {
+        i32 n = sz(a), L = 31 - __builtin_clz(n);
+        static v<complex<f128>> R(2, 1);
+        static v<cpl> rt(2, 1); // (^ 10% faster if double)
+        for(i32 k = 2; k < n; k *= 2) {
+            R.resize(n); rt.resize(n);
+            auto x = polar(1.0L, acos(-1.0L) / k);
+            for(i32 i = k; i < k + k; i++) rt[i] = R[i] = i & 1 ? R[i / 2] * x : R[i / 2];
         }
-        if (isPrime(g)) return g;
-        else return factorize(g);
-    }
-    static i128 pow(i128 a, i128 b) {
-        return pow(a, b, lim<i128>::max());
-    }
-    static i128 pow(i128 a, i128 b, i128 mod) {
-        a %= mod;
-        i128 ans = 1;
-        while (b) {
-            if (b & 1) ans = ans * a % mod;
-            b >>= 1;
-            a = a * a % mod;
-        }
-        return ans;
-    }
-    static i128 gcd(i128 a, i128 b) {
-        if (a < b) swap(a, b);
-        while (b != 0) {
-            i128 r = a % b;
-            a = b;
-            b = r;
-        }
-        return a;
-    }
-private:
-    v<i128> base;
-    mt19937 gen;
-    uniform_int_distribution<i128> dis;
-    static bool _isPrime(i128 n, i128 a) {
-        if (a % n == 0) return true;
-        i128 d = n - 1;
-        while (true) {
-            i128 temp = pow(a, d, n);
-            if (temp == n - 1) return true;
-            if (d % 2 == 1) return (temp == 1 || temp == n - 1);
-            d /= 2;
+        vi rev(n);
+        for(i32 i = 0; i < n; i++) rev[i] = (rev[i / 2] | (i & 1) << L) / 2;
+        for(i32 i = 0; i < n; i++) if(i < rev[i]) swap(a[i], a[rev[i]]);
+        for(i32 k = 1; k < n; k *= 2) {
+            for(i32 i = 0; i < n; i += 2 * k)
+                for(i32 j = 0; j < k; j++) {
+                    //complex_t z = rt[j+k] * a[i+j+k]; // (25% faster if hand-rolled) /// include-line
+                    auto x = (double *) &rt[j + k], y = (double *) &a[i + j + k]; /// exclude-line
+                    cpl z(x[0] * y[0] - x[1] * y[1], x[0] * y[1] + x[1] * y[0]); /// exclude-line
+                    a[i + j + k] = a[i + j] - z;
+                    a[i + j] += z;
+                }
         }
     }
-};
+    template <typename T>
+    v<T> operator*(const v<T>& a, const v<T>& b) {
+        if(a.empty() || b.empty()) return {};
+        v<T> res(sz(a) + sz(b) - 1);
+        i32 L = 32 - __builtin_clz(sz(res)), n = 1 << L;
+        v<cpl> in(n), out(n);
+        copy(all(a), begin(in));
+        for(i32 i = 0; i < sz(b); i++) in[i].imag(b[i]);
+        fft(in);
+        for(cpl &x: in) x *= x;
+        for(i32 i = 0; i < n; i++) out[i] = in[-i & (n - 1)] - conj(in[i]);
+        fft(out);
+        for(i32 i = 0; i < sz(res); i++) {
+            res[i] = static_cast<T>(imag(out[i]) / (4 * n) +
+                                    (is_integral_v<T> ? (imag(out[i]) > 0 ? 0.5 : -0.5) : 0));
+        }
+        return res;
+    }
+}
+using namespace FFT;
 
-//short
-struct prs{
-    prs(){B={2,3,5,7,11,13,17,19,23,29,31,37,41};E=mt19937(random_device()());}bool isPrime(i128 n){if(n<=1)return 0;for(const i128 &a:B)if(!_(n,a))return 0;return 1;}
-    i128 factorize(const i128&n){if(n%2==0)return 2;if(isPrime(n))return n;i128 x=D(E)%(n-2)+2,y=x,c=D(E)%10+1,g=1;while(g==1){x=(x*x%n+c)%n;y=(y*y%n+c)%n;y=(y*y%n
-                                                                                                                                                              +c)%n;g=G(x-y>0?x-y:y-x,n);if(g==n)return factorize(n);}if(isPrime(g))return g;else return factorize(g);}i128 p(i128 a,i128 b,i128 m){a%=m;i128 z=1;while(
-                b){if(b&1)z=z*a%m;b>>=1;a=a*a%m;}return z;}i128 G(i128 a,i128 b) {if(a<b)swap(a,b);while(b){i128 r=a%b;a=b;b=r;}return a;}v<i128>B;mt19937 E;uniform_int_distribution
-            <i128>D;bool _(i128 n,i128 a){if(a%n==0)return 1;i128 d=n-1;while(1){i128 t=p(a,d,n);if(t==n-1)return 1;if(d%2)return(t==1||t==n-1);d/=2;}}
-};
+// 17105. 골드바흐 트리플
+// #fft #sieve #포함 배제의 원리
 
-signed main() {
-
+i32 main() {
+    fastio;
+    vl primes(1000010, 1);
+    vl doublePrimes(1000010, 0);
+    vl c(1000010, 0);
+    primes[0] = primes[1] = 0;
+    forn(i, 1000009) {
+        if(!primes[i]) continue;
+        if(i + i < 1000010) doublePrimes[i+i]++;
+        if(i + i + i < 1000010) c[i+i+i]++;
+        for(i64 j = i + i; j < 1000010; j += i)
+            primes[j] = 0;
+    }
+    vl a = primes * primes * primes;
+    vl b = doublePrimes * primes;
+    inRep() {
+        i64 i = in();
+        println((a[i] - (b[i]-c[i])*3 - c[i])/6 + b[i]);
+    }
 }
