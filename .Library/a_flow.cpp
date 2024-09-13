@@ -144,7 +144,6 @@ public:
 
 #pragma region examples
 void solve2367() {
-    fastio;
     int n, k, d; cin >> n >> k >> d;
     Flow flow(999, 0, 999);
     forn(i, d) flow.addEdge(i+501, 999, input());

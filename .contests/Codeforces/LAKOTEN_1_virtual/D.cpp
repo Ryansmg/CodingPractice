@@ -1,7 +1,7 @@
 #pragma region macros
 //@formatter:off
 #define GCC_OPTIMIZE_ENABLE false
-#define ENABLE_CPP20_MACRO false
+#define ENABLE_CPP20_MACRO true
 
 #include <bits/stdc++.h>
 using namespace std;
@@ -41,24 +41,30 @@ template <typename T> using v = vector<T>; template <typename T> using v2 = v<v<
 using vl = v<i64>; using v2l = v2<i64>; using vi = v<i32>;
 #define pb push_back
 #define eb emplace_back
+#define pf push_front
+#define ef emplace_front
 using ii = array<i64, 2>; using iii = array<i64, 3>;
 template <typename T> using lim = std::numeric_limits<T>;
+template <typename Signature> using func = function<Signature>;
 
 template <typename T = i64> T input() {T t; cin >> t; return t;} template <typename T = i64> T in() {T t; cin >> t; return t;}
 string readline() { string s; getline(cin, s); return s; }
 #if ENABLE_CPP20_MACRO
-template <typename T, typename T2=v<T>, typename T3=less<>> using pq = priority_queue<T, T2, T3>;
+template <typename T=i64, typename T2=v<T>, typename T3=less<>> using pq = priority_queue<T, T2, T3>;
 template <typename T> T::value_type fpop(T &que) { auto t = que.front(); que.pop(); return t; }
 template <typename T> T::value_type tpop(T &st) { auto t = st.top(); st.pop(); return t; }
 #endif
-template <typename T> void reverse(v<T> &v) { reverse(all(v)); }
+template <typename T> void reverse(T &v) { reverse(all(v)); }
 template <typename T> void sort(v<T> &v) { sort(all(v)); }
 template <typename T> void compress(v<T> &v, const bool &autosort=true) { if(autosort) sort(all(v)); v.erase(unique(all(v)), v.end()); }
 template <typename T> T idx(const T &val, const v<T> &compressed) { return lower_bound(all(compressed), val) - compressed.begin(); }
 template <typename T> T pow_(T a, T b, T mod=lim<T>::max()) { a%=mod;T ans=1;while(b){if(b&1)ans=ans*a%mod;b>>=1;a=a*a%mod;} return ans; }
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
+template <typename T> T lcm_(T a, T b) { return a / gcd_(a, b) * b; }
 template <typename T = i64> v<T> inputArr(i64 sz) { v<T> a; forn(i,sz) a.push_back(input<T>()); return a; }
+template <typename T = i64> v<T> inArr(i64 sz) { v<T> a; forn(i,sz) a.push_back(in<T>()); return a; }
 template <typename T> void inputArr(v<T> &arr, i64 sz, bool clear = true) { if(clear) arr.clear(); forn(i,sz) arr.push_back(input<T>()); }
+template <typename T> T reversed_copy(T arr) { reverse(all(arr)); return arr; }
 template <typename T> v<T> sorted_copy(v<T> arr) { sort(all(arr)); return arr; }
 template <typename T> v<T> compressed_copy(v<T> arr, const bool &autosort=true) { compress(arr, autosort); return arr; }
 
@@ -73,37 +79,23 @@ void print(A a=nl_, B b=nl_, C c=nl_, D d=nl_, E e=nl_, F f=nl_, G g=nl_, H h=nl
 template <class A=Nl_, class B=Nl_, class C=Nl_, class D=Nl_, class E=Nl_, class F=Nl_, class G=Nl_, class H=Nl_, class I=Nl_, class J=Nl_>
 void println(A a=nl_, B b=nl_, C c=nl_, D d=nl_, E e=nl_, F f=nl_, G g=nl_, H h=nl_, I i=nl_, J j=nl_) { print(a, b, c, d, e, f, g, h, i, j); cout << '\n'; }
 template <typename T>
-void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") { for(const T &i : v) cout << i << sep; cout << end; }
+void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") {
+    i64 paSz_ = v.size(); forn(i, paSz_-1) cout << v[i] << sep; cout << v[paSz_-1] << end;
+}
 //@formatter:on
 #pragma endregion
 
+i64 n;
+
+vl ask(i64 i) {
+    println("? ", i);
+    cout.flush();
+    return inArr(n);
+}
+
 i32 main() {
     fastio;
-    i64 n, m; str s;
-    in(n, m, s);
-    char prev = s[0];
-    if(prev == 'O') prev = 'X';
-    i64 cnt = prev == 'I';
-    i64 ans = 0;
-    forf(i, 1, m-1) {
-        if(s[i] == 'I') {
-            if(prev == 'O') {
-                cnt++;
-                if(cnt >= n*2+1) ans++;
-                prev = 'I';
-            } else {
-                prev = 'I';
-                cnt = 1;
-            }
-        } else {
-            if(prev == 'I') {
-                cnt++;
-                prev = 'O';
-            } else {
-                prev = 'X';
-                cnt = 0;
-            }
-        }
-    }
-    println(ans);
+    in(n);
+    vl f = ask(1);
+    
 }
