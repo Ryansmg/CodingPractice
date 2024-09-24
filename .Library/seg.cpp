@@ -509,9 +509,9 @@ private:
 
 namespace PST {
     constexpr i64 n = 500010;
-    constexpr i32 null = 0;
-    i64 avail = 1;
     using ptr = i32;
+    ptr avail = 1;
+    constexpr ptr null = 0;
     struct pnd { ptr l = null, r = null; i64 val = 0; };
     pnd mem[15000000];
 

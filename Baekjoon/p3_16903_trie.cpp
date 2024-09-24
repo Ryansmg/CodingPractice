@@ -1,19 +1,16 @@
 #pragma region macros
 //@formatter:off
 #define GCC_OPTIMIZE_ENABLE false
-#define DISABLE_KOISTUDY_ERROR false
+#define ENABLE_CPP20_MACRO true
 
 #include <bits/stdc++.h>
-#if DISABLE_KOISTUDY_ERROR
-using namespace std;
-#else
-using std::cin, std::cout, std::endl, std::istream, std::ostream, std::format;
+// using namespace std;
+using std::cin, std::cout, std::endl, std::istream, std::ostream;
 using std::array, std::vector, std::stack, std::queue, std::deque, std::list;
 using std::max, std::min, std::gcd, std::lcm, std::pow;
-using std::less, std::greater, std::all_of;
+using std::less, std::greater;
 using std::stoi, std::stol, std::stoll, std::stoul, std::stoull;
 using std::sort, std::shuffle, std::uniform_int_distribution, std::mt19937, std::random_device;
-#endif
 
 #if GCC_OPTIMIZE_ENABLE
 #pragma GCC optimize("Ofast")
@@ -36,20 +33,19 @@ template <typename T> using uset = std::unordered_set<T>;
 #define cint ci64
 #define ci32 const i32 &
 constexpr i64 i64max = 9223372036854775807,
-              llmax  = i64max,
-              INF    = 1000000000000000000,
-              inf    = 3000000000;
+    llmax  = i64max,
+    INF    = 1000000000000000000,
+    inf    = 3000000000;
 #define fastio std::ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr)
 #define forn(name, val) for(i64 name = 0; name < val; name++)
 #define forf(name, start, end) for(i64 name = start; name <= end; name++)
 #define forr(name, start, end) for(i64 name = start; name >= end; name--)
 #define rep(n) forn(bit_Ly_S, n)
 #define rep2(n) forn(la_sh_Discord, n)
-#define elif else if
 
 i64 iR_v_, iR_v2_;
-#define inRep() input(iR_v_); forn(iR_v3_, iR_v_)
-#define inRep2() input(iR_v2_); forn(iR_v4_, iR_v2_)
+#define inRep() input(inRep_v_); forn(inRep_var_3_, inRep_var_)
+#define inRep2() input(inRep_var_2_); forn(inRep_var_4_, inRep_var_2_)
 
 #define all(vec) (vec).begin(), (vec).end()
 template <typename T> using v = std::vector<T>; template <typename T> using v2 = v<v<T>>;
@@ -68,7 +64,7 @@ template <typename T = i64> T input() {T t; cin >> t; return t;}
 template <typename T = i64> T in() {T t; cin >> t; return t;}
 template <typename T> str toStr(T t) { return std::to_string(t); }
 str readline() { char c = '\n'; while(c == '\n') cin.get(c); str s; getline(cin, s); s = c + s; return s; }
-#if !DISABLE_KOISTUDY_ERROR
+#if ENABLE_CPP20_MACRO
 template <typename T=i64, typename T2=v<T>, typename T3=less<>> using pq = std::priority_queue<T, T2, T3>;
 template <typename T> T::value_type fpop(T &que) { auto t = que.front(); que.pop(); return t; }
 template <typename T> T::value_type tpop(T &st) { auto t = st.top(); st.pop(); return t; }
@@ -84,21 +80,23 @@ template <typename T> T pow_(T a, T b, T mod=lim<T>::max()) { a%=mod;T ans=1;whi
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 template <typename T> T lcm_(T a, T b) { return a / gcd_(a, b) * b; }
 template <typename T> T sq_(const T &i) { return i * i; }
-template <typename T = i64> v<T> inputArr(i64 sz) { v<T> a; forn(i,sz) a.eb(in<T>()); return a; }
-template <typename T = i64> v<T> inArr(i64 sz) { v<T> a; forn(i,sz) a.eb(in<T>()); return a; }
-template <typename T = i64> v<T> inArr() { v<T> a; i64 sz = in(); forn(i,sz) a.eb(in<T>()); return a; }
-template <typename T> void inputArr(v<T> &arr, i64 sz, bool clear = true) { if(clear) arr.clear(); forn(i,sz) arr.eb(in<T>()); }
+template <typename T = i64> v<T> inputArr(i64 sz) { v<T> a; forn(i,sz) a.push_back(input<T>()); return a; }
+template <typename T = i64> v<T> inArr(i64 sz) { v<T> a; forn(i,sz) a.push_back(in<T>()); return a; }
+template <typename T> void inputArr(v<T> &arr, i64 sz, bool clear = true) { if(clear) arr.clear(); forn(i,sz) arr.push_back(input<T>()); }
 template <typename T> T reversed_copy(T arr) { reverse(all(arr)); return arr; }
 template <typename T> v<T> sorted_copy(T arr) { sort(all(arr)); return arr; }
 template <typename T> v<T> compressed_copy(v<T> arr, const bool &autosort=true) { compress(arr, autosort); return arr; }
 
-#if !DISABLE_KOISTUDY_ERROR
-template <typename ...T> void print(const T&... a_) { (cout << ... << a_); }
-template <typename ...T> void println(const T&... a_) { (cout << ... << a_); cout << '\n'; }
-template <typename ...T> void input(T&... a_) { (cin >> ... >> a_); }
-template <typename ...T> void in(T&... a_) { (cin >> ... >> a_); }
-#endif
+enum Nl_{} nl_; istream& operator>>(istream& i, const Nl_&) { return i; } ostream& operator<<(ostream& i, const Nl_&) { return i; }
 
+template <class A, class B=Nl_, class C=Nl_, class D=Nl_, class E=Nl_, class F=Nl_, class G=Nl_>
+void input(A &a, B &b=nl_, C &c=nl_, D &d=nl_, E &e=nl_, F &f=nl_, G &g=nl_) { cin >> a >> b >> c >> d >> e >> f >> g; }
+template <class A, class B=Nl_, class C=Nl_, class D=Nl_, class E=Nl_, class F=Nl_, class G=Nl_>
+void in(A &a, B &b=nl_, C &c=nl_, D &d=nl_, E &e=nl_, F &f=nl_, G &g=nl_) { cin >> a >> b >> c >> d >> e >> f >> g; }
+template <class A=Nl_, class B=Nl_, class C=Nl_, class D=Nl_, class E=Nl_, class F=Nl_, class G=Nl_>
+void print(A a=nl_, B b=nl_, C c=nl_, D d=nl_, E e=nl_, F f=nl_, G g=nl_) { cout << a << b << c << d << e << f << g; }
+template <class A=Nl_, class B=Nl_, class C=Nl_, class D=Nl_, class E=Nl_, class F=Nl_, class G=Nl_>
+void println(A a=nl_, B b=nl_, C c=nl_, D d=nl_, E e=nl_, F f=nl_, G g=nl_) { print(a, b, c, d, e, f, g); cout << '\n'; }
 template <typename T>
 void printArr(const v<T> &v, const str &sep = " ", const str &end = "\n") {
     if(v.empty()) return;
@@ -108,10 +106,81 @@ void fixPrecision(i32 a_) { cout << std::fixed; cout.precision(a_); }
 //@formatter:on
 #pragma endregion
 
-// prob
-// #tags
+// 수열과 쿼리 20
+// #trie
+
+class trie {
+    struct node {
+        // 0, 1, val
+        i32 a=0, b=0, val=0;
+        [[nodiscard]] bool empty() const {
+            return !a && !b;
+        }
+        [[nodiscard]] i32 size() const {
+            i32 ret = 0;
+            if(a) ret++;
+            if(b) ret++;
+            return ret;
+        }
+        [[nodiscard]] i32 getNonnull() const {
+            if(a) return a;
+            if(b) return b;
+            assert(false);
+        }
+        node()=default;
+        node(i32 c, i32 d, i32 e) : a(c), b(d), val(e) {}
+    };
+    v<node> mem;
+    i32 avail_ = 2;
+    i32 New(i32 val) {
+        mem.eb(0, 0, val);
+        return avail_++;
+    }
+public:
+    trie() : mem(2, {0, 0, 0}){ }
+    i32 find(i32 tar, i32 ret = 0, i32 curBit = 31, i32 pos = 1) {
+        i32 mask = 1 << curBit;
+        if((mask&tar) != mem[pos].val*mask) ret ^= mask;
+        if(curBit == 0) return ret;
+        if(mem[pos].size() == 1) return find(tar, ret, curBit-1, mem[pos].getNonnull());
+        
+        mask >>= 1;
+        if(tar & mask) return find(tar, ret, curBit-1, mem[pos].a);
+        else return find(tar, ret, curBit-1, mem[pos].b);
+    }
+    void insert(i32 tar, i32 curBit = 30, i32 pos = 1) {
+        if(curBit < 0) return;
+        i32 mask = 1 << curBit;
+        if(tar & mask) {
+            if(!mem[pos].b) mem[pos].b = New(1);
+            insert(tar, curBit-1, mem[pos].b);
+        } else {
+            if(!mem[pos].a) mem[pos].a = New(0);
+            insert(tar, curBit-1, mem[pos].a);
+        }
+    }
+    void remove(i32 tar, i32 curBit = 30, i32 pos = 1, i32 par = 0) {
+        if(curBit < 0) {
+            if(tar & mem[pos].val) mem[par].b = 0;
+            else mem[par].a = 0;
+            return;
+        }
+        i32 mask = 1 << curBit;
+        remove(tar, curBit-1, tar&mask?mem[pos].b:mem[pos].a, pos);
+        if(!mem[pos].empty()) return;
+        if(mem[pos].val) mem[par].b = 0;
+        else mem[par].a = 0;
+    }
+};
 
 i32 main() {
     fastio;
-    
+    umap<i32, i32> chk; trie trie;
+    trie.insert(0);
+    inRep() {
+        i32 t, x; in(t, x);
+        if(t == 1) { if(!chk[x]++) trie.insert(x); }
+        else if(t == 2) { if(!--chk[x]) trie.remove(x); }
+        else println(trie.find(x));
+    }
 }

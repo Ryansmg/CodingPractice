@@ -32,7 +32,7 @@ constexpr i64 llmax = 9223372036854775807, INF = 1000000000000000000, inf = 3000
 #define rep(n) forn(bit_Ly_S, n)
 #define rep2(n) forn(la_sh_Discord, n)
 
-i64 iR_v_, iR_v2_;
+i64 inRep_var_, inRep_var_2_;
 #define inRep() input(inRep_var_); forn(inRep_var_3_, inRep_var_)
 #define inRep2() input(inRep_var_2_); forn(inRep_var_4_, inRep_var_2_)
 
@@ -41,16 +41,13 @@ template <typename T> using v = vector<T>; template <typename T> using v2 = v<v<
 using vl = v<i64>; using v2l = v2<i64>; using vi = v<i32>;
 #define pb push_back
 #define eb emplace_back
-#define pf push_front
-#define ef emplace_front
 using ii = array<i64, 2>; using iii = array<i64, 3>;
 template <typename T> using lim = std::numeric_limits<T>;
-template <typename Signature> using func = function<Signature>;
 
 template <typename T = i64> T input() {T t; cin >> t; return t;} template <typename T = i64> T in() {T t; cin >> t; return t;}
-string readline() { string s; getline(cin, s); return s; }
+#define In (in())
 #if ENABLE_CPP20_MACRO
-template <typename T=i64, typename T2=v<T>, typename T3=less<>> using pq = priority_queue<T, T2, T3>;
+template <typename T, typename T2=v<T>, typename T3=less<>> using pq = priority_queue<T, T2, T3>;
 template <typename T> T::value_type fpop(T &que) { auto t = que.front(); que.pop(); return t; }
 template <typename T> T::value_type tpop(T &st) { auto t = st.top(); st.pop(); return t; }
 #endif
@@ -61,7 +58,6 @@ template <typename T> T idx(const T &val, const v<T> &compressed) { return lower
 template <typename T> T pow_(T a, T b, T mod=lim<T>::max()) { a%=mod;T ans=1;while(b){if(b&1)ans=ans*a%mod;b>>=1;a=a*a%mod;} return ans; }
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 template <typename T = i64> v<T> inputArr(i64 sz) { v<T> a; forn(i,sz) a.push_back(input<T>()); return a; }
-template <typename T = i64> v<T> inArr(i64 sz) { v<T> a; forn(i,sz) a.push_back(in<T>()); return a; }
 template <typename T> void inputArr(v<T> &arr, i64 sz, bool clear = true) { if(clear) arr.clear(); forn(i,sz) arr.push_back(input<T>()); }
 template <typename T> v<T> sorted_copy(v<T> arr) { sort(all(arr)); return arr; }
 template <typename T> v<T> compressed_copy(v<T> arr, const bool &autosort=true) { compress(arr, autosort); return arr; }
@@ -70,8 +66,6 @@ enum Nl_{} nl_; istream& operator>>(istream& i, const Nl_&) { return i; } ostrea
 
 template <class A, class B=Nl_, class C=Nl_, class D=Nl_, class E=Nl_, class F=Nl_, class G=Nl_>
 void input(A &a, B &b=nl_, C &c=nl_, D &d=nl_, E &e=nl_, F &f=nl_, G &g=nl_) { cin >> a >> b >> c >> d >> e >> f >> g; }
-template <class A, class B=Nl_, class C=Nl_, class D=Nl_, class E=Nl_, class F=Nl_, class G=Nl_>
-void in(A &a, B &b=nl_, C &c=nl_, D &d=nl_, E &e=nl_, F &f=nl_, G &g=nl_) { cin >> a >> b >> c >> d >> e >> f >> g; }
 template <class A=Nl_, class B=Nl_, class C=Nl_, class D=Nl_, class E=Nl_, class F=Nl_, class G=Nl_, class H=Nl_, class I=Nl_, class J=Nl_>
 void print(A a=nl_, B b=nl_, C c=nl_, D d=nl_, E e=nl_, F f=nl_, G g=nl_, H h=nl_, I i=nl_, J j=nl_) { cout << a << b << c << d << e << f << g << h << i << j; }
 template <class A=Nl_, class B=Nl_, class C=Nl_, class D=Nl_, class E=Nl_, class F=Nl_, class G=Nl_, class H=Nl_, class I=Nl_, class J=Nl_>
@@ -81,79 +75,11 @@ void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") 
 //@formatter:on
 #pragma endregion
 
-class pollard_rho {
-public:
-    explicit pollard_rho() {
-        base = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41};
-        gen = mt19937(random_device()());
+i32 main() {
+    fastio;
+    inRep() {
+        i64 a, b, k; input(a, b, k);
+        if(a/k+(a%k?1:0) > b/k+(b%k?1:0)) println((a/k+(a%k?1:0))*2-1);
+        else println((b/k+(b%k?1:0))*2);
     }
-    bool isPrime(i128 n) {
-        if(n<=1) return false;
-        for(const i128 &a: base) if (!_isPrime(n, a)) return false;
-        return true;
-    }
-    i128 factorize(i128 n) {
-        assert(n>=2);
-        if (n % 2 == 0) return 2;
-        if (isPrime(n)) return n;
-        i128 x = dis(gen) % (n - 2) + 2, y = x, c = dis(gen) % 10 + 1, g = 1;
-        while (g == 1) {
-            x = (x * x % n + c) % n;
-            y = (y * y % n + c) % n;
-            y = (y * y % n + c) % n;
-            g = gcd(x - y > 0 ? x - y : y - x, n);
-            if (g == n) return factorize(n);
-        }
-        if (isPrime(g)) return g;
-        else return factorize(g);
-    }
-    static i128 pow(i128 a, i128 b) {
-        return pow(a, b, lim<i128>::max());
-    }
-    static i128 pow(i128 a, i128 b, i128 mod) {
-        a %= mod;
-        i128 ans = 1;
-        while (b) {
-            if (b & 1) ans = ans * a % mod;
-            b >>= 1;
-            a = a * a % mod;
-        }
-        return ans;
-    }
-    static i128 gcd(i128 a, i128 b) {
-        if (a < b) swap(a, b);
-        while (b != 0) {
-            i128 r = a % b;
-            a = b;
-            b = r;
-        }
-        return a;
-    }
-private:
-    v<i128> base;
-    mt19937 gen;
-    uniform_int_distribution<i128> dis;
-    static bool _isPrime(i128 n, i128 a) {
-        if (a % n == 0) return true;
-        i128 d = n - 1;
-        while (true) {
-            i128 temp = pow(a, d, n);
-            if (temp == n - 1) return true;
-            if (d % 2 == 1) return (temp == 1 || temp == n - 1);
-            d /= 2;
-        }
-    }
-};
-
-//short
-struct prs{
-    prs(){B={2,3,5,7,11,13,17,19,23,29,31,37,41};E=mt19937(random_device()());}bool isPrime(i128 n){if(n<=1)return 0;for(const i128 &a:B)if(!_(n,a))return 0;return 1;}
-    i128 factorize(const i128&n){if(n%2==0)return 2;if(isPrime(n))return n;i128 x=D(E)%(n-2)+2,y=x,c=D(E)%10+1,g=1;while(g==1){x=(x*x%n+c)%n;y=(y*y%n+c)%n;y=(y*y%n
-    +c)%n;g=G(x-y>0?x-y:y-x,n);if(g==n)return factorize(n);}if(isPrime(g))return g;else return factorize(g);}i128 p(i128 a,i128 b,i128 m){a%=m;i128 z=1;while(
-    b){if(b&1)z=z*a%m;b>>=1;a=a*a%m;}return z;}i128 G(i128 a,i128 b) {if(a<b)swap(a,b);while(b){i128 r=a%b;a=b;b=r;}return a;}v<i128>B;mt19937 E;uniform_int_distribution
-    <i128>D;bool _(i128 n,i128 a){if(a%n==0)return 1;i128 d=n-1;while(1){i128 t=p(a,d,n);if(t==n-1)return 1;if(d%2)return(t==1||t==n-1);d/=2;}}
-};
-
-signed main() {
-
 }

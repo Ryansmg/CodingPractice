@@ -1,7 +1,7 @@
 #pragma region macros
 //@formatter:off
 #define GCC_OPTIMIZE_ENABLE false
-#define ENABLE_CPP20_MACRO true
+#define ENABLE_CPP20_MACRO false
 
 #include <bits/stdc++.h>
 using namespace std;
@@ -32,7 +32,7 @@ constexpr i64 llmax = 9223372036854775807, INF = 1000000000000000000, inf = 3000
 #define rep(n) forn(bit_Ly_S, n)
 #define rep2(n) forn(la_sh_Discord, n)
 
-i64 iR_v_, iR_v2_;
+i64 inRep_var_, inRep_var_2_;
 #define inRep() input(inRep_var_); forn(inRep_var_3_, inRep_var_)
 #define inRep2() input(inRep_var_2_); forn(inRep_var_4_, inRep_var_2_)
 
@@ -54,15 +54,17 @@ template <typename T=i64, typename T2=v<T>, typename T3=less<>> using pq = prior
 template <typename T> T::value_type fpop(T &que) { auto t = que.front(); que.pop(); return t; }
 template <typename T> T::value_type tpop(T &st) { auto t = st.top(); st.pop(); return t; }
 #endif
-template <typename T> void reverse(v<T> &v) { reverse(all(v)); }
+template <typename T> void reverse(T &v) { reverse(all(v)); }
 template <typename T> void sort(v<T> &v) { sort(all(v)); }
 template <typename T> void compress(v<T> &v, const bool &autosort=true) { if(autosort) sort(all(v)); v.erase(unique(all(v)), v.end()); }
 template <typename T> T idx(const T &val, const v<T> &compressed) { return lower_bound(all(compressed), val) - compressed.begin(); }
 template <typename T> T pow_(T a, T b, T mod=lim<T>::max()) { a%=mod;T ans=1;while(b){if(b&1)ans=ans*a%mod;b>>=1;a=a*a%mod;} return ans; }
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
+template <typename T> T lcm_(T a, T b) { return a / gcd_(a, b) * b; }
 template <typename T = i64> v<T> inputArr(i64 sz) { v<T> a; forn(i,sz) a.push_back(input<T>()); return a; }
 template <typename T = i64> v<T> inArr(i64 sz) { v<T> a; forn(i,sz) a.push_back(in<T>()); return a; }
 template <typename T> void inputArr(v<T> &arr, i64 sz, bool clear = true) { if(clear) arr.clear(); forn(i,sz) arr.push_back(input<T>()); }
+template <typename T> T reversed_copy(T arr) { reverse(all(arr)); return arr; }
 template <typename T> v<T> sorted_copy(v<T> arr) { sort(all(arr)); return arr; }
 template <typename T> v<T> compressed_copy(v<T> arr, const bool &autosort=true) { compress(arr, autosort); return arr; }
 
@@ -77,7 +79,9 @@ void print(A a=nl_, B b=nl_, C c=nl_, D d=nl_, E e=nl_, F f=nl_, G g=nl_, H h=nl
 template <class A=Nl_, class B=Nl_, class C=Nl_, class D=Nl_, class E=Nl_, class F=Nl_, class G=Nl_, class H=Nl_, class I=Nl_, class J=Nl_>
 void println(A a=nl_, B b=nl_, C c=nl_, D d=nl_, E e=nl_, F f=nl_, G g=nl_, H h=nl_, I i=nl_, J j=nl_) { print(a, b, c, d, e, f, g, h, i, j); cout << '\n'; }
 template <typename T>
-void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") { for(const T &i : v) cout << i << sep; cout << end; }
+void printArr(const v<T> &v, const string &sep = " ", const string &end = "\n") {
+    i64 paSz_ = v.size(); forn(i, paSz_-1) cout << v[i] << sep; cout << v[paSz_-1] << end;
+}
 //@formatter:on
 #pragma endregion
 
@@ -85,7 +89,6 @@ class pollard_rho {
 public:
     explicit pollard_rho() {
         base = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41};
-        gen = mt19937(random_device()());
     }
     bool isPrime(i128 n) {
         if(n<=1) return false;
@@ -96,7 +99,7 @@ public:
         assert(n>=2);
         if (n % 2 == 0) return 2;
         if (isPrime(n)) return n;
-        i128 x = dis(gen) % (n - 2) + 2, y = x, c = dis(gen) % 10 + 1, g = 1;
+        i128 x = rand()*rand() % (n - 2) + 2, y = x, c = rand()*rand() % 10 + 1, g = 1;
         while (g == 1) {
             x = (x * x % n + c) % n;
             y = (y * y % n + c) % n;
@@ -131,8 +134,6 @@ public:
     }
 private:
     v<i128> base;
-    mt19937 gen;
-    uniform_int_distribution<i128> dis;
     static bool _isPrime(i128 n, i128 a) {
         if (a % n == 0) return true;
         i128 d = n - 1;
@@ -145,15 +146,13 @@ private:
     }
 };
 
-//short
-struct prs{
-    prs(){B={2,3,5,7,11,13,17,19,23,29,31,37,41};E=mt19937(random_device()());}bool isPrime(i128 n){if(n<=1)return 0;for(const i128 &a:B)if(!_(n,a))return 0;return 1;}
-    i128 factorize(const i128&n){if(n%2==0)return 2;if(isPrime(n))return n;i128 x=D(E)%(n-2)+2,y=x,c=D(E)%10+1,g=1;while(g==1){x=(x*x%n+c)%n;y=(y*y%n+c)%n;y=(y*y%n
-    +c)%n;g=G(x-y>0?x-y:y-x,n);if(g==n)return factorize(n);}if(isPrime(g))return g;else return factorize(g);}i128 p(i128 a,i128 b,i128 m){a%=m;i128 z=1;while(
-    b){if(b&1)z=z*a%m;b>>=1;a=a*a%m;}return z;}i128 G(i128 a,i128 b) {if(a<b)swap(a,b);while(b){i128 r=a%b;a=b;b=r;}return a;}v<i128>B;mt19937 E;uniform_int_distribution
-    <i128>D;bool _(i128 n,i128 a){if(a%n==0)return 1;i128 d=n-1;while(1){i128 t=p(a,d,n);if(t==n-1)return 1;if(d%2)return(t==1||t==n-1);d/=2;}}
-};
-
-signed main() {
-
+i32 main() {
+    fastio;
+    i64 n = in(); vl ans; pollard_rho p;
+    while(n != 1) {
+        i64 z = p.factorize(n);
+        n /= z;
+        ans.pb(z);
+    }
+    printArr(sorted_copy(ans));
 }

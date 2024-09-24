@@ -27,6 +27,20 @@ public:
     u64 operator[](const T &target) { return cnt(target); }
 };
 
+i64 sqrtCnt; //sqrt(쿼리의 개수)
+struct query {
+    i64 i, j, order;
+    query()=default;
+    query(i64 a, i64 b, i64 c) {
+        i = a; j = b; order = c;
+    }
+    bool operator<(const query &b) const {
+        if(i / sqrtCnt == b.i / sqrtCnt) {
+            return j < b.j;
+        } else return i / sqrtCnt < b.i / sqrtCnt;
+    }
+};
+
 int main() {
 
 }
