@@ -180,16 +180,17 @@ public:
     explicit iterSeg(const v<int> &arr) { n = (int) arr.size(); init(arr); }
     explicit iterSeg(cint i) { tree = v<int>(i*2+10, 0); n = i; }
     void inputInit() { tree = v<int>(2*n+10, 0); forf(i, n, 2*n-1) cin >> tree[i]; init(); }
-    /// 0 <= tar < n
+    /// 1 <= tar <= n
     void update(int tar, int val) {
-        assert(0 <= tar && tar < n);
+        assert(1 <= tar && tar <= n);
+        tar--;
         tree[n+tar] = val;
         for(int i = n+tar; i>1; i>>=1) tree[i>>1] = tree[i] + tree[i^1];
     }
     /// [l, r]
     int query(int left, int right) {
-        assert(0 <= left && right < n);
-        right++;
+        assert(1 <= left && right <= n);
+        left--;
         int l = n+left, r = n+right, ans = 0;
         for(; l<r; l>>=1, r>>=1) {
             if(l&1) ans += tree[l++];

@@ -1,7 +1,7 @@
-#include <bits/stdc++.h>
 #pragma region macros
 #define GCC_OPTIMIZE_ENABLE false
 
+#include <bits/stdc++.h>
 using namespace std;
 
 #if GCC_OPTIMIZE_ENABLE
@@ -331,7 +331,7 @@ signed main() {
         p().val = choice(require);
     }
 
-    // BFS를 통한 승리 여부 탐색
+    // 승리 여부 탐색
     bool win = false; int bfsCnt = 0;
     stack<Player> search;
     Player temp; temp.vis[4][4] = true; temp.bfsVis[4][4] = true;
