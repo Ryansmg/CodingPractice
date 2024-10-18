@@ -203,7 +203,7 @@ struct BigInt {
         return result;
     }
     template <typename L, typename R> typename std::enable_if<std::is_convertible<L, BigInt>::value && std::is_convertible<R, BigInt>::value && std::is_rvalue_reference<R &&>::value, BigInt>::type friend operator+(L &&l, R &&r) {
-        BigInt result(std::move(r));
+        BigInt result(std::forward<R>(r));
         result += l;
         return result;
     }
@@ -576,10 +576,9 @@ int main() {
     BigInt i = 0, ans = 0; i.a.reserve(500000);
     for(char &c : s) {
         if(c == '-') {
-            i.a.pop_back();
+            i /= 10;
         } else {
-            i *= 10;
-            i += (c - '0');
+            i *= 10; i += c - '0';
         }
         ans += i;
     }

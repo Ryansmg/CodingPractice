@@ -1,11 +1,12 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#define int long long
 using namespace std;
 
 // 1708. 볼록 껍질
 // #볼록 껍질
+
+#define int long long
 
 //(x1,y1)->(x2,y2) 벡터 기준 (x3,y3)의 위치
 // 1이 반시계 방향
@@ -14,8 +15,7 @@ int _ccw(int x1, int y1, int x2, int y2, int x3, int y3) {
     return c == 0 ? 0 : (c>0 ? 1 : -1);
 }
 
-class point {
-    public:
+struct point {
     int x, y;
     bool operator< (const point &a) {
         return y == a.y ? x < a.x : y < a.y;
@@ -39,8 +39,7 @@ bool cmp(point &a, point &b) {
 
 int input() { int i; cin >> i; return i; }
 
-signed main()
-{
+signed main() {
     ios_base::sync_with_stdio(false);
     cin.tie(0); cout.tie(0);
     int n = input();

@@ -1,0 +1,10 @@
+n = int(input())
+for i in range(n):
+    println(i+1)
+
+arr = {3, 2, 1, "my name is", 'hello world'}
+for i in arr:
+    print(i, " ")
+println()
+println(len(arr))
+println(arr[0] + arr[1])

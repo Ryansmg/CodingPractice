@@ -20,7 +20,7 @@ using std::set, std::multiset, std::map, std::initializer_list, std::bitset;
 using std::max, std::min, std::gcd, std::lcm, std::pow, std::swap;
 using std::less, std::greater, std::all_of, std::hash;
 using std::stoi, std::stol, std::stoll, std::stoul, std::stoull, std::stof, std::stod, std::stold;
-using std::sort, std::shuffle, std::uniform_int_distribution, std::mt19937, std::random_device;
+using std::sort, std::stable_sort, std::shuffle, std::uniform_int_distribution, std::mt19937, std::random_device;
 using std::iota, std::prev, std::next, std::prev_permutation, std::next_permutation;
 
 #include <ext/pb_ds/assoc_container.hpp>
@@ -45,6 +45,7 @@ template <typename Signature> using fun = std::function<Signature>;
 #define ci64 const i64 &
 #define cint ci64
 #define ci32 const i32 &
+#define cast static_cast
 
 // consts ///////////////////////////////////////////////////////////////
 constexpr i64 i64max = 9223372036854775807,
@@ -88,6 +89,7 @@ template <typename T> T sorted_copy(T arr) { sort(all(arr)); return arr; }
 template <typename T> T compressed_copy(T arr, const bool &autosort=true) { compress(arr, autosort); return arr; }
 template <typename T> T idx(const T &val, const v<T> &compressed) { return lower_bound(all(compressed), val) - compressed.begin(); }
 template <typename T> T pow_(T a, T b, T mod=lim<T>::max()) { a%=mod;T ans=1;while(b){if(b&1)ans=ans*a%mod;b>>=1;a=a*a%mod;} return ans; }
+i64 pow_(i64 a, i64 b, i64 mod=lim<i64>::max()) { a%=mod;i64 ans=1;while(b){if(b&1)ans=ans*a%mod;b>>=1;a=a*a%mod;} return ans; }
 template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 
 template <typename Tp> Tp gcd(initializer_list<Tp> l_) {
@@ -117,6 +119,15 @@ template <typename T> T sq_(const T &i) { return i * i; }
 #define lfastio fastio
 #endif
 #define fastio std::ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr)
+#ifdef LOCAL
+#define fileio filein; fileout
+#define filein freopen(R"(C:\Users\ryans\Desktop\Coding\Baekjoon\z.etcBJ\input.txt)", "r", stdin)
+#define fileout freopen(R"(C:\Users\ryans\Desktop\Coding\Baekjoon\z.etcBJ\output.txt)", "w", stdout)
+#else
+#define fileio print()
+#define filein print()
+#define fileout print()
+#endif
 template <typename T = i64> T input() {T t; cin >> t; return t;}
 template <typename T = i64> v<T> inputArr(i64 sz) { v<T> a; forn(i,sz) a.eb(input<T>()); return a; }
 template <typename T> void inputArr(v<T> &arr, i64 sz, bool clear = true) { if(clear) arr.clear(); forn(i,sz) arr.eb(input<T>()); }
@@ -159,274 +170,100 @@ f128 tof128(const str &t) { return stold(t); }
 //@formatter:on
 #pragma endregion
 
-class Splay {
-public:
-    using ptr = i32;
-    #define cptr const ptr &
-    static constexpr ptr null = 0;
-    struct nd {
-        ptr l = null, r = null, p = null;
-        i64 sz = 0;
-        i64 val = 0, sum = 0, mx = 0, mn = INF;
-        bool flip = false, dummy = false;
-        nd()=default;
-        nd(ptr L, ptr R, ptr Parent, i64 Value) : l(L), r(R), p(Parent), val(Value), sum(Value), mx(Value), mn(Value), sz(1) {}
-    };
-private:
-    v<nd> mem; ptr root = null; ptr avail = 1;
-    static constexpr ptr trashPtr = 2015571557;
-    stack<ptr> free; i32 size_ = 0;
-    ptr New(cptr l, cptr r, cptr p, const i64 &val) {
-        if(!free.empty()) {
-            ptr t = pop(free);
-            mem[t] = nd(l, r, p, val);
-            return t;
-        }
-        mem.eb(l, r, p, val);
-        assert(avail + 1 < trashPtr);
-        return avail++;
-    }
-    void Delete(cptr tar) {
-        free.push(tar);
-        l(tar) = r(tar) = p(tar) = trashPtr;
-        val(tar) = {};
-    }
-    ptr& l(cptr x) { return mem[x].l; }
-    ptr& r(cptr x) { return mem[x].r; }
-    ptr& p(cptr x) { return mem[x].p; }
-    i64& sz(cptr x) { return mem[x].sz; }
-    i64& val(cptr x) { return mem[x].val; }
-    i64& sum(cptr x) { return mem[x].sum; }
-    i64& mx(cptr x) { return mem[x].mx; }
-    i64& mn(cptr x) { return mem[x].mn; }
-    bool& flip(cptr x) { return mem[x].flip; }
-    void update(cptr x) {
-        sz(x) = 1 + sz(l(x)) + sz(r(x));
-        sum(x) = val(x) + sum(l(x)) + sum(r(x));
-        mn(x) = min({val(x), mn(l(x)), mn(r(x))});
-        mx(x) = min({val(x), mx(l(x)), mx(r(x))});
-    }
-    void push(cptr x) {
-        if(!flip(x)) return;
-        swap(l(x), r(x));
-        if(l(x)) flip(l(x)) = !flip(l(x));
-        if(r(x)) flip(r(x)) = !flip(r(x));
-        flip(x) = false;
-    }
-    void rotate(cptr x) {
-        if(x == root) return;
-        ptr P = p(x), G = p(P);
-        push(P); push(x);
-        if(l(p(x)) == x) {
-            l(p(x)) = r(x);
-            p(r(x)) = p(x);
-            r(x) = p(x);
-        } else {
-            r(p(x)) = l(x);
-            p(l(x)) = p(x);
-            l(x) = p(x);
-        }
-        p(x) = G;
-        p(P) = x;
-        if(l(G) == P) l(G) = x;
-        else if(G) r(G) = x;
-        if(p(x) == null) root = x;
-        update(P); update(x);
-    }
-    void splay(cptr x, cptr g = null) {
-        while( p(x) != g ) {
-            if(p(p(x)) == g) { rotate(x); break; }
-            if( (x == l(p(x)) ) == ( p(x) == l(p(p(x))) ) ) rotate(p(x));
-            else rotate(x);
-            rotate(x);
-        }
-        if(!g) assert(root == x);
-    }
-public:
-    Splay() {
-        mem = v<nd>(1, {0, 0, 0, {}});
-        mem[0].sz = 0;
-        root = null;
-    }
-    explicit Splay(const vl &arr) : Splay() {
-        i64 n_ = arr.size();
-        root = New(null, null, null, arr[0]);
-        ptr cur = root;
-        v<ptr> t_(1, root);
-        forf(i, 1, n_ - 1) {
-            ptr nxt = New(null, null, cur, arr[i]);
-            r(cur) = nxt; cur = nxt;
-            t_.eb(cur);
-        }
-        l(root) = New(null, null, cur, 0);
-        mem[l(root)].dummy = true;
-        r(cur) = New(null, null, cur, 0);
-        mem[r(cur)].dummy = true;
-        assert(t_.size() == n_); size_ = n_;
-        forr(i, n_-1, 0) update(t_[i]);
-    }
-    nd getMem(cptr i) { return mem[i]; }
-    ptr rootPtr() const { return root; }
-    void reserve(u64 sz) { mem.reserve(sz); }
-    
-    i32 size() const { return size_; }
-    
-    // [s, e], s >= 0
-    ptr gather(i32 s, i32 e) {
-        kth(e+1);
-        ptr t = root;
-        kth(s-1);
-        splay(t, root);
-        return l(r(root));
-    }
-    
-    void flip(i32 s, i32 e) {
-        ptr x = gather(s, e);
-        flip(x) = !flip(x);
-    }
-    
-    void shift(i32 s, i32 e, i32 k) {
-        if(k >= 0) {
-            k %= e - s + 1; if(!k) return;
-            flip(s, e); flip(s, s+k-1); flip(s+k, e);
-        } else {
-            k *= -1; k %= e - s + 1; if(!k) return;
-            flip(s, e); flip(s, e-k); flip(e-k+1, e);
-        }
-    }
-    
-    ptr operator[](i32 k) {
-        splay(k+1);
-        return root;
-    }
-    
-    /// k >= 0
-    void kth(i32 k) {
-        ptr x = root;
-        while(true) {
-            while(l(x) && sz(l(x)) > k) x = l(x);
-            k -= sz(l(x));
-            if(!k--) break;
-            x = r(x);
-        }
-        splay(x);
-    }
-    
-    template <typename Callable>
-    void forEach(const Callable &f, ptr tar = -1) {
-        fun<void(ptr)> recF_ = [&](const ptr &i) {
-            if(!i) return;
-            push(i);
-            if(l(i)) recF_(l(i));
-            f(mem[i]);
-            if(r(i)) recF_(r(i));
-        };
-        if(tar == -1) tar = root;
-        recF_(tar);
-    }
-};
+using lz = array<char, 10>;
+using tr = array<i32, 10>;
+constexpr i32 mod = 998244353;
+tr tree[4000000]; lz lazy[4000000]; tr lazy2[4000000];
+i32 L;
 
-// 13159. 배열
-// #splay_tree
+i32 inline mul(ci32 a, ci32 b) { return cast<i32>(a * (i64) b % mod); }
 
-i32 main() {
-    lfastio;
-    invar(n, q);
-    vl init; forf(i, 1, n) init.eb(i);
-    Splay splay(init);
-    rep(q) {
-        invar(op);
-        if(op == 1) {
-            invar(s, e);
-            splay.flip(s-1, e-1);
-            Splay::nd x = splay.getMem(splay.gather(s-1, e-1));
-            println(x.mn, " ", x.mx, " ", x.sum);
-        }
-        else if(op == 2) {
-            invar(s, e, k);
-            Splay::nd x = splay.getMem(splay.gather(s-1, e-1));
-            println(x.mn, " ", x.mx, " ", x.sum);
-            splay.shift(s-1, e-1, k);
-        }
-        else if(op == 3) {
-            splay.kth(input());
-            println(splay.getMem(splay.rootPtr()).val);
-        }
-        else {
-            i32 x = splay[input()-1];
-            println(splay.getMem(splay.getMem(x).l).sz);
-        }
-    }
-    splay.forEach([&](Splay::nd n) {
-        print(n.val, " ");
-    });
+tr mergeTr(const tr &l, const tr &r, i32 s, i32 e) {
+    i32 rightRangeLen = e - ((s + e) / 2 + 1) + 1;
+    i64 leftOffset = pow_(10LL, rightRangeLen, mod);
+    tr ret;
+    forn(i, 10) ret[i] = cast<i32>((l[i] * leftOffset % mod + r[i]) % mod);
+    return ret;
 }
 
-// std::set 구현
-//void insert(const i64 &key) {
-//    ptr newNd = New(0, 0, 0, key);
-//    if(root == null) { root = newNd; size_++; return; }
-//    ptr cur = root;
-//    while(true) {
-//        if(val(cur) == key) return; // 중복
-//        if(key < val(cur)) {
-//            if(l(cur) == null) {
-//                l(cur) = newNd; p(newNd) = cur;
-//                break;
-//            }
-//            cur = l(cur);
-//        } else {
-//            if(r(cur) == null) {
-//                r(cur) = newNd; p(newNd) = cur;
-//                break;
-//            }
-//            cur = r(cur);
-//        }
-//    }
-//    size_++; splay(newNd);
-//}
-//bool find(const i64 &key) {
-//    ptr cur = root;
-//    if(root == null) return false;
-//    while(cur) {
-//        if(key == val(cur)) break;
-//        if(key < val(cur)) {
-//            if(l(cur) == null) break;
-//            cur = l(cur);
-//        }
-//        else {
-//            if(r(cur) == null) break;
-//            cur = r(cur);
-//        }
-//    }
-//    splay(cur);
-//    return key == val(cur);
-//}
-//void erase(const i64 &key) {
-//    if(!find(key)) return;
-//    size_--; ptr pre = root;
-//    if(l(root) && r(root)) {
-//        root = l(root);
-//        p(root) = null;
-//
-//        ptr cur = root;
-//        while(r(cur)) cur = r(cur);
-//        r(cur) = r(pre); p(r(pre)) = cur;
-//        Delete(pre);
-//        return;
-//    }
-//    if(l(root)) {
-//        root = l(root);
-//        p(root) = null;
-//        Delete(pre);
-//        return;
-//    }
-//    if(r(root)) {
-//        root = r(root);
-//        p(root) = null;
-//        Delete(pre);
-//        return;
-//    }
-//    Delete(pre); root = null;
-//}
-//
+void push(i32 ptr, i32 start, i32 end) {
+    tr res = tree[ptr];
+    forn(i, 10) {
+        if(lazy[ptr][i] == i) continue; // 변경 없음
+        // i를 lazy[ptr][i]로 변경
+        res[lazy[ptr][i]] += tree[ptr][i];
+        res[i] = (res[i] + mod - tree[ptr][i]) % mod;
+        res[lazy[ptr][i]] %= mod;
+        forf(nxtp, ptr*2, ptr*2+1) {
+            if(start == end) break;
+            forn(j, 10) if(lazy[nxtp][j] == i && lazy2[nxtp][j] < lazy2[ptr][i]) {
+                lazy[nxtp][j] = lazy[ptr][i];
+                lazy2[nxtp][j] = lazy2[ptr][i];
+            }
+        }
+        lazy[ptr][i] = i;
+        lazy2[ptr][i] = -1;
+    }
+    tree[ptr] = res;
+}
+
+void update(i32 l, i32 r, i32 from, i32 to, i32 qidx, i32 node = 1, i32 start = 1, i32 end = L) {
+    push(node, start, end);
+    if(r < start || end < l) return;
+    if(l <= start && end <= r) {
+        lazy[node][from] = to;
+        lazy2[node][from] = qidx;
+        push(node, start, end);
+        return;
+    }
+    
+    update(l, r, from, to, qidx, node*2, start, (start+end)/2);
+    update(l, r, from, to, qidx, node*2+1, (start+end)/2+1, end);
+    
+    tree[node] = mergeTr(tree[node*2], tree[node*2+1], start, end);
+}
+
+i32 query(i32 l, i32 r, i32 node = 1, i32 start = 1, i32 end = L) {
+    push(node, start, end);
+    if(r < start || end < l) return 0;
+    if(l <= start && end <= r) {
+        i32 raw = 0;
+        forn(i, 10) raw += mul(tree[node][i], i), raw %= mod;
+        i64 offset = pow_(10LL, r - end, mod);
+        return cast<i32>(raw * offset % mod);
+    }
+    return (query(l, r, node*2, start, (start+end)/2) + query(l, r, node*2+1, (start+end)/2+1, end)) % mod;
+}
+
+str s;
+
+void init(i32 node = 1, i32 start = 1, i32 end = L) {
+    if(start == end) {
+        tree[node][s[start-1]-'0'] = 1;
+        return;
+    }
+    init(node*2, start, (start+end)/2);
+    init(node*2+1, (start+end)/2+1, end);
+    tree[node] = mergeTr(tree[node*2], tree[node*2+1], start, end);
+}
+
+i32 main() {
+//    fileio;
+    fastio;
+    i64 q; input(s, q);
+    L = Size(s);
+    for(tr &t : tree) t = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    for(tr &t : lazy2) t = { -1, -1, -1, -1, -1, -1, -1, -1 };
+    for(lz &l : lazy) l = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    init();
+    forn(qi, q) {
+        invar(qtype);
+        if(qtype == 1) {
+            invar(i, j, from, to);
+            update(i, j, from, to, qi);
+        } else {
+            invar(i, j);
+            println(query(i, j));
+        }
+    }
+}

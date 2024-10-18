@@ -108,6 +108,21 @@ struct Fenwick {
     int query(int tar) { int ans = 0; while(tar > 0) ans += tree[tar], tar -= (tar & -tar);  return ans; }
 };
 
+/*
+2d fenwick
+int tree[5050][5050];
+
+void update(int x, int y, int v){
+    for(x++; x<5050; x+=x&-x) for(int yy=y+1; yy<5050; yy+=yy&-yy) tree[x][yy] += v;
+}
+int query(int x, int y){
+    int ret = 0;
+    for(x++; x; x-=x&-x) for(int yy=y+1; yy; yy-=yy&-yy) ret += tree[x][yy];
+    return ret;
+}
+
+ */
+
 signed main() {
 
 }

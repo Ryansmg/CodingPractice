@@ -20,7 +20,7 @@ using std::set, std::multiset, std::map, std::initializer_list, std::bitset;
 using std::max, std::min, std::gcd, std::lcm, std::pow, std::swap;
 using std::less, std::greater, std::all_of, std::hash;
 using std::stoi, std::stol, std::stoll, std::stoul, std::stoull, std::stof, std::stod, std::stold;
-using std::sort, std::shuffle, std::uniform_int_distribution, std::mt19937, std::random_device;
+using std::sort, std::stable_sort, std::shuffle, std::uniform_int_distribution, std::mt19937, std::random_device;
 using std::iota, std::prev, std::next, std::prev_permutation, std::next_permutation;
 
 #include <ext/pb_ds/assoc_container.hpp>
@@ -45,6 +45,7 @@ template <typename Signature> using fun = std::function<Signature>;
 #define ci64 const i64 &
 #define cint ci64
 #define ci32 const i32 &
+#define cast static_cast
 
 // consts ///////////////////////////////////////////////////////////////
 constexpr i64 i64max = 9223372036854775807,
@@ -110,6 +111,15 @@ template <typename T> T min(const v<T> v_) {
 template <typename T> T lcm_(T a, T b) { return a / gcd_(a, b) * b; }
 template <typename T> T sq_(const T &i) { return i * i; }
 
+random_device macro_random_device_;
+mt19937 mt19937_gen_(macro_random_device_());
+uniform_int_distribution<i32> uni_i_dis_i32_(0, lim<i32>::max());
+uniform_int_distribution<i64> uni_i_dis_i64_(0, lim<i64>::max());
+#define rand() rand_()
+i32 rand_() { return uni_i_dis_i32_(mt19937_gen_); }
+i64 randl() { return uni_i_dis_i64_(mt19937_gen_); }
+i64 randInt(ci64 l_, ci64 r_) { return randl() % (r_ - l_ + 1) + l_; } // inclusive
+
 // I/O macros ///////////////////////////////////////////////////////////////
 #ifdef LOCAL
 #define lfastio print()
@@ -117,6 +127,17 @@ template <typename T> T sq_(const T &i) { return i * i; }
 #define lfastio fastio
 #endif
 #define fastio std::ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr)
+#ifdef LOCAL
+#define fileio filein; fileout
+#define filein freopen(R"(C:\Users\ryans\Desktop\Coding\Baekjoon\z.etcBJ\input.txt)", "r", stdin)
+#define fileout freopen(R"(C:\Users\ryans\Desktop\Coding\Baekjoon\z.etcBJ\output.txt)", "w", stdout)
+#define ansout freopen(R"(C:\Users\ryans\Desktop\Coding\Baekjoon\z.etcBJ\ans.txt)", "w", stdout)
+#else
+#define fileio print()
+#define filein print()
+#define fileout print()
+#define ansout print()
+#endif
 template <typename T = i64> T input() {T t; cin >> t; return t;}
 template <typename T = i64> v<T> inputArr(i64 sz) { v<T> a; forn(i,sz) a.eb(input<T>()); return a; }
 template <typename T> void inputArr(v<T> &arr, i64 sz, bool clear = true) { if(clear) arr.clear(); forn(i,sz) arr.eb(input<T>()); }
@@ -159,274 +180,34 @@ f128 tof128(const str &t) { return stold(t); }
 //@formatter:on
 #pragma endregion
 
-class Splay {
-public:
-    using ptr = i32;
-    #define cptr const ptr &
-    static constexpr ptr null = 0;
-    struct nd {
-        ptr l = null, r = null, p = null;
-        i64 sz = 0;
-        i64 val = 0, sum = 0, mx = 0, mn = INF;
-        bool flip = false, dummy = false;
-        nd()=default;
-        nd(ptr L, ptr R, ptr Parent, i64 Value) : l(L), r(R), p(Parent), val(Value), sum(Value), mx(Value), mn(Value), sz(1) {}
-    };
-private:
-    v<nd> mem; ptr root = null; ptr avail = 1;
-    static constexpr ptr trashPtr = 2015571557;
-    stack<ptr> free; i32 size_ = 0;
-    ptr New(cptr l, cptr r, cptr p, const i64 &val) {
-        if(!free.empty()) {
-            ptr t = pop(free);
-            mem[t] = nd(l, r, p, val);
-            return t;
-        }
-        mem.eb(l, r, p, val);
-        assert(avail + 1 < trashPtr);
-        return avail++;
-    }
-    void Delete(cptr tar) {
-        free.push(tar);
-        l(tar) = r(tar) = p(tar) = trashPtr;
-        val(tar) = {};
-    }
-    ptr& l(cptr x) { return mem[x].l; }
-    ptr& r(cptr x) { return mem[x].r; }
-    ptr& p(cptr x) { return mem[x].p; }
-    i64& sz(cptr x) { return mem[x].sz; }
-    i64& val(cptr x) { return mem[x].val; }
-    i64& sum(cptr x) { return mem[x].sum; }
-    i64& mx(cptr x) { return mem[x].mx; }
-    i64& mn(cptr x) { return mem[x].mn; }
-    bool& flip(cptr x) { return mem[x].flip; }
-    void update(cptr x) {
-        sz(x) = 1 + sz(l(x)) + sz(r(x));
-        sum(x) = val(x) + sum(l(x)) + sum(r(x));
-        mn(x) = min({val(x), mn(l(x)), mn(r(x))});
-        mx(x) = min({val(x), mx(l(x)), mx(r(x))});
-    }
-    void push(cptr x) {
-        if(!flip(x)) return;
-        swap(l(x), r(x));
-        if(l(x)) flip(l(x)) = !flip(l(x));
-        if(r(x)) flip(r(x)) = !flip(r(x));
-        flip(x) = false;
-    }
-    void rotate(cptr x) {
-        if(x == root) return;
-        ptr P = p(x), G = p(P);
-        push(P); push(x);
-        if(l(p(x)) == x) {
-            l(p(x)) = r(x);
-            p(r(x)) = p(x);
-            r(x) = p(x);
-        } else {
-            r(p(x)) = l(x);
-            p(l(x)) = p(x);
-            l(x) = p(x);
-        }
-        p(x) = G;
-        p(P) = x;
-        if(l(G) == P) l(G) = x;
-        else if(G) r(G) = x;
-        if(p(x) == null) root = x;
-        update(P); update(x);
-    }
-    void splay(cptr x, cptr g = null) {
-        while( p(x) != g ) {
-            if(p(p(x)) == g) { rotate(x); break; }
-            if( (x == l(p(x)) ) == ( p(x) == l(p(p(x))) ) ) rotate(p(x));
-            else rotate(x);
-            rotate(x);
-        }
-        if(!g) assert(root == x);
-    }
-public:
-    Splay() {
-        mem = v<nd>(1, {0, 0, 0, {}});
-        mem[0].sz = 0;
-        root = null;
-    }
-    explicit Splay(const vl &arr) : Splay() {
-        i64 n_ = arr.size();
-        root = New(null, null, null, arr[0]);
-        ptr cur = root;
-        v<ptr> t_(1, root);
-        forf(i, 1, n_ - 1) {
-            ptr nxt = New(null, null, cur, arr[i]);
-            r(cur) = nxt; cur = nxt;
-            t_.eb(cur);
-        }
-        l(root) = New(null, null, cur, 0);
-        mem[l(root)].dummy = true;
-        r(cur) = New(null, null, cur, 0);
-        mem[r(cur)].dummy = true;
-        assert(t_.size() == n_); size_ = n_;
-        forr(i, n_-1, 0) update(t_[i]);
-    }
-    nd getMem(cptr i) { return mem[i]; }
-    ptr rootPtr() const { return root; }
-    void reserve(u64 sz) { mem.reserve(sz); }
-    
-    i32 size() const { return size_; }
-    
-    // [s, e], s >= 0
-    ptr gather(i32 s, i32 e) {
-        kth(e+1);
-        ptr t = root;
-        kth(s-1);
-        splay(t, root);
-        return l(r(root));
-    }
-    
-    void flip(i32 s, i32 e) {
-        ptr x = gather(s, e);
-        flip(x) = !flip(x);
-    }
-    
-    void shift(i32 s, i32 e, i32 k) {
-        if(k >= 0) {
-            k %= e - s + 1; if(!k) return;
-            flip(s, e); flip(s, s+k-1); flip(s+k, e);
-        } else {
-            k *= -1; k %= e - s + 1; if(!k) return;
-            flip(s, e); flip(s, e-k); flip(e-k+1, e);
-        }
-    }
-    
-    ptr operator[](i32 k) {
-        splay(k+1);
-        return root;
-    }
-    
-    /// k >= 0
-    void kth(i32 k) {
-        ptr x = root;
-        while(true) {
-            while(l(x) && sz(l(x)) > k) x = l(x);
-            k -= sz(l(x));
-            if(!k--) break;
-            x = r(x);
-        }
-        splay(x);
-    }
-    
-    template <typename Callable>
-    void forEach(const Callable &f, ptr tar = -1) {
-        fun<void(ptr)> recF_ = [&](const ptr &i) {
-            if(!i) return;
-            push(i);
-            if(l(i)) recF_(l(i));
-            f(mem[i]);
-            if(r(i)) recF_(r(i));
-        };
-        if(tar == -1) tar = root;
-        recF_(tar);
-    }
-};
-
-// 13159. 배열
-// #splay_tree
-
 i32 main() {
-    lfastio;
-    invar(n, q);
-    vl init; forf(i, 1, n) init.eb(i);
-    Splay splay(init);
+    filein;
+    ansout;
+    fastio;
+    str s; i64 q; input(s, q);
+    i64 mod = 998244353;
+    auto get = [&](i64 l, i64 r) -> i64 {
+        i64 ret = 0;
+        forf(i, l-1, r-1) {
+            ret *= 10;
+            ret += s[i] - '0';
+            ret %= mod;
+        }
+        return ret;
+    };
+    auto set = [&](i64 l, i64 r, i64 from, i64 to) {
+        char f = from + '0', t = to + '0';
+        forf(i, l-1, r-1) {
+            if(s[i] == f) s[i] = t;
+        }
+    };
     rep(q) {
-        invar(op);
-        if(op == 1) {
-            invar(s, e);
-            splay.flip(s-1, e-1);
-            Splay::nd x = splay.getMem(splay.gather(s-1, e-1));
-            println(x.mn, " ", x.mx, " ", x.sum);
-        }
-        else if(op == 2) {
-            invar(s, e, k);
-            Splay::nd x = splay.getMem(splay.gather(s-1, e-1));
-            println(x.mn, " ", x.mx, " ", x.sum);
-            splay.shift(s-1, e-1, k);
-        }
-        else if(op == 3) {
-            splay.kth(input());
-            println(splay.getMem(splay.rootPtr()).val);
-        }
-        else {
-            i32 x = splay[input()-1];
-            println(splay.getMem(splay.getMem(x).l).sz);
+        if(input() == 1) {
+            invar(a, b, c, d);
+            set(a, b, c, d);
+        } else {
+            invar(a, b);
+            println(get(a, b));
         }
     }
-    splay.forEach([&](Splay::nd n) {
-        print(n.val, " ");
-    });
 }
-
-// std::set 구현
-//void insert(const i64 &key) {
-//    ptr newNd = New(0, 0, 0, key);
-//    if(root == null) { root = newNd; size_++; return; }
-//    ptr cur = root;
-//    while(true) {
-//        if(val(cur) == key) return; // 중복
-//        if(key < val(cur)) {
-//            if(l(cur) == null) {
-//                l(cur) = newNd; p(newNd) = cur;
-//                break;
-//            }
-//            cur = l(cur);
-//        } else {
-//            if(r(cur) == null) {
-//                r(cur) = newNd; p(newNd) = cur;
-//                break;
-//            }
-//            cur = r(cur);
-//        }
-//    }
-//    size_++; splay(newNd);
-//}
-//bool find(const i64 &key) {
-//    ptr cur = root;
-//    if(root == null) return false;
-//    while(cur) {
-//        if(key == val(cur)) break;
-//        if(key < val(cur)) {
-//            if(l(cur) == null) break;
-//            cur = l(cur);
-//        }
-//        else {
-//            if(r(cur) == null) break;
-//            cur = r(cur);
-//        }
-//    }
-//    splay(cur);
-//    return key == val(cur);
-//}
-//void erase(const i64 &key) {
-//    if(!find(key)) return;
-//    size_--; ptr pre = root;
-//    if(l(root) && r(root)) {
-//        root = l(root);
-//        p(root) = null;
-//
-//        ptr cur = root;
-//        while(r(cur)) cur = r(cur);
-//        r(cur) = r(pre); p(r(pre)) = cur;
-//        Delete(pre);
-//        return;
-//    }
-//    if(l(root)) {
-//        root = l(root);
-//        p(root) = null;
-//        Delete(pre);
-//        return;
-//    }
-//    if(r(root)) {
-//        root = r(root);
-//        p(root) = null;
-//        Delete(pre);
-//        return;
-//    }
-//    Delete(pre); root = null;
-//}
-//
