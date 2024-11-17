@@ -237,5 +237,12 @@ mac_conv_(i64, ll) mac_conv_(i32, i) mac_conv_(u64, ull) mac_conv_(f64, d) mac_c
 
 i32 main() {
     fastio;
-    
+    tcRep() {
+        invar(n);
+        vl cnt(n+1, 0);
+        rep(n) cnt[input()]++;
+        i64 ans = 0;
+        for(ci64 i : cnt) ans += i/2;
+        println(ans);
+    }
 }

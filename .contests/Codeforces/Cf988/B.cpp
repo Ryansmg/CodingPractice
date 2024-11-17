@@ -235,7 +235,49 @@ mac_conv_(i64, ll) mac_conv_(i32, i) mac_conv_(u64, ull) mac_conv_(f64, d) mac_c
 //@formatter:on
 #pragma endregion
 
+struct prs{
+    prs(){B={2,3,5,7,11,13,17,19,23,29,31,37,41};E=mt19937(random_device()());}bool isPrime(i64 n){if(n<=1)return 0;for(const i64 &a:B)if(!_(n,a))return 0;return 1;}
+    i64 factorize(const i64&n){if(n%2==0)return 2;if(isPrime(n))return n;i64 x=D(E)%(n-2)+2,y=x,c=D(E)%10+1,g=1;while(g==1){x=(x*x%n+c)%n;y=(y*y%n+c)%n;y=(y*y%n
+    +c)%n;g=G(x-y>0?x-y:y-x,n);if(g==n)return factorize(n);}if(isPrime(g))return g;else return factorize(g);}i64 p(i64 a,i64 b,i64 m){a%=m;i64 z=1;while(
+        b){if(b&1)z=z*a%m;b>>=1;a=a*a%m;}return z;}i64 G(i64 a,i64 b) {if(a<b)swap(a,b);while(b){i64 r=a%b;a=b;b=r;}return a;}v<i64>B;mt19937 E;uniform_int_distribution
+        <i64>D;bool _(i64 n,i64 a){if(a%n==0)return 1;i64 d=n-1;while(1){i64 t=p(a,d,n);if(t==n-1)return 1;if(d%2)return(t==1||t==n-1);d/=2;}}
+};
+
 i32 main() {
     fastio;
-    
+    prs p;
+    tcRep() {
+        invar(k);
+        map<i64, i64> m;
+        rep(k) m[input()]++;
+        k -= 2;
+        i64 k2 = k;
+        vl fs;
+        while(k != 1) {
+            i64 f = p.factorize(k);
+            fs.eb(f); k /= f;
+        }
+        set<i64> fts;
+        fts.insert(1);
+        for(ci64 i : fs) {
+            set<i64> nxt = fts;
+            for(ci64 j : fts) nxt.insert(i * j);
+            fts = nxt;
+        }
+        for(ci64 i : fts) {
+            i64 j = k2 / i;
+            if(i == j) {
+                if(m[i] >= 2) {
+                    printSep(i, j); goto e;
+                }
+            } else {
+                if(m[i] && m[j]) {
+                    printSep(i, j); goto e;
+                }
+            }
+        }
+        assert(false);
+        e:
+        println();
+    }
 }

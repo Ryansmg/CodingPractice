@@ -237,5 +237,8 @@ mac_conv_(i64, ll) mac_conv_(i32, i) mac_conv_(u64, ull) mac_conv_(f64, d) mac_c
 
 i32 main() {
     fastio;
-    
+    tcRep() {
+        invar(n, m, L);
+        
+    }
 }

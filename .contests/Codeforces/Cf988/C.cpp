@@ -237,5 +237,18 @@ mac_conv_(i64, ll) mac_conv_(i32, i) mac_conv_(u64, ull) mac_conv_(f64, d) mac_c
 
 i32 main() {
     fastio;
-    
+    tcRep() {
+        invar(n);
+        if(n >= 5) {
+            forf(i, 1, n)
+                if(!(i&1) && i != 4) printf(.end=" ")(i);
+            
+            printf(.end=" ")(4, 5);
+            forf(i, 1, n)
+                if(i&1 && i != 5) printf(.end=" ")(i);
+            println();
+        } else {
+            println(-1);
+        }
+    }
 }

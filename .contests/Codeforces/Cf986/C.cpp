@@ -24,13 +24,11 @@ using namespace std;
 using std::cin, std::cout, std::cerr, std::clog, std::endl, std::istream, std::ostream, std::ifstream, std::ofstream, std::setw, std::setfill;
 using std::array, std::vector, std::stack, std::queue, std::deque, std::list, std::pair, std::tuple;
 using std::set, std::multiset, std::map, std::initializer_list, std::bitset;
-using std::max, std::min, std::gcd, std::lcm, std::pow, std::swap, std::abs, std::sin, std::cos, std::tan, std::asin, std::acos, std::atan;
-using std::sinh, std::cosh, std::tanh, std::atan2;
+using std::max, std::min, std::gcd, std::lcm, std::pow, std::swap, std::abs;
 using std::less, std::greater, std::less_equal, std::greater_equal, std::all_of, std::any_of, std::hash;
 using std::stoi, std::stol, std::stoll, std::stoul, std::stoull, std::stof, std::stod, std::stold;
 using std::sort, std::stable_sort, std::shuffle, std::uniform_int_distribution, std::mt19937, std::random_device;
 using std::iota, std::prev, std::next, std::prev_permutation, std::next_permutation;
-using std::complex, std::polar, std::is_integral_v;
 
 #include <ext/pb_ds/assoc_container.hpp>
 #include <ext/pb_ds/tree_policy.hpp>
@@ -88,10 +86,9 @@ constexpr f128
 #define rep(n) forn(rep_mac_name_1_, n)
 #define rep2(n) forn(rep_mac_name_2_, n)
 
-i64 iR_v_, iR_v2_, iR_v5_;
+i64 iR_v_, iR_v2_;
 #define inRep() input(iR_v_); forn(iR_v3_, iR_v_)
 #define inRep2() input(iR_v2_); forn(iR_v4_, iR_v2_)
-#define tcRep() input(iR_v5_); forf(TCN, 1, iR_v5_)
 
 // STL macros ///////////////////////////////////////////////////////////////
 #if !DISABLE_KOISTUDY_ERROR
@@ -161,11 +158,11 @@ inline i64 randInt(ci64 l_, ci64 r_) { return randl() % (r_ - l_ + 1) + l_; } //
 #define fastio std::ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr)
 #ifdef LOCAL
 #define fileio filein; fileout
-#define filein freopen(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\z.etcBJ\input.txt)", "r", stdin)
-#define fileout freopen(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\z.etcBJ\output.txt)", "w", stdout)
-#define inputout freopen(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\z.etcBJ\input.txt)", "w", stdout)
-#define outputin freopen(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\z.etcBJ\output.txt)", "r", stdin)
-#define ansout freopen(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\z.etcBJ\ans.txt)", "w", stdout)
+#define filein freopen(R"(C:\Users\ryans\Desktop\Coding\Baekjoon\z.etcBJ\input.txt)", "r", stdin)
+#define fileout freopen(R"(C:\Users\ryans\Desktop\Coding\Baekjoon\z.etcBJ\output.txt)", "w", stdout)
+#define inputout freopen(R"(C:\Users\ryans\Desktop\Coding\Baekjoon\z.etcBJ\input.txt)", "w", stdout)
+#define outputin freopen(R"(C:\Users\ryans\Desktop\Coding\Baekjoon\z.etcBJ\output.txt)", "r", stdin)
+#define ansout freopen(R"(C:\Users\ryans\Desktop\Coding\Baekjoon\z.etcBJ\ans.txt)", "w", stdout)
 #else
 #define fileio print()
 #define filein print()
@@ -175,7 +172,6 @@ inline i64 randInt(ci64 l_, ci64 r_) { return randl() % (r_ - l_ + 1) + l_; } //
 #define outputin print()
 #endif // LOCAL
 template <typename T = i64> inline T input() {T t; cin >> t; return t;}
-inline str inStr() { str t; cin >> t; return t; }
 template <typename T = i64> inline v<T> inputArr(i64 sz) { v<T> a; forn(i,sz) a.eb(input<T>()); return a; }
 template <typename T = i64> inline void inputArr(v<T> &arr, i64 sz, bool clear = true) { if(clear) arr.clear(); forn(i,sz) arr.eb(input<T>()); }
 template <typename T = i64> inline void inArr(v<T> &arr, i64 sz, bool clear = true) { inputArr(arr, sz, clear); }
@@ -201,14 +197,13 @@ template <typename ...T> inline void input(T&... a_) { (cin >> ... >> a_); }
 
 struct Printf {
     str sep = " ", end;
-    i32 prec = -1;
+    i32 precision = -1;
     i32 width = -1; char fill = ' ';
     void operator()() {}
     template <typename ...T> void operator()(const T&... _) { prf_imp_(_...); }
-    Printf& appendEnd(const str& end_) { end += end_; return *this; }
 private:
     inline void prf_imp_preset_() const {
-        if(prec != -1) cout << std::fixed, cout.precision(prec);
+        if(precision != -1) cout << std::fixed, cout.precision(precision);
         if(width != -1) cout << std::setw(width) << std::setfill(fill);
     }
     Tpl void prf_imp_(const T& _) const { prf_imp_preset_(); cout << _ << end; }
@@ -216,8 +211,7 @@ private:
         prf_imp_preset_(); cout << _ << sep; prf_imp_(b_...);
     }
 };
-#define printf(...) Printf({__VA_ARGS__})
-#define printfln(...) printf(__VA_ARGS__).appendEnd("\n")
+#define printf(...) Printf_({__VA_ARGS__})
 
 #endif // !DISABLE_KOISTUDY_ERROR
 #define invar(...) i64 __VA_ARGS__; input(__VA_ARGS__)
@@ -237,5 +231,34 @@ mac_conv_(i64, ll) mac_conv_(i32, i) mac_conv_(u64, ull) mac_conv_(f64, d) mac_c
 
 i32 main() {
     fastio;
-    
+    inRep() {
+        invar(n, m, v);
+        vl a = inArr(n);
+        i64 l = 0, r = n - 1;
+        i64 s = sum(a);
+        while(true) {
+            if(m == 0) { assert(s >= 0); println(s); break; }
+            if(s < v * m) { println(-1); break; }
+            assert(l <= r);
+            i64 nl = l, nr = r;
+            i64 ls = 0, rs = 0;
+            while(ls < v && nl <= r)
+                ls += a[nl++];
+            while(rs < v && nr >= l)
+                rs += a[nr--];
+            assert(ls);
+            assert(rs);
+            if(ls <= rs) {
+                assert(ls >= v);
+                assert(s >= ls);
+                s -= ls; l = nl;
+                m--;
+            } else {
+                assert(rs >= v);
+                assert(s >= rs);
+                s -= rs; r = nr;
+                m--;
+            }
+        }
+    }
 }

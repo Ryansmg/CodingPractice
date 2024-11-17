@@ -128,14 +128,6 @@ private:
 // 4464. Pride and Prejudice and Zombies
 // #pollard_rho #miller_rabin
 
-bool next(v<bool> &bo) {
-    unsigned int sz = bo.size();
-    int i=0;
-    while(bo[i] && i<sz) bo[i++]=false;
-    if(i==sz) return false;
-    return bo[i]=true;
-}
-
 signed main() {
     fastio;
     pollard_rho pr;
@@ -149,20 +141,22 @@ signed main() {
         string sortStr = instr;
         sort(all(sortStr));
         if(len&1) { cout << "no\n"; continue; }
-        v<int> arr;
-        v<bool> bo;
+        v<int> arr; v<bool> bo;
         int a = in;
         while(a!=1) {
             int b = (int) pr.factorize(a);
             arr.push_back(b); a/=b;
         }
-        uint sz = arr.size();
-        forn(i, sz) bo.push_back(false);
-        forn(i, sz) bo.push_back(true);
-        do {
-            int i = 1, j;
-            forn(k, sz) if(bo[k]) i*=arr[k];
-            j=in/i;
+        
+        set<int> fac; fac.insert(1);
+        for(auto i : arr) {
+            set<int> nxt = fac;
+            for(auto j : fac) nxt.insert(i * j);
+            fac = nxt;
+        }
+        
+        for(int i : fac) {
+            int j = in/i;
             string is = to_string(i), js = to_string(j);
             string s = is+js; sort(all(s));
             bool ichk, jchk; ichk=jchk=false;
@@ -182,7 +176,6 @@ signed main() {
             nxtdw:
             cout << "";
         }
-        while(next(bo));
         cout << "no\n";
         nxt:
         cout << "";
