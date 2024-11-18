@@ -239,5 +239,6 @@ i32 main() {
     fastio;
     tcRep() {
         invar(n);
+        
     }
 }

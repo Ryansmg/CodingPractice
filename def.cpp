@@ -7,6 +7,7 @@
 #pragma ide diagnostic ignored "OCUnusedMacroInspection"
 #pragma ide diagnostic ignored "OCUnusedTypeAliasInspection"
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
+#pragma ide diagnostic ignored "OCUnusedStructInspection"
 #pragma ide diagnostic ignored "UnreachableCallsOfFunction"
 
 #if GCC_OFAST_ENABLE
@@ -106,7 +107,7 @@ template <typename T, typename T3> inline T pop(pq<T, T3> &pq) { T t = pq.top();
 #define ef emplace_front
 Tpl inline auto lb(const v<T> &r_, T i_) { return lower_bound(all(r_), i_); }
 Tpl inline auto ub(const v<T> &r_, T i_) { return upper_bound(all(r_), i_); }
-Tpl inline i64 Size(const T &t_) { return static_cast<i64>(t_.size()); }
+Tpl inline i64 Size(const T &_) { return static_cast<i64>(_.size()); }
 
 Tpl inline T pop(stack<T> &st) { T t = st.top(); st.pop(); return t; }
 Tpl inline T pop(queue<T> &q) { T t = q.front(); q.pop(); return t; }
@@ -151,6 +152,12 @@ uniform_int_distribution<i64> uni_i_dis_i64_(0, lim<i64>::max());
 inline i32 randi() { return uni_i_dis_i32_(mt19937_gen_); }
 inline i64 randl() { return uni_i_dis_i64_(mt19937_gen_); }
 inline i64 randInt(ci64 l_, ci64 r_) { return randl() % (r_ - l_ + 1) + l_; } // inclusive
+
+#ifdef LOCAL
+#define lassert assert
+#else
+#define lassert(...)
+#endif
 
 // I/O macros ///////////////////////////////////////////////////////////////
 #ifdef LOCAL
@@ -231,11 +238,71 @@ Tpl inline i128 toi128(const T &t) { return cast<i128>(t); }
 inline i128 toi128(const str &t) { return cast<i128>(stoull(t)); }
 mac_conv_(i64, ll) mac_conv_(i32, i) mac_conv_(u64, ull) mac_conv_(f64, d) mac_conv_(f128, ld)
 
+// data structures
+constexpr i64 add_i64_(ci64 a, ci64 b) { return a + b; }
+
+template <typename Type = i64>
+class Segtree {
+    vector<Type> tree; i64 n;
+    Type identityElement; fun<Type(const Type&, const Type&)> merge;
+public:
+    class iterator {
+        friend Segtree;
+        iterator(Segtree* ptr) : treePtr(ptr), node(1), start(1), end(ptr->n) {} // NOLINT(*-explicit-constructor)
+        iterator(Segtree* a, i64 b, i64 c, i64 d) : treePtr(a), node(b), start(c), end(d) {}
+        Segtree* treePtr;
+    public:
+        i64 node, start, end;
+        inline Type& operator*() const { return treePtr->tree[node]; }
+        inline bool leaf() const { return start == end; }
+        inline iterator left() const { lassert(!leaf()); return iterator(treePtr, node<<1, start, (start+end)>>1); }
+        inline iterator right() const { lassert(!leaf()); return iterator(treePtr, (node<<1)|1, ((start+end)>>1)+1, end); }
+    };
+    iterator begin() { return iterator(this); }
+    explicit Segtree(ci64 treeSize, const Type& IdentityElement = 0,
+                     const fun<Type(const Type&, const Type&)>& mergeFunc = add_i64_) {
+        tree = v<Type>(4*treeSize, identityElement); n = treeSize;
+        identityElement = IdentityElement; merge = mergeFunc;
+    }
+    explicit Segtree(const v<Type> &a, const Type& IdentityElement = 0,
+                     const fun<Type(const Type&, const Type&)>& mergeFunc = add_i64_)
+        : Segtree(Size(a), IdentityElement, mergeFunc) { init(a, begin()); }
+    void update(ci64 tar, const Type& diff) { update(begin(), tar, diff); }
+    void set(ci64 tar, const Type& val) { set(begin(), tar, val); }
+    Type query(ci64 left, ci64 right) { return query(begin(), left, right); }
+protected:
+    Type init(const v<Type> &a, const iterator& iter) {
+        if(iter.leaf()) return *iter = a[iter.start-1];
+        else return *iter = merge(init(a, iter.left()), init(a, iter.right()));
+    }
+    const Type& update(const iterator& iter, ci64 tar, const Type& diff) {
+        if(iter.end < tar || tar < iter.start) return *iter;
+        if(iter.leaf()) return *iter = merge(*iter, diff);
+        return *iter = merge(update(iter.left(), tar, diff), update(iter.right(), tar, diff));
+    }
+    Type set(const iterator& iter, ci64 tar, Type val) {
+        if(iter.end < tar || tar < iter.start) return *iter;
+        if(iter.leaf()) return *iter = val;
+        return *iter = merge(set(iter.left(), tar, val), set(iter.right(), tar, val));
+    }
+    Type query(const iterator& iter, ci64 left, ci64 right) const {
+        if(right < iter.start || iter.end < left) return identityElement;
+        if(left <= iter.start && iter.end <= right) return *iter;
+        return merge(query(iter.left(), left, right), query(iter.right(), left, right));
+    }
+};
+
 #pragma clang diagnostic pop
 //@formatter:on
 #pragma endregion
 
 i32 main() {
     fastio;
-    
+    invar(n, m, k);
+    Segtree seg(inArr(n));
+    rep(m+k) {
+        invar(a, b, c);
+        if(a == 1) seg.set(b, c);
+        else println(seg.query(b, c));
+    }
 }

@@ -239,6 +239,45 @@ i32 main() {
     fastio;
     tcRep() {
         invar(n, m, L);
+        vl hurdleStart, hurdleWidth;
+        rep(n) {
+            invar(l, r);
+            hurdleStart.eb(l);
+            hurdleWidth.eb(r - l + 1);
+        }
+        hurdleStart.eb(inf);
+        v2l powerup(n+1, vl());
+        rep(m) {
+            invar(x, v);
+            i64 idx = lb(hurdleStart, x) - hurdleStart.begin();
+            powerup[idx].eb(v);
+        }
+        for(auto& r : powerup) sort(all(r), [](ci64 a, ci64 b){return a > b;});
+        i64 maxHurdleWidth = max(hurdleWidth);
         
+        pq prePowerUp;
+        
+        i64 ans = 0, curPowerUp = 1;
+        forn(i, n) {
+            i64 curIdx = 0;
+            while(curPowerUp <= hurdleWidth[i]) {
+                if(curIdx == Size(powerup[i]) && prePowerUp.empty()) {
+                    println(-1); goto end;
+                }
+                if(!prePowerUp.empty() && (curIdx == Size(powerup[i]) || prePowerUp.top() > powerup[i][curIdx])) {
+                    curPowerUp += pop(prePowerUp);
+                    ans++;
+                } else {
+                    curPowerUp += powerup[i][curIdx++];
+                    ans++;
+                }
+            }
+            if(curPowerUp > maxHurdleWidth) {
+                println(ans); goto end;
+            }
+            while(curIdx != Size(powerup[i])) prePowerUp.emplace(powerup[i][curIdx++]);
+        }
+        assert(false);
+        end: print();
     }
 }
