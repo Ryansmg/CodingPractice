@@ -2,13 +2,16 @@
 //@formatter:off
 #define GCC_OFAST_ENABLE false
 #define DISABLE_KOISTUDY_ERROR false
+#define IGNORE_UNUSED_MACRO_WARNING true
 
 #pragma clang diagnostic push
+#if IGNORE_UNUSED_MACRO_WARNING
 #pragma ide diagnostic ignored "OCUnusedMacroInspection"
 #pragma ide diagnostic ignored "OCUnusedTypeAliasInspection"
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 #pragma ide diagnostic ignored "OCUnusedStructInspection"
 #pragma ide diagnostic ignored "UnreachableCallsOfFunction"
+#endif
 
 #if GCC_OFAST_ENABLE
 #pragma GCC optimize("Ofast")
@@ -57,7 +60,7 @@ Tpl void erase_all(ordered_multiset<T> &omset, T val) { while(contains(omset, va
 
 using i16 = short; using i32 = signed; using i64 = long long; using i128 = __int128;
 using u16 = unsigned short; using u32 = unsigned; using u64 = unsigned long long; using u128 = unsigned __int128;
-using f32 = float; using f64 = double; using f128 = long double; using F128 = __float128;
+using f32 = float; using f64 = double; using f128 = long double;
 using str = std::string;
 template <typename T, typename T2> using umap = std::unordered_map<T, T2>;
 Tpl using uset = std::unordered_set<T>;
@@ -238,28 +241,28 @@ Tpl inline i128 toi128(const T &t) { return cast<i128>(t); }
 inline i128 toi128(const str &t) { return cast<i128>(stoull(t)); }
 mac_conv_(i64, ll) mac_conv_(i32, i) mac_conv_(u64, ull) mac_conv_(f64, d) mac_conv_(f128, ld)
 
-// data structures
+// data structures ///////////////////////////////////////////////////////////////
+
 constexpr i64 add_i64_(ci64 a, ci64 b) { return a + b; }
 
 template <typename Type = i64>
 class Segtree {
-    vector<Type> tree; i64 n;
+    vector<Type> tree; i32 n;
     Type identityElement; fun<Type(const Type&, const Type&)> merge;
 public:
     class iterator {
-        friend Segtree;
-        iterator(Segtree* ptr) : treePtr(ptr), node(1), start(1), end(ptr->n) {} // NOLINT(*-explicit-constructor)
-        iterator(Segtree* a, i64 b, i64 c, i64 d) : treePtr(a), node(b), start(c), end(d) {}
-        Segtree* treePtr;
+        friend Segtree; Segtree* treePtr;
+        iterator(Segtree* a, i32 b, i32 c, i32 d) : treePtr(a), node(b), start(c), end(d) {}
     public:
-        i64 node, start, end;
+        i32 node, start, end;
         inline Type& operator*() const { return treePtr->tree[node]; }
         inline bool leaf() const { return start == end; }
         inline iterator left() const { lassert(!leaf()); return iterator(treePtr, node<<1, start, (start+end)>>1); }
         inline iterator right() const { lassert(!leaf()); return iterator(treePtr, (node<<1)|1, ((start+end)>>1)+1, end); }
+        inline bool isNul() const { return node == 0; }
     };
-    iterator begin() { return iterator(this); }
-    explicit Segtree(ci64 treeSize, const Type& IdentityElement = 0,
+    iterator begin() { return iterator(this, 1, 1, n); }
+    explicit Segtree(ci32 treeSize, const Type& IdentityElement = 0,
                      const fun<Type(const Type&, const Type&)>& mergeFunc = add_i64_) {
         tree = v<Type>(4*treeSize, identityElement); n = treeSize;
         identityElement = IdentityElement; merge = mergeFunc;
@@ -267,30 +270,64 @@ public:
     explicit Segtree(const v<Type> &a, const Type& IdentityElement = 0,
                      const fun<Type(const Type&, const Type&)>& mergeFunc = add_i64_)
         : Segtree(Size(a), IdentityElement, mergeFunc) { init(a, begin()); }
-    void update(ci64 tar, const Type& diff) { update(begin(), tar, diff); }
-    void set(ci64 tar, const Type& val) { set(begin(), tar, val); }
-    Type query(ci64 left, ci64 right) { return query(begin(), left, right); }
-protected:
+    void update(ci32 tar, const Type& diff) { lassert(1 <= tar && tar <= n); update(begin(), tar, diff); }
+    void set(ci32 tar, const Type& val) { lassert(1 <= tar && tar <= n); set(begin(), tar, val); }
+    Type query(ci32 left, ci32 right) { lassert(1 <= left && left <= n && 1 <= right && right <= n);
+        if(left > right) { return identityElement; } return query(begin(), left, right); }
+    iterator operator[](ci32 tar) { return queryIter(begin(), tar); }
+    const iterator nul = iterator(this, 0, 0, 0);
+    void foreach(const fun<void(const iterator&)> f) { foreach(begin(), f); }
+private:
     Type init(const v<Type> &a, const iterator& iter) {
         if(iter.leaf()) return *iter = a[iter.start-1];
         else return *iter = merge(init(a, iter.left()), init(a, iter.right()));
     }
-    const Type& update(const iterator& iter, ci64 tar, const Type& diff) {
+    const Type& update(const iterator& iter, ci32 tar, const Type& diff) {
         if(iter.end < tar || tar < iter.start) return *iter;
         if(iter.leaf()) return *iter = merge(*iter, diff);
         return *iter = merge(update(iter.left(), tar, diff), update(iter.right(), tar, diff));
     }
-    Type set(const iterator& iter, ci64 tar, Type val) {
+    Type set(const iterator& iter, ci32 tar, Type val) {
         if(iter.end < tar || tar < iter.start) return *iter;
         if(iter.leaf()) return *iter = val;
         return *iter = merge(set(iter.left(), tar, val), set(iter.right(), tar, val));
     }
-    Type query(const iterator& iter, ci64 left, ci64 right) const {
+    iterator queryIter(const iterator& iter, ci32 tar) {
+        if(iter.end < tar || tar < iter.start) return nul;
+        if(iter.leaf()) return iter;
+        iterator ret = queryIter(iter.left(), tar);
+        if(ret.isNul()) return queryIter(iter.right(), tar);
+        return ret;
+    }
+    Type query(const iterator& iter, ci32 left, ci32 right) const {
         if(right < iter.start || iter.end < left) return identityElement;
         if(left <= iter.start && iter.end <= right) return *iter;
         return merge(query(iter.left(), left, right), query(iter.right(), left, right));
     }
+    void foreach(const iterator& iter, const fun<void(const iterator&)> f) {
+        if(iter.leaf()) f(iter);
+        else foreach(iter.left(), f), foreach(iter.right(), f);
+    }
 };
+
+// extra math ///////////////////////////////////////////////////////////////
+namespace PollardRho {
+    namespace itnl {
+        v<i128>base={2,3,5,7,11,13,17,19,23,29,31,37,41};mt19937 gen=mt19937(random_device()());uniform_int_distribution<i128>dis;
+        bool _isPrime(i128 n,i128 a){if(a%n==0){return true;}i128 d=n-1;while(true){i128 t=pow_(a,d,n);if(t==n-1){return true;}
+        if(d%2==1){return(t==1||t==n-1);}d/= 2;}}
+    }
+    bool isPrime(i128 n){if(n<=1)return false;for(const i128&a:itnl::base){if(!itnl::_isPrime(n, a))return false;}return true;}
+    i128 factorize(i128 n){lassert(n>=2);if(n%2==0){return 2;}if(isPrime(n)){return n;}i128 x=itnl::dis(itnl::gen)%(n-2)+2,y=x,
+        c=itnl::dis(itnl::gen)%10+1,g=1;while(g==1){x=(x*x%n+c)%n;y=(y*y%n+c)%n;y=(y*y%n+c)%n;g=gcd_(x-y>0?x-y:y-x,n);
+        if(g==n)return factorize(n);}if(isPrime(g)){return g;}else return factorize(g);}
+    vl getPrimes(i128 n) { vl r; while(n != 1) { i128 p = factorize(n); r.eb(p); n /= p; } return r; }
+}
+constexpr i32 dx4[] = {1, 0, -1, 0};
+constexpr i32 dy4[] = {0, 1, 0, -1};
+
+// useful structs
+struct edge { i64 s, e, v; };
 
 #pragma clang diagnostic pop
 //@formatter:on
@@ -298,11 +335,5 @@ protected:
 
 i32 main() {
     fastio;
-    invar(n, m, k);
-    Segtree seg(inArr(n));
-    rep(m+k) {
-        invar(a, b, c);
-        if(a == 1) seg.set(b, c);
-        else println(seg.query(b, c));
-    }
+
 }
