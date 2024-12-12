@@ -22,6 +22,7 @@
 
 // keyword reassign ///////////////////////////////////////////////////////////////
 #define Tpl template <typename T>
+#define elif else if
 #if DISABLE_KOISTUDY_ERROR
 using namespace std;
 #else
@@ -29,6 +30,7 @@ using std::cin, std::cout, std::cerr, std::clog, std::endl, std::istream, std::o
 using std::array, std::vector, std::stack, std::queue, std::deque, std::list, std::pair, std::tuple;
 using std::set, std::multiset, std::map, std::initializer_list, std::bitset;
 using std::max, std::min, std::gcd, std::lcm, std::pow, std::swap, std::abs, std::sin, std::cos, std::tan, std::asin, std::acos, std::atan;
+using std::floor, std::ceil, std::round;
 using std::sinh, std::cosh, std::tanh, std::atan2;
 using std::less, std::greater, std::less_equal, std::greater_equal, std::all_of, std::any_of, std::hash;
 using std::stoi, std::stol, std::stoll, std::stoul, std::stoull, std::stof, std::stod, std::stold;
@@ -36,6 +38,7 @@ using std::sort, std::stable_sort, std::shuffle, std::uniform_int_distribution, 
 using std::iota, std::prev, std::next, std::prev_permutation, std::next_permutation;
 using std::complex, std::polar, std::is_integral_v;
 
+#include <algorithm>
 #include <ext/pb_ds/assoc_container.hpp>
 #include <ext/pb_ds/tree_policy.hpp>
 template <typename Type>
@@ -241,75 +244,6 @@ Tpl inline i128 toi128(const T &t) { return cast<i128>(t); }
 inline i128 toi128(const str &t) { return cast<i128>(stoull(t)); }
 mac_conv_(i64, ll) mac_conv_(i32, i) mac_conv_(u64, ull) mac_conv_(f64, d) mac_conv_(f128, ld)
 
-// data structures ///////////////////////////////////////////////////////////////
-
-constexpr i64 add_i64_(ci64 a, ci64 b) { return a + b; }
-
-template <typename Type = i64>
-class Segtree {
-    vector<Type> tree; i32 n;
-    Type identityElement; fun<Type(const Type&, const Type&)> merge;
-public:
-    class iterator {
-        friend Segtree; Segtree* treePtr;
-        iterator(Segtree* a, i32 b, i32 c, i32 d) : treePtr(a), node(b), start(c), end(d) {}
-    public:
-        i32 node, start, end;
-        inline Type& operator*() const { return treePtr->tree[node]; }
-        inline bool leaf() const { return start == end; }
-        inline iterator left() const { lassert(!leaf()); return iterator(treePtr, node<<1, start, (start+end)>>1); }
-        inline iterator right() const { lassert(!leaf()); return iterator(treePtr, (node<<1)|1, ((start+end)>>1)+1, end); }
-        inline bool isNul() const { return node == 0; }
-    };
-    iterator begin() { return iterator(this, 1, 1, n); }
-    explicit Segtree(ci32 treeSize, const Type& IdentityElement = 0,
-                     const fun<Type(const Type&, const Type&)>& mergeFunc = add_i64_) {
-        tree = v<Type>(4*treeSize, identityElement); n = treeSize;
-        identityElement = IdentityElement; merge = mergeFunc;
-    }
-    explicit Segtree(const v<Type> &a, const Type& IdentityElement = 0,
-                     const fun<Type(const Type&, const Type&)>& mergeFunc = add_i64_)
-        : Segtree(Size(a), IdentityElement, mergeFunc) { init(a, begin()); }
-    void update(ci32 tar, const Type& diff) { lassert(1 <= tar && tar <= n); update(begin(), tar, diff); }
-    void set(ci32 tar, const Type& val) { lassert(1 <= tar && tar <= n); set(begin(), tar, val); }
-    Type query(ci32 left, ci32 right) { lassert(1 <= left && left <= n && 1 <= right && right <= n);
-        if(left > right) { return identityElement; } return query(begin(), left, right); }
-    iterator operator[](ci32 tar) { return queryIter(begin(), tar); }
-    const iterator nul = iterator(this, 0, 0, 0);
-    void foreach(const fun<void(const iterator&)> f) { foreach(begin(), f); }
-private:
-    Type init(const v<Type> &a, const iterator& iter) {
-        if(iter.leaf()) return *iter = a[iter.start-1];
-        else return *iter = merge(init(a, iter.left()), init(a, iter.right()));
-    }
-    const Type& update(const iterator& iter, ci32 tar, const Type& diff) {
-        if(iter.end < tar || tar < iter.start) return *iter;
-        if(iter.leaf()) return *iter = merge(*iter, diff);
-        return *iter = merge(update(iter.left(), tar, diff), update(iter.right(), tar, diff));
-    }
-    Type set(const iterator& iter, ci32 tar, Type val) {
-        if(iter.end < tar || tar < iter.start) return *iter;
-        if(iter.leaf()) return *iter = val;
-        return *iter = merge(set(iter.left(), tar, val), set(iter.right(), tar, val));
-    }
-    iterator queryIter(const iterator& iter, ci32 tar) {
-        if(iter.end < tar || tar < iter.start) return nul;
-        if(iter.leaf()) return iter;
-        iterator ret = queryIter(iter.left(), tar);
-        if(ret.isNul()) return queryIter(iter.right(), tar);
-        return ret;
-    }
-    Type query(const iterator& iter, ci32 left, ci32 right) const {
-        if(right < iter.start || iter.end < left) return identityElement;
-        if(left <= iter.start && iter.end <= right) return *iter;
-        return merge(query(iter.left(), left, right), query(iter.right(), left, right));
-    }
-    void foreach(const iterator& iter, const fun<void(const iterator&)> f) {
-        if(iter.leaf()) f(iter);
-        else foreach(iter.left(), f), foreach(iter.right(), f);
-    }
-};
-
 // extra math ///////////////////////////////////////////////////////////////
 namespace PollardRho {
     namespace itnl {
@@ -326,14 +260,144 @@ namespace PollardRho {
 constexpr i32 dx4[] = {1, 0, -1, 0};
 constexpr i32 dy4[] = {0, 1, 0, -1};
 
-// useful structs
+#pragma endregion
+
+#pragma region structs
 struct edge { i64 s, e, v; };
+
+/// requirements: operator+(T, T)
+template <typename T = i64>
+class Segtree {
+protected:
+    vector<T> tree; i32 n;
+public:
+    explicit Segtree(ci32 treeSize) {
+        tree = v<T>(4*treeSize, T()); n = treeSize;
+    }
+    explicit Segtree(const v<T> &a) {
+        n = Size(a); tree = v<T>(4*n, T());
+        init(a, 1, 1, n);
+    }
+    void set(ci32 tar, const T& val) { set(1, tar, 1, n, val); }
+    void update(ci32 tar, const T& diff) { update(1, tar, 1, n, diff); }
+    T query(ci32 left, ci32 right) { return query(1, left, right, 1, n); }
+protected:
+    T init(const v<T> &a, ci32 node, ci32 start, ci32 end) {
+        if(start==end) return tree[node] = a[start-1];
+        else return tree[node] = init(a, node*2, start, (start+end)/2)
+                                 + init(a, node*2+1, (start+end)/2+1, end);
+    }
+    T update(ci32 node, ci32 tar, ci32 start, ci32 end, const T& diff) {
+        if(end < tar || tar < start) return tree[node];
+        if(start == end) return tree[node] = tree[node] + diff;
+        return tree[node] = update(node*2, tar, start, (start+end)/2, diff)
+                            + update(node*2+1, tar, (start+end)/2+1, end, diff);
+    }
+    T set(ci32 node, ci32 tar, ci32 start, ci32 end, const T& val) {
+        if(end < tar || tar < start) return tree[node];
+        if(start == end) return tree[node] = val;
+        return tree[node] = set(node*2, tar, start, (start+end)/2, val)
+                            + set(node*2+1, tar, (start+end)/2+1, end, val);
+    }
+    T query(ci32 node, ci32 left, ci32 right, ci32 start, ci32 end) {
+        if(right < start || end < left) return T();
+        if(left <= start && end <= right) return tree[node];
+        return query(node*2, left, right, start, (start+end)/2) +
+               query(node*2+1, left, right, (start+end)/2+1, end);
+    }
+};
+
+template <typename LazyType>
+struct LazyIter { i32 node, start, end; LazyType val; };
+
+struct LazypropSumLazy {
+    i64 v = 0;
+    LazypropSumLazy operator+(ci64 i) const { return LazypropSumLazy(v+i); }
+    LazypropSumLazy operator+(const LazyIter<LazypropSumLazy>& i) const { return LazypropSumLazy(v+i.val.v); }
+};
+i64 operator+(ci64 a, const LazyIter<LazypropSumLazy>& b) { return a + (b.end - b.start + 1) * b.val.v; }
+
+/// requirements: operator+(TreeType, TreeType), operator+(LazyType, TreeType), operator+(TreeType, LazyIter), operator+(LazyType, LazyIter)
+/// <br> usage: node merge, node update, lazy update, lazy update
+template <typename TreeType = i64, typename LazyType = LazypropSumLazy>
+class Lazyprop {
+typedef LazyIter<LazyType> iter;
+protected:
+    v<TreeType> tree; v<LazyType> lazy; i32 n=-1;
+    void push(i32 node, i32 start, i32 end) {
+        tree[node] = tree[node] + iter(node, start, end, lazy[node]);
+        if(start!=end) {
+            lazy[node*2] = lazy[node*2] + iter(node, start, end, lazy[node]);
+            lazy[node*2+1] = lazy[node*2+1] + iter(node, start, end, lazy[node]);
+        }
+        lazy[node] = LazyType();
+    }
+public:
+    explicit Lazyprop(i32 treeSize) {
+        tree = v<TreeType>(4*treeSize, TreeType());
+        lazy = v<LazyType>(4*treeSize, LazyType());
+        n = treeSize;
+    }
+    explicit Lazyprop(const v<TreeType> &a) : Lazyprop((i32) a.size()) { init(a, 1, 1, n); }
+    void update(i32 left, i32 right, TreeType diff) { update(1, left, right, 1, n, diff); }
+    TreeType query(i32 left, i32 right) { return query(1, left, right, 1, n); }
+protected:
+    TreeType init(const v<TreeType> &a, i32 node, i32 start, i32 end) {
+        if(start==end) return tree[node] = a[start-1];
+        else return tree[node] = init(a, node*2, start, (start+end)/2) + init(a, node*2+1, (start+end)/2+1, end);
+    }
+    TreeType update(i32 node, i32 left, i32 right, i32 start, i32 end, TreeType diff) {
+        push(node, start, end);
+        if(end < left || right < start) return tree[node];
+        if(left <= start && end <= right) {
+            lazy[node] = lazy[node] + diff;
+            push(node, start, end);
+            return tree[node];
+        }
+        return tree[node] = update(node*2, left, right, start, (start+end)/2, diff) +
+                            update(node*2+1, left, right, (start+end)/2+1, end, diff);
+    }
+    TreeType query(i32 node, i32 left, i32 right, i32 start, i32 end) {
+        push(node, start, end);
+        if(right < start || end < left) return TreeType();
+        if(left <= start && end <= right) return tree[node];
+        return query(node*2, left, right, start, (start+end)/2) + query(node*2+1, left, right, (start+end)/2+1, end);
+    }
+};
 
 #pragma clang diagnostic pop
 //@formatter:on
 #pragma endregion
 
+struct tr {
+    i64 val = inf;
+    tr operator+(const tr& b) const { return tr(min(val, b.val)); }
+};
+
+struct lz {
+    i64 val = 0;
+    lz operator+(const tr& b) const { return lz(val+b.val); }
+    lz operator+(const LazyIter<lz>& b) const { return lz(val+b.val.val); }
+};
+
+tr operator+(const tr& a, const LazyIter<lz>& b) { return tr(a.val+b.val.val); }
+
 i32 main() {
     fastio;
-
+    str s = inStr();
+    i64 n = Size(s);
+    v<tr> r; for(char c : s) r.eb(c=='('?1:-1);
+    v<tr> r2 = r;
+    forf(i, 1, n-1) r2[i].val += r2[i-1].val;
+    Lazyprop<tr, lz> lp(r2);
+    i64 ans = 0, bracketSum = 0;
+    for(const tr& t : r) bracketSum += t.val;
+    inRep() {
+        invar(t);
+        bool wasOpenBracket = r[t-1].val == 1;
+        if(wasOpenBracket) lp.update(t, n, tr(-2)), r[t-1].val = -1, bracketSum -= 2;
+        else lp.update(t, n, tr(2)), r[t-1].val = 1, bracketSum += 2;
+        ans += lp.query(1, n).val == 0 && bracketSum == 0;
+    }
+    println(ans);
 }

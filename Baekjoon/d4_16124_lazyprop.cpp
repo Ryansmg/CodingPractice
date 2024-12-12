@@ -31,7 +31,7 @@ using pbds = __gnu_pbds::tree<Type, __gnu_pbds::null_type, Cmp, __gnu_pbds::rb_t
 
 using i16 = short; using i32 = signed; using i64 = long long; using i128 = __int128;
 using u16 = unsigned short; using u32 = unsigned; using u64 = unsigned long long; using u128 = unsigned __int128;
-using f32 = float; using f64 = double; using f128 = long double; using F128 = __float128;
+using f32 = float; using f64 = double; using f128 = long double;
 using str = std::string;
 template <typename T, typename T2> using umap = std::unordered_map<T, T2>;
 template <typename T> using uset = std::unordered_set<T>;

@@ -235,7 +235,7 @@ protected:
     }
     int update(int node, int left, int right, int start, int end, int diff) {
         push(node, start, end);
-        if(end < left || right < start) return 0;
+        if(end < left || right < start) return tree[node];
         if(left <= start && end <= right) {
             lazy[node] += diff;
             push(node, start, end);
