@@ -32,7 +32,7 @@ using pbds = __gnu_pbds::tree<Type, __gnu_pbds::null_type, Cmp, __gnu_pbds::rb_t
 
 using i16 = short; using i32 = signed; using i64 = long long; using i128 = __int128;
 using u16 = unsigned short; using u32 = unsigned; using u64 = unsigned long long; using u128 = unsigned __int128;
-using f32 = float; using f64 = double; using f128 = long double; using F128 = __float128;
+using f32 = float; using f64 = double; using f128 = long double;
 using str = std::string;
 template <typename T, typename T2> using umap = std::unordered_map<T, T2>;
 Tpl using uset = std::unordered_set<T>;
@@ -197,7 +197,7 @@ i32 main() {
     //   target.exe generates wrong answer at output.txt
     // 3. wait
     
-    i64 timeLimit = 500;
+    i64 timeLimit = 2000;
     
     // settings
     constexpr bool stop_at_TLE_encounter = true;
@@ -210,17 +210,17 @@ i32 main() {
         tc++;
         i64 genCl, solCl, tarCl, chCl, cl = clock();
         // generate input
-        system(R"(C:\Users\ryans\Desktop\Coding\Baekjoon\z.etcBJ\findCounterExample\generator.exe)");
+        system(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\z.etcBJ\findCounterExample\generator.exe)");
         genCl = clock() - cl; cl = clock();
         // generate answer
-        system(R"(C:\Users\ryans\Desktop\Coding\Baekjoon\z.etcBJ\findCounterExample\solution.exe)");
+        system(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\z.etcBJ\findCounterExample\solution.exe)");
         solCl = clock() - cl; cl = clock();
         // generate (possibly) wrong answer
-        system(R"(C:\Users\ryans\Desktop\Coding\Baekjoon\z.etcBJ\findCounterExample\target.exe)");
+        system(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\z.etcBJ\findCounterExample\target.exe)");
         tarCl = clock() - cl; cl = clock();
         
-        ifstream ans(R"(C:\Users\ryans\Desktop\Coding\Baekjoon\z.etcBJ\ans.txt)"),
-            output(R"(C:\Users\ryans\Desktop\Coding\Baekjoon\z.etcBJ\output.txt)");
+        ifstream ans(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\z.etcBJ\ans.txt)"),
+            output(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\z.etcBJ\output.txt)");
         str s1, s2;
         long long line = 1;
         while(!ans.eof()) {
