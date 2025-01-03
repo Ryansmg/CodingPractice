@@ -197,10 +197,12 @@ i32 main() {
     //   target.exe generates wrong answer at output.txt
     // 3. wait
     
-    i64 timeLimit = 2000;
+    i64 timeLimit = 4000;
     
     // settings
     constexpr bool stop_at_TLE_encounter = true;
+    constexpr bool use_generated_input = true;
+    constexpr bool use_generated_answer = false;
     constexpr i64 log_flush_rate = 1;
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -210,13 +212,13 @@ i32 main() {
         tc++;
         i64 genCl, solCl, tarCl, chCl, cl = clock();
         // generate input
-        system(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\z.etcBJ\findCounterExample\generator.exe)");
+        if(!use_generated_input) system(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\findCounterExample\generator.exe)");
         genCl = clock() - cl; cl = clock();
         // generate answer
-        system(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\z.etcBJ\findCounterExample\solution.exe)");
+        if (!use_generated_answer) system(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\findCounterExample\solution.exe)");
         solCl = clock() - cl; cl = clock();
         // generate (possibly) wrong answer
-        system(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\z.etcBJ\findCounterExample\target.exe)");
+        system(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\findCounterExample\target.exe)");
         tarCl = clock() - cl; cl = clock();
         
         ifstream ans(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\z.etcBJ\ans.txt)"),

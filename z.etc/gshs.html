@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+
+
+
+
+
+
+
+
+
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+
+    <link rel="stylesheet" href="/student/template/plugins/jquery-ui-1.12.1/jquery-ui.min.css?v=2">
+    <link rel="stylesheet" href="/student/template/plugins/jquery-ui-1.12.1/css/melon.datepicker.css?v=2">
+    <link rel="stylesheet" href="/student/template/plugins/datetimepicker/build/jquery.datetimepicker.min.css?v=2">
+    <!-- Bootstrap 3.3.5 -->
+    <link rel="stylesheet" href="/student/template/bootstrap/css/bootstrap.min.css?v=2">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/student/template/font-awesome/css/font-awesome.min.css?v=2">
+    <!-- Ionicons -->
+    <link rel="stylesheet" href="/student/template/ionicons/css/ionicons.min.css?v=2">
+    <!-- Theme style -->
+    <link rel="stylesheet" href="/student/template/dist/css/AdminLTE.min.css?v=2">
+    <!-- AdminLTE Skins. Choose a skin from the css/skins
+         folder instead of downloading all of them to reduce the load. -->
+    <link rel="stylesheet" href="/student/template/dist/css/skins/_all-skins.min.css?v=2">
+    <link rel="stylesheet" href="/student/css/template/popup.css?v=2">
+
+    <!-- jQuery 2.1.4 -->
+    <script type="text/javascript" src="/student/template/plugins/jQuery/jQuery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="/student/template/plugins/jquery-ui-1.12.1/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="/student/template/plugins/datetimepicker/build/jquery.datetimepicker.full.min.js" ></script>
+
+    <!-- Bootstrap 3.3.5 -->
+    <script type="text/javascript" src="/student/template/bootstrap/js/bootstrap.min.js"></script>
+    <!-- SlimScroll -->
+    <script type="text/javascript" src="/student/template/plugins/slimScroll/jquery.slimscroll.min.js"></script>
+    <!-- FastClick -->
+    <script type="text/javascript" src="/student/template/plugins/fastclick/fastclick.min.js"></script>
+    <!-- AdminLTE App -->
+    <script type="text/javascript" src="/student/template/dist/js/app.min.js"></script>
+    <script type="text/javascript" src="/student/template/plugins/jquery.tablesorter.min.js" ></script>
+    <script type="text/javascript" src="/student/js/crypto-js/3.1.2/build/rollups/aes.js"></script>
+    <script type="text/javascript" src="/student/js/crypto-js/3.1.2/build/rollups/sha256.js"></script>
+    <script type="text/javascript" src="/student/template/common.js"></script>
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="/student/template/html5shiv/src/html5shiv.min.js"></script>
+    <script src="/student/template/respond/src/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- Favicons -->
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/student/template/gshs_144.png">
+    <link rel="shortcut icon" href="/student/template/favicon.ico">
+    <script type="text/javascript">
+        var contextPath = "/student";
+        var sessionKey = null;
+
+        $(document).ready(function() {
+
+            getSessionKey();
+
+            //인증번호를 가지고 있는경우
+            if(window.localStorage){
+                var gs_session = window.localStorage.getItem("gs_session");
+                var gs_user_name = window.localStorage.getItem("gs_user_name");
+                var gs_user_photo = window.localStorage.getItem("gs_user_photo");
+                var gs_login_mode = window.localStorage.getItem("gs_login_mode");
+                var gs_user_type = window.localStorage.getItem("gs_user_type");
+                var gs_user_id = window.localStorage.getItem("gs_user_id");
+
+                if(isNull(gs_session) || isNull(gs_login_mode)){
+                    //location.href = contextPath + "/login.do?mode=manual&returnUrl=/index.do";
+                    forceRequestLogin();
+                    return;
+                }
+
+                if(gs_login_mode == "AUTO"){
+                    setTimeout(function(){
+                        login(gs_session, gs_login_mode, null);
+                    }, 100);
+                }else if(gs_login_mode == "PIN"){
+
+                    $(".lockscreen-wrapper").show();
+
+                    $(".lockscreen-name").text(gs_user_name);
+                    $(".lockscreen-image img").attr("alt", gs_user_name);
+                    if(!isNull(gs_user_photo)){
+                        $(".lockscreen-image img").attr("src", contextPath + "/file/thumbnail.do?fileNo=" + gs_user_photo);
+                    }
+
+                    $("#pin")[0].focus();
+                }else{
+                    //location.href = contextPath + "/login.do?mode=manual&returnUrl=/index.do";
+                    forceRequestLogin();
+                }
+
+            }else{
+                //location.href = contextPath + "/login.do?mode=manual&returnUrl=/index.do";
+                forceRequestLogin();
+            }
+        });
+
+
+        function getSessionKey(){
+            $.ajax({
+                type: "POST",
+                url: contextPath + "/getSessionKey.do",
+                dataType : "html",
+                success:function(html){
+                    sessionKey = html.trim();
+                },
+                error:function(html){
+                    console.log("login.do error");
+                    setTimeout(() => {
+                        if(confirm("서버가 응답하지 않습니다. 다시 시도하겠습니까?")){
+                            location.reload();
+                        }
+                    },3000);
+                }
+            });
+        }
+
+        function forceRequestLogin(){
+            const form = document.createElement('form'); // form 태그 생성
+            form.setAttribute('method', 'post'); // 전송 방식 결정 (get or post)
+            form.setAttribute('action', contextPath + "/login.do"); // 전송할 url 지정
+
+            const mode = document.createElement('input'); // input 태그 생성
+            mode.setAttribute('type', 'hidden'); // type = hidden
+            mode.setAttribute('name', 'mode'); // 데이터의 key
+            mode.setAttribute('value', 'force'); // 데이터의 value (여기서는 data1)
+
+            // 여러 개의 데이터를 보낼 경우 위와 같은 코드 반복
+            const returnUrl = document.createElement('input');
+            returnUrl.setAttribute('type', 'hidden');
+            returnUrl.setAttribute('name', 'returnUrl');
+            returnUrl.setAttribute('value', "/index.do");
+
+            // form 태그에 input 태그 넣고 summit 가능하게 처리
+            form.appendChild(mode);
+            form.appendChild(returnUrl);
+
+            document.body.appendChild(form);
+
+            form.submit();
+        }
+
+
+        function login(gs_session, mode, pin){
+
+            //console.log("login");
+            if(isNull(sessionKey)){
+                //alert("서버와의 통신이 원할하지 않습니다. 잠시만 기다려 주십시오.");
+                setTimeout(function(){
+                    login(gs_session, mode, pin);
+                }, 500);
+                return;
+            }
+
+            //암호화요소
+            var guid = window.navigator.userAgent.replace(/[0-9]/g,'').replace(/ /g,'').replace(/[\{\}\[\]\/?.,;:|\)*~`!^\-_+<>@#$%&\\\=\(\'\"]/gi,'').toUpperCase();
+            //var jsessionId = getJSessionId();
+            //var passphrase = generatorKey(uuid, jsessionId);
+            var serverKey = CryptoJS.SHA256(sessionKey).toString();
+            var encryptKey = CryptoJS.SHA256(gs_session).toString();
+            var guidKey = CryptoJS.SHA256(guid).toString();
+
+            //서버 전송키
+            //console.log("passphrase : " + passphrase);
+            //console.log("secureKey : " + encrypt.toString());
+            //console.log("guid : " + guid);
+            //console.log("device : " + getDevice());
+            //console.log("verificationKey : " + guidKey);
+
+            $.ajax({
+                type: "POST",
+                url: contextPath + "/autoLogin.do",
+                data: { 'sKey' : encryptKey, 'cKey' : serverKey,  'vKey' : guidKey, 'device' : getDevice(), 'mode' : mode, 'pin' : pin},
+                dataType : "html",
+                success:function(html){
+                    var msg = html.trim();
+                    if(msg == 'FINE'){
+                        location.href = contextPath + '/index.do';
+                    }else if(msg == 'RETRY'){
+                        location.reload();
+                    }else if(msg == 'SELECT_STUDENT'){
+                        //alert("select student : id = "  + gs_session );
+                        location.href = contextPath + "/selectStudent.do?returnUrl=/index.do";
+                    }else if(msg.indexOf('WPIN') != -1){
+                        var wrongCnt = msg.replace("WPIN:", "");
+                        //alert(msg);
+                        $(".help-block").text("간편 비밀번호가 일치 하지 않습니다.( "  + wrongCnt + " / 5회 )");
+                        $("#pin").val("");
+                        $("#pin")[0].focus();
+                    }else{
+                        alert(msg);
+                        clearStorage();
+                        //location.href = contextPath + "/login.do?mode=manual&returnUrl=/index.do";
+                        forceRequestLogin();
+                    }
+                },
+                error:function(html){
+                    //location.href = contextPath + "/login.do?mode=manual&returnUrl=/index.do";
+                    if(confirm("서버가 응답하지 않습니다. 다시 시도하겠습니까?")){
+                        location.reload();
+                    }
+                }
+            });
+        }
+
+
+        function pinLogin(){
+
+            var pin = $("#pin").val();
+
+            if(isNull(pin)){
+                alert("빈값이 올 수 없습니다.");
+                $("#pin")[0].focus();
+                return;
+            }
+
+            if(!isNumber(pin)){
+                alert("숫자만 입력하셔야 합니다.");
+                $("#pin")[0].focus();
+                return;
+            }
+
+            if(pin.legnth < 4){
+                alert("4자리 이상입니다.");
+                $("#pin")[0].focus();
+                return;
+            }
+
+            var gs_session = window.localStorage.getItem("gs_session");
+            login(gs_session, "PIN", CryptoJS.SHA256(pin).toString());
+            return false;
+        }
+
+
+        function clearStorage(){
+            if(window.localStorage){
+                window.localStorage.setItem("gs_session", null);
+                window.localStorage.setItem("gs_user_name", null);
+                window.localStorage.setItem("gs_user_photo", null);
+                window.localStorage.setItem("gs_login_mode", null);
+                window.localStorage.setItem("gs_user_type", null);
+                window.localStorage.setItem("gs_user_id", null);
+            }
+        }
+
+        function deleteSession(){
+            var gs_user_name = window.localStorage.getItem("gs_user_name");
+            if(confirm(gs_user_name + "님의 기기 세션을 제거합니다.\n계속진행하시겠습니까?")){
+                var sessionId =  window.localStorage.getItem("gs_session");
+                clearStorage();
+                location.href = contextPath + "/logout.do?sessionId=" + CryptoJS.SHA256(sessionId).toString();
+            }
+        }
+
+        function generatorKey(key1, key2){
+
+            var length = key1.length>key2.length?key1.length:key2.length;
+
+            var gkey = "";
+
+            for(var i = 0 ; i < length; i++){
+                gkey += (key1.charAt(i) + key2.charAt(i));
+            }
+
+            //console.log("key1 : " + key1);
+            //console.log("key2 : " + key2);
+            //console.log("gkey : " + gkey);
+
+            return CryptoJS.SHA256(gkey).toString();
+        }
+
+
+        function showPin(){
+            if($("#btn-pin").hasClass("fa-eye")){
+                $("#pin").attr("type", "text");
+                $("#btn-pin").removeClass("fa-eye");
+                $("#btn-pin").addClass("fa-eye-slash");
+            }else{
+                $("#pin").attr("type", "password");
+                $("#btn-pin").removeClass("fa-eye-slash");
+                $("#btn-pin").addClass("fa-eye");
+            }
+            $("#pin")[0].focus();
+        }
+    </script>
+    <script type="text/javascript">
+        function getJSessionId(){
+            var jsId = document.cookie.match(/JSESSIONID=[^;]+/);
+            if(jsId != null) {
+                if (jsId instanceof Array)
+                    jsId = jsId[0].substring(11);
+                else
+                    jsId = jsId.substring(11);
+            }
+            return jsId;
+        }
+
+        function getGuid(){
+            return window.navigator.userAgent.replace(/[0-9]/g,'').replace(/ /g,'').replace(/[\{\}\[\]\/?.,;:|\)*~`!^\-_+<>@#$%&\\\=\(\'\"]/gi,'').toUpperCase();
+        }
+
+        function getDevice(){
+            var user = navigator.userAgent.toLowerCase();
+            if( user.indexOf("iphone") > -1 ) return "iPhone";
+            if( user.indexOf("android") > -1 ) return "Android";
+            if( user.indexOf("ipad") > -1 ) return "iPad";
+            if( user.indexOf("ipod") > -1 ) return "iPod";
+            if( user.indexOf("edg") != -1) return 'Edge';
+            if( user.indexOf("whale") != -1) return 'Whale';
+            if( user.indexOf("chrome") != -1) return 'Chrome';
+            if( user.indexOf("opera") != -1) return 'Opera';
+            if( user.indexOf("staroffice") != -1) return 'Star Office';
+            if( user.indexOf("webtv") != -1) return 'WebTV';
+            if( user.indexOf("beonex") != -1) return 'Beonex';
+            if( user.indexOf("chimera") != -1) return 'Chimera';
+            if( user.indexOf("netpositive") != -1) return 'NetPositive';
+            if( user.indexOf("phoenix") != -1) return 'Phoenix';
+            if( user.indexOf("firefox") != -1) return 'Firefox';
+            if( user.indexOf("safari") != -1) return 'Safari';
+            if( user.indexOf("skipstone") != -1) return 'SkipStone';
+            if( user.indexOf("netscape") != -1) return 'Netscape';
+            if( user.indexOf("mozilla/5.0") != -1) return 'Mozilla';
+            if( user.indexOf("msie") != -1) {
+                var rv = -1;
+                if (navigator.appName == 'Microsoft Internet Explorer') {
+                    var ua = navigator.userAgent;
+                    var re = new RegExp("MSIE ([0-9]{1,}[\.0-9]{0,})");
+                    if (re.exec(ua) != null)
+                        rv = parseFloat(RegExp.$1);
+                }
+                return 'Internet Explorer '+rv;
+            }
+
+            return "Unknown"
+        }
+    </script>
+    <style>
+        .lockscreen-name {
+            color: #003171;
+        }
+
+        .lockscreen-footer {
+            font-size: 10px;
+        }
+
+        .input-number-password {
+            -webkit-text-security: disc;
+        }
+
+    </style>
+    <title>경기과학고등학교</title>
+</head>
+<body class="hold-transition lockscreen">
+<div class="lockscreen-wrapper" style="display: none;">
+    <div class="lockscreen-logo">
+        <a href="http://www.gs.hs.kr" target="_blank" ><b>경기과학고등학교</b></a>
+    </div>
+    <div class="lockscreen-name">김경기 </div>
+    <div class="lockscreen-item">
+        <div class="lockscreen-image">
+            <img src="/student/img/cmmn/noImage.png" alt="User Image">
+        </div>
+
+        <form class="lockscreen-credentials" onsubmit="return pinLogin();">
+            <div class="input-group">
+                <input id="pin" name="pin" data-toggle="tooltip" type="password" inputmode="numeric" class="form-control input-number-password"  title="세션에 등록된 사용자의 간편비밀번호를 입력하세요." placeholder="간편비밀번호">
+                <div class="input-group-btn">
+                    <button type="button" class="btn" onclick="showPin();">
+                        <i id="btn-pin" class="fa fa-eye text-muted"></i>
+                    </button>
+                    <button type="submit" class="btn">
+                        <i class="fa fa-arrow-right text-muted"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="help-block text-center gs_red"></div>
+    <div class="text-center">
+        <button class="btn btn-xs btn-danger btn-flat" onclick="deleteSession();">세션삭제</button>
+    </div>
+    <div class="lockscreen-footer text-center">
+        Copyright &copy; 2012-<script>document.write(new Date().getFullYear());</script> <a href="http://www.gs.hs.kr">GYEONGGI SCIENCE HIGH SCHOOL</a> All rights reserved.<br/>
+        440-800 경기도 수원시 장안구 수일로 135(송죽동)<br/>
+        본교무실: 031-259-0420, 행정실: 031-259-0400, <br />입시 안내: 031-8014-1501~3, FAX: 031-8014-1600
+    </div>
+</div>
+</body>
+</html>

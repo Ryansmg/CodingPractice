@@ -1,0 +1,15 @@
+{
+    "files.associations": {
+        "filesystem": "cpp",
+        "xstring": "cpp",
+        "string": "cpp",
+        "format": "cpp",
+        "xiosbase": "cpp",
+        "compare": "cpp",
+        "xutility": "cpp",
+        "utility": "cpp",
+        "tuple": "cpp",
+        "ostream": "cpp",
+        "random": "cpp"
+    }
+}

@@ -50,7 +50,7 @@ using std::less, std::greater, std::less_equal, std::greater_equal, std::all_of,
 using std::stoi, std::stol, std::stoll, std::stoul, std::stoull, std::stof, std::stod, std::stold;
 using std::sort, std::stable_sort, std::shuffle, std::uniform_int_distribution, std::mt19937, std::random_device;
 using std::iota, std::prev, std::next, std::prev_permutation, std::next_permutation;
-using std::complex, std::polar, std::is_integral_v, std::is_convertible_v;
+using std::complex, std::polar, std::is_integral_v;
 #endif
 
 #include <ext/pb_ds/assoc_container.hpp>
@@ -85,9 +85,7 @@ constexpr i64
     i64max = 9223372036854775807,
     llmax  = 9223372036854775807,
     INF    = 1000000000000000000,
-    inf    = 3000000000,
-    mod1   = 1000000007,
-    mod9   = 998244353;
+    inf    = 3000000000;
 constexpr f128
     pi = 3.14159265358979323846;
 const fun<void(i64, i64)> ll_nullFunc_ = [](ci64, ci64){};
@@ -118,9 +116,6 @@ template <typename T, typename T3> inline T pop(pq<T, T3> &pq_) { T t_ = pq_.top
 #if !CPP11_MODE
 Tpl inline auto lb(const v<T> &arr, T v) { return lower_bound(all(arr), v); }
 Tpl inline auto ub(const v<T> &arr, T v) { return upper_bound(all(arr), v); }
-template <typename T, typename Cmp> inline auto lb(const v<T> &arr, T v, const Cmp& cmp) { return lower_bound(all(arr), v, cmp); }
-template <typename T, typename Cmp> inline auto ub(const v<T> &arr, T v, const Cmp& cmp) { return upper_bound(all(arr), v, cmp); }
-
 #else
 #define lb(arr, v) lower_bound(all((arr)), (v))
 #define ub(arr, v) upper_bound(all((arr)), (v))
@@ -136,10 +131,7 @@ template <typename T, typename Cmp> inline T sorted(T arr, const Cmp& cmp) { sor
 Tpl inline void compress(v<T> &arr, const bool &autosort=true) { if(autosort) sort(all(arr)); arr.erase(unique(all(arr)), arr.end()); }
 Tpl inline T compressed(T arr, const bool &autosort=true) { compress(arr, autosort); return arr; }
 Tpl inline i64 idx(const T &val, const v<T> &compressed) { return lower_bound(all(compressed), val) - compressed.begin(); }
-Tpl inline T pow_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)ans=ans*a%mod;b>>=1;a=a*a%mod;} return ans; }
-Tpl inline T pow(const T& a, const T& b, const T& mod) { return pow_(a, b, mod); }
-inline i64 pow(ci64 a, ci64 b, ci64 mod) { return pow_(a, b, mod); }
-
+Tpl inline T pow_(T a, T b, T mod=lim<T>::max()) { a%=mod;T ans=1;while(b){if(b&1)ans=ans*a%mod;b>>=1;a=a*a%mod;} return ans; }
 Tpl inline T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 Tpl inline T max(const v<T>& v_) { T ret = lim<T>::min(); for(const T &t_ : v_) { ret = max(ret, t_); } return ret; }
 Tpl inline T min(const v<T>& v_) { T ret = lim<T>::max(); for(const T &t_ : v_) { ret = min(ret, t_); } return ret; }
@@ -192,7 +184,7 @@ template <typename T2, typename T1> v<T2> castVec(const T1& arr) { v<T2> ret; fo
 Tpl64 inline T input() {T t; cin >> t; return t;}
 inline str inStr() { str t; cin >> t; return t; }
 Tpl64 inline v<T> inArr(i64 sz) { v<T> a; forn(i,sz) a.eb(input<T>()); return a; }
-Tpl64 inline void inArr(v<T> &arr, i64 sz, bool clear = false) { if(clear) arr.clear(); forn(i,sz) arr.eb(input<T>()); }
+Tpl64 inline void inArr(v<T> &arr, i64 sz, bool clear = true) { if(clear) arr.clear(); forn(i,sz) arr.eb(input<T>()); }
 Tpl64 inline v<T> inArr() { return inArr<T>(input()); }
 inline str readline() { char c = '\n'; while(c == '\n') cin.get(c); str s; getline(cin, s); s = c + s; return s; }
 
@@ -205,6 +197,14 @@ template <typename ...T> inline void print(const T&... a_) { (cout << ... << a_)
 template <typename ...T> inline void println(const T&... a_) { (cout << ... << a_); cout << '\n'; } inline void println() { cout << '\n'; }
 template <typename ...T> inline void input(T&... a_) { (cin >> ... >> a_); }
 #define in64(...) i64 __VA_ARGS__; input(__VA_ARGS__)
+
+#ifdef LOCAL
+#define lprint print
+#define lprintln println
+#else
+#define lprint(...) print()
+#define lprintln(...) print()
+#endif
 
 #if !CPP17_MODE
 template <typename... Args> void printf_legacy(const Args&... args) { printf(args...); }
@@ -256,31 +256,6 @@ private:
 #define printfln(...) printf(__VA_ARGS__).appendEnd("\n")
 #define printfExit(...) printfln(__VA_ARGS__).setExit()
 #define printExit(...) printfln().setExit()(__VA_ARGS__)
-
-#ifdef LOCAL
-#define lprint print
-#define lprintln println
-#define lprintvar(...) lprintvar_(#__VA_ARGS__, __VA_ARGS__)
-
-template <typename... Args>
-void lprintvar_(const string& names_, Args... args) {
-    size_t pos = 0; string delimiter = ",", name, names = names_;
-    auto print_each = [&](auto&& value) {
-        pos = names.find(delimiter); name = (pos == string::npos) ? names : names.substr(0, pos);
-        while(name[0] == ' ') {name = name.substr(1);} while(name.back() == ' ') {name.pop_back();}
-        cout << name << ": "; printf()(value); cout << (pos == string::npos ? "\n" : ", ");
-        if (pos != string::npos) names = names.substr(pos + delimiter.length());
-    };
-    (print_each(args), ...);
-}
-
-#else
-#define lprint(...) print()
-#define lprintln(...) print()
-#define lprintvar(...) print()
-#endif
-
-
 #endif // !CPP17_MODE
 
 #endif // !CPP11_MODE
@@ -295,11 +270,7 @@ inline i128 toi128(const str &t) { return cast<i128>(stoull(t)); }
 mac_conv_(i64, ll) mac_conv_(i32, i) mac_conv_(u64, ull) mac_conv_(f64, d) mac_conv_(f128, ld)
 
 // qol //////////////////////////////////////////////////////////////////////
-template <typename T, typename T2, typename T3> T replace_if(const T& origin, const T2& cond, const T3& replacement)
-    requires is_convertible_v<T2, T> && is_convertible_v<T3, T> {
-    return origin == cast<T>(cond) ? cast<T>(replacement) : origin;
-}
-#define rplif replace_if
+Tpl T replace_if(const T& origin, const T& cond, const T& replacement) { return origin == cond ? replacement : origin; }
 
 // extra math ///////////////////////////////////////////////////////////////
 namespace PollardRho {
@@ -369,15 +340,15 @@ public:
         return cur;
     }
 protected:
-    T& init(const v<T> &a, ci32 node, ci32 start, ci32 end) {
+    T init(const v<T> &a, ci32 node, ci32 start, ci32 end) {
         if(start==end) return tree[node] = a[start-1];
         else return tree[node] = init(a, node*2, start, (start+end)/2) + init(a, node*2+1, (start+end)/2+1, end);
     }
-    T& update(ci32 node, ci32 tar, ci32 start, ci32 end, const T& diff) { if(end < tar || tar < start) return tree[node];
+    T update(ci32 node, ci32 tar, ci32 start, ci32 end, const T& diff) { if(end < tar || tar < start) return tree[node];
         if(start == end) return tree[node] = tree[node] + diff;
         return tree[node] = update(node*2, tar, start, (start+end)/2, diff) + update(node*2+1, tar, (start+end)/2+1, end, diff);
     }
-    T& set(ci32 node, ci32 tar, ci32 start, ci32 end, const T& val) { if(end < tar || tar < start) return tree[node];
+    T set(ci32 node, ci32 tar, ci32 start, ci32 end, const T& val) { if(end < tar || tar < start) return tree[node];
         if(start == end) return tree[node] = val;
         return tree[node] = set(node*2, tar, start, (start+end)/2, val) + set(node*2+1, tar, (start+end)/2+1, end, val);
     }
@@ -418,18 +389,12 @@ public:
     TreeType query(i32 left, i32 right) { return query(1, left, right, 1, n); }
     TreeType query(i32 tar) { return query(tar, tar); }
     iter root() { push(1, 1, n); return iter(1, 1, n, tree[1], lazy[1], this); }
-    // ret[i] == query(i+1)
-    v<TreeType> getLeafs() { v<TreeType> ret(n);
-        fun<void(i64, i64, i64)> f = [&](i64 p, i64 s, i64 e) { push(p, s, e);
-            if(s == e) ret[s-1] = tree[p];
-            else f(p*2, s, (s+e)/2), f(p*2+1, (s+e)/2+1, e); };
-        f(1, 1, n); return ret; }
 protected:
-    TreeType& init(const v<TreeType> &a, i32 node, i32 start, i32 end) {
+    TreeType init(const v<TreeType> &a, i32 node, i32 start, i32 end) {
         if(start==end) return tree[node] = a[start-1];
         else return tree[node] = init(a, node*2, start, (start+end)/2) + init(a, node*2+1, (start+end)/2+1, end);
     }
-    TreeType& update(i32 node, i32 left, i32 right, i32 start, i32 end, UpdateType diff) {
+    TreeType update(i32 node, i32 left, i32 right, i32 start, i32 end, UpdateType diff) {
         push(node, start, end); if(end < left || right < start) return tree[node];
         if(left <= start && end <= right) { lazy[node] = lazy[node] + diff; push(node, start, end); return tree[node]; }
         return tree[node] = update(node*2, left, right, start, (start+end)/2, diff) + update(node*2+1, left, right, (start+end)/2+1, end, diff);
@@ -444,8 +409,6 @@ protected:
 struct SumLazy { i64 v = 0; SumLazy operator+(ci64 i) const { return SumLazy(v+i); }
     SumLazy operator+(const Lazyprop<i64, SumLazy, i64>::iter& i) const { return SumLazy(v+i.lazy.v); } };
 i64 operator+(ci64 a, const Lazyprop<i64, SumLazy, i64>::iter& b) { return a + (b.end - b.start + 1) * b.lazy.v; }
-
-#define Dlp Lazyprop<tr, lz, i64>
 
 #pragma endregion // dataStructures
 
@@ -585,35 +548,6 @@ public:
     i64 getGroupSize(i64 group) { uf_init(); return groupSize[group]; }
 };
 
-class UF {
-    bool useUnionFind = false; i64 n{};
-    vl groupNum, groupSize;
-    i64 uf_find(i64 tar) { if(groupNum[tar] == tar) return tar;
-        return groupNum[tar] = uf_find(groupNum[tar]); }
-    void uf_union(i64 a, i64 b) {
-        if(uf_find(a) == uf_find(b)) return;
-        if(groupSize[uf_find(a)] < groupSize[uf_find(b)]) swap(a, b);
-        groupSize[uf_find(a)] += groupSize[uf_find(b)]; groupSize[uf_find(b)] = 0; groupNum[uf_find(b)] = uf_find(a);
-    }
-    void uf_init() {
-        if(useUnionFind) { return; } useUnionFind = true;
-        groupNum.resize(n, -1); groupSize.resize(n, 0);
-        forn(i, n) groupNum[i] = i, groupSize[i] = 1;
-    }
-public:
-    void merge(ci64 a, ci64 b) { uf_init(); uf_union(a, b); }
-    explicit UF(i64 maxNodeNum) : n(maxNodeNum+1) { }
-    /// union-find ( 0 <= group < nodeCnt ), O(N) (calls uf_find for all nodes)
-    /// @return {[node] = group}
-    [[nodiscard]] vl getAllGroup() { uf_init(); forn(i, n) groupNum[i] = uf_find(i);
-        return groupNum; }
-    vl getAllGroupSize() { uf_init(); return groupSize; }
-    /// union-find ( 0 <= group < nodeCnt ), O(1) (O(N) at first uf call)
-    i64 group(i64 node) { uf_init(); return uf_find(node); }
-    /// union-find ( 0 <= group < nodeCnt ), O(1) (O(N) at first uf call)
-    i64 size(i64 group) { uf_init(); return groupSize[group]; }
-};
-
 template <typename EdgeType>
 class Tree : public Graph<EdgeType> { defGCFs_
     bool usingHld = false;
@@ -709,100 +643,22 @@ public:
 //@formatter:on
 #pragma endregion // structs
 
-struct tr {
-    i64 val = 0;
-    tr operator+(const tr& b) const { return {val + b.val}; }
-};
-
-struct lz {
-    i64 mx = -INF, mn = INF;
-    lz operator+(const lz& b) const {
-        lz ret = *this;
-        ret.mx = max(ret.mx, b.mx);
-        ret.mn = max(ret.mn, b.mx);
-        ret.mx = min(ret.mx, b.mn);
-        ret.mn = min(ret.mn, b.mn);
-        return ret;
-    }
-};
-
-tr operator+(const tr& a, Lazyprop<tr, lz, lz>::iter&& b) {
-    return {min(max(a.val, b.lazy.mx), b.lazy.mn)};
-}
-
-lz operator+(const lz& a, Lazyprop<tr, lz, lz>::iter&& b) {
-    return a + b.lazy;
-}
 
 i32 main() {
     fastio;
-    in64(n, k);
-    Lazyprop<tr, lz, lz> lp(v<tr>(n, {0}));
-    rep(k) {
-        in64(op, l, r, h); l++; r++;
-        if(op == 1) lp.update(l, r, {h, INF});
-        else lp.update(l, r, {-INF, h});
+    tcRep() {
+        in64(n);
+        vl arr = inArr(n);
+        forn(i, Size(arr)-1) {
+            i64 a = arr[i], b = arr[i+1];
+            if(a > b) swap(a, b);
+            if(a * 2 > b) {
+                println("YES");
+                goto a;
+            }
+        }
+        println("NO");
+        a:
+        print();
     }
-    for(const auto& a : lp.getLeafs()) println(a.val);
-
-    // input(n);
-    // ct_child = v2l(n+1, vl());
-    // adj = v2<ii>(n+1, v<ii>());
-    // par = v2l(n+1, vl());
-    // vis = color = vb(n+1, false); sz = ct_par = depth = vl(n+1, 0);
-    // ss = v<multiset<i64>>(n+1, multiset<i64>());
-    // rep(n-1) {
-    //     in64(u, v, w);
-    //     adj[u].pb({v, w}); adj[v].pb({u, w});
-    // }
-    // init_par_0(); init_par_1();
-    // init_ct_tree(1);
-    // forf(i, 1, n) update(i);
-    // in64(m);
-    // rep(m) {
-    //     if(input() == 1) update(input());
-    //     else println(query(input()));
-    // }
-
-    // inputout;
-    // i64 n = 8; //randInt(1, 500000);
-    // println(n);
-    // rep(n) print(randInt(0, 10), " "); // print(randInt(-1000000000, 1000000000), " ");
-    // println();
-    // i64 m = 15; //randInt(1, 500000);
-    // println(m);
-    // rep(m) {
-    //     i64 t = randInt(1, 4), l = randInt(1, n), r = randInt(1, n);
-    //     if(l > r) swap(l, r);
-    //     printf()(t, l, r, "");
-    //     if(t == 1) print(randInt(-20, 20)); //print(randInt(-2000, 2000));
-    //     elif(t != 4) print(randInt(-20, 20)); // print(randInt(-1000000000, 1000000000));
-    //     println();
-    // }
-    // filein;
-    // ansout;
-    // i64 n = input();
-    // vl arr(1, 1); rep(n) arr.eb(input());
-    // vl b(n+1, 0);
-    // inRep() {
-    //     in64(t, l, r);
-    //     if(t == 1) {
-    //         in64(v);
-    //         if(v == 0) continue;
-    //         forf(i, l, r) b[i]++, arr[i]+=v;
-    //     }
-    //     elif(t == 2) {
-    //         in64(v);
-    //         forf(i, l, r) if(arr[i] < v) arr[i]=v, b[i]++;
-    //     }
-    //     elif(t == 3) {
-    //         in64(v);
-    //         forf(i, l, r) if(arr[i] > v) arr[i]=v, b[i]++;
-    //     }
-    //     else {
-    //         i64 ans = 0;
-    //         forf(i, l, r) ans += b[i];
-    //         println(ans);
-    //     }
-    // }
 }

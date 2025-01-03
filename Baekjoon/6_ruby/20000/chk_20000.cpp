@@ -64,7 +64,7 @@ template <typename T> T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a 
 signed main() {
     fastio;
     ifstream ans, chk;
-    ans.open("C:/Users/ryans/Desktop/Coding/Baekjoon/ruby/20000/challenge6.out");
+    ans.open("C:/Users/ryans/Desktop/Coding/Baekjoon/6_ruby/20000/challenge6.out");
     chk.open("C:/Users/ryans/Desktop/Coding/Baekjoon/output.txt");
     string as, cs;
     int line = 0;
