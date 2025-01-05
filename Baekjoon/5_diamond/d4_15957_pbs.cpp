@@ -482,10 +482,10 @@ Tpl concept isEdge = isEdge1_<T> || isEdge2_<T>;
 template <isEdge EdgeType = SimpleEdge>
 class Graph { defGCFs_
     static EdgeType revEdge_(EdgeType e) {
-        if constexpr(isEdge1_<EdgeType>) swap(e.s, e.e);
-        else if constexpr(isEdge2_<EdgeType>) swap(e.start, e.end);
-        return e;
-    }
+    if constexpr(isEdge1_<EdgeType>) swap(e.s, e.e);
+    else if constexpr(isEdge2_<EdgeType>) swap(e.start, e.end);
+    return e;
+}
 public:
     i64 nodeCnt = 0; // (maxNodeNumber) + 1
     v2<EdgeType> child, parent, undir;
@@ -720,5 +720,48 @@ public:
 
 i32 main() {
     fastio;
-    
+    in64(n, k, J);
+    Graph g(n);
+    forf(i, 2, n) g.addUEdge(i, input());
+    auto [in, out] = Tree(1, g).getInOut();
+    vl singer(1, -1); inArr(singer, n);
+    v2l song(n+1, vl());
+    forf(i, 1, n) song[singer[i]].eb(i);
+    map<i64, i64> ans;
+    map<i64, ii> lr;
+    forf(i, 1, n) if(!song[i].empty()) lr.insert({i, {0, k-1}});
+    v<iii> datas;
+    rep(k) { in64(t, p, s); datas.pb({t, p, s}); }
+    sort(datas);
+
+    while(true) {
+        v2l tar(k, vl());
+        bool brk = true;
+        for(auto& [i, range] : lr) {
+            if(range[0] > range[1]) continue;
+            brk = false;
+            tar[(range[0]+range[1])/2].eb(i);
+        }
+        if(brk) break;
+        iterSeg seg(n+1);
+        forn(i, k) {
+            i64 time = datas[i][0];
+            i64 inv = in[datas[i][1]], outv = out[datas[i][1]];
+            i64 val = datas[i][2] / (outv-inv+1);
+            seg.add(inv, val); seg.add(outv+1, -val);
+            for(ci64 j : tar[i]) {
+                i64 sum = 0, cnt = song[j].size();
+                for(ci64 k : song[j]) sum += seg.query(1, in[k]);
+                if(sum > cnt*J) {
+                    ans[j] = time;
+                    lr[j][1] = i-1;
+                } else lr[j][0] = i+1;
+            }
+        }
+    }
+
+    forf(i, 1, n) {
+        if(lr[singer[i]][0] >= k) println(-1);
+        else println(ans[singer[i]]);
+    }
 }

@@ -720,5 +720,25 @@ public:
 
 i32 main() {
     fastio;
-    
+    in64(n);
+    i64 a = 0, b = 0;
+    {
+        vl r = inArr(n);
+        Segtree seg(n);
+        forn(i, n) {
+            if(r[i] != n) a += seg.query(r[i]+1, n);
+            a %= 2;
+            seg.update(r[i], 1);
+        }
+    }
+    {
+        vl r = inArr(n);
+        Segtree seg(n);
+        forn(i, n) {
+            if(r[i] != n) b += seg.query(r[i]+1, n);
+            b %= 2;
+            seg.update(r[i], 1);
+        }
+    }
+    println(a == b ? "Possible" : "Impossible");
 }

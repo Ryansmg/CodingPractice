@@ -482,10 +482,10 @@ Tpl concept isEdge = isEdge1_<T> || isEdge2_<T>;
 template <isEdge EdgeType = SimpleEdge>
 class Graph { defGCFs_
     static EdgeType revEdge_(EdgeType e) {
-        if constexpr(isEdge1_<EdgeType>) swap(e.s, e.e);
-        else if constexpr(isEdge2_<EdgeType>) swap(e.start, e.end);
-        return e;
-    }
+    if constexpr(isEdge1_<EdgeType>) swap(e.s, e.e);
+    else if constexpr(isEdge2_<EdgeType>) swap(e.start, e.end);
+    return e;
+}
 public:
     i64 nodeCnt = 0; // (maxNodeNumber) + 1
     v2<EdgeType> child, parent, undir;
@@ -718,7 +718,32 @@ public:
 //@formatter:on
 #pragma endregion // structs
 
+struct tr {
+    i64 ans = 0, mxapi = -INF, mnapi = INF, mxami = -INF, mnami = INF;
+    tr operator+(const tr& b) {
+        tr ret;
+        ret.ans = max({ans, b.ans, b.mxami - mnami, mxapi - b.mnapi});
+        ret.mxapi = max(mxapi, b.mxapi);
+        ret.mnapi = min(mnapi, b.mnapi);
+        ret.mxami = max(mxami, b.mxami);
+        ret.mnami = min(mnami, b.mnami);
+        return ret;
+    }
+};
+
 i32 main() {
     fastio;
-    
+    tcRep() {
+        in64(n, q);
+        vl a = inArr(n);
+        v<tr> ar2; forn(i, n) ar2.eb(0, a[i]+i, a[i]+i, a[i]-i, a[i]-i);
+        Segtree<tr> seg(ar2);
+        println(seg.query(1, n).ans);
+        rep(q) {
+            in64(p, x); p--;
+            a[p] = x;
+            seg.set(p+1, {0, a[p]+p, a[p]+p, a[p]-p, a[p]-p});
+            println(seg.query(1, n).ans);
+        }
+    }
 }

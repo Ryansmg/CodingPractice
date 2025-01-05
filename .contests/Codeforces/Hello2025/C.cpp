@@ -482,10 +482,10 @@ Tpl concept isEdge = isEdge1_<T> || isEdge2_<T>;
 template <isEdge EdgeType = SimpleEdge>
 class Graph { defGCFs_
     static EdgeType revEdge_(EdgeType e) {
-        if constexpr(isEdge1_<EdgeType>) swap(e.s, e.e);
-        else if constexpr(isEdge2_<EdgeType>) swap(e.start, e.end);
-        return e;
-    }
+    if constexpr(isEdge1_<EdgeType>) swap(e.s, e.e);
+    else if constexpr(isEdge2_<EdgeType>) swap(e.start, e.end);
+    return e;
+}
 public:
     i64 nodeCnt = 0; // (maxNodeNumber) + 1
     v2<EdgeType> child, parent, undir;
@@ -720,5 +720,27 @@ public:
 
 i32 main() {
     fastio;
-    
+    tcRep() {
+        i64 a = 0, b = 0, c = 0;
+        in64(l, r);
+        forr(i, 31, 0) {
+            i64 cur = 1LL << i;
+            if(cur > r) continue;
+            bool A = false, B = false, C = false;
+            if(a + cur - 1 < l) a ^= cur, A = true;
+            if(b + cur - 1 < l) b ^= cur, B = true;
+            if(!B && b == c && b + cur - 2 < l) b ^= cur, B = true;
+            if(c + cur - 1 < l) c ^= cur, C = true;
+            if(!A && a <= b && a + cur <= r) {
+                a ^= cur; continue;
+            }
+            if(!B && b == c && b + cur <= r) {
+                b ^= cur; continue;
+            }
+            if(!A && !B && !C && c + cur <= r) c ^= cur;
+        }
+        printf()(a, b, c);
+        lprint(" ", (a^c)+(a^b)+(b^c));
+        println();
+    }
 }

@@ -482,10 +482,10 @@ Tpl concept isEdge = isEdge1_<T> || isEdge2_<T>;
 template <isEdge EdgeType = SimpleEdge>
 class Graph { defGCFs_
     static EdgeType revEdge_(EdgeType e) {
-        if constexpr(isEdge1_<EdgeType>) swap(e.s, e.e);
-        else if constexpr(isEdge2_<EdgeType>) swap(e.start, e.end);
-        return e;
-    }
+    if constexpr(isEdge1_<EdgeType>) swap(e.s, e.e);
+    else if constexpr(isEdge2_<EdgeType>) swap(e.start, e.end);
+    return e;
+}
 public:
     i64 nodeCnt = 0; // (maxNodeNumber) + 1
     v2<EdgeType> child, parent, undir;
@@ -718,7 +718,10 @@ public:
 //@formatter:on
 #pragma endregion // structs
 
+
 i32 main() {
     fastio;
-    
+    tcRep() {
+        
+    }
 }

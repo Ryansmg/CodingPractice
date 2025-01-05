@@ -17,3 +17,8 @@ add_executable(Baekjoon_z.etcBJ_Generator_solution_sol0 Baekjoon/z.etcBJ/Generat
 add_executable(Baekjoon_z.etcBJ_Generator_solution_sol1 Baekjoon/z.etcBJ/Generator/solution/sol1.cpp)
 add_executable(Baekjoon_6_ruby_r5_19455_segbeats Baekjoon/6_ruby/r5_19455_segbeats.cpp)
 add_executable(Baekjoon_6_ruby_r4_17477_segbeats Baekjoon/6_ruby/r4_17477_segbeats.cpp)
+add_executable(.contests_Codeforces_Hello2025_A .contests/Codeforces/Hello2025/A.cpp)
+add_executable(.contests_Codeforces_Hello2025_B .contests/Codeforces/Hello2025/B.cpp)
+add_executable(.contests_Codeforces_Hello2025_C .contests/Codeforces/Hello2025/C.cpp)
+add_executable(.contests_Codeforces_Hello2025_D .contests/Codeforces/Hello2025/D.cpp)
+add_executable(.contests_Codeforces_Hello2025_E1 .contests/Codeforces/Hello2025/E1.cpp)
