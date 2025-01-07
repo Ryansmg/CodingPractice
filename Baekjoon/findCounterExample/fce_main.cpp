@@ -201,7 +201,7 @@ i32 main() {
     
     // settings
     constexpr bool stop_at_TLE_encounter = true;
-    constexpr bool use_generated_input = true;
+    constexpr bool use_generated_input = false;
     constexpr bool use_generated_answer = false;
     constexpr i64 log_flush_rate = 1;
     

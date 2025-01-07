@@ -104,7 +104,9 @@ struct Fenwick {
     v<int> tree; int n;
     explicit Fenwick(int treeSize) { n = treeSize; tree = v<int>(treeSize+10, 0); }
     void update(int tar, cint val) { assert(tar>0); while(tar < n) tree[tar] += val, tar += (tar & -tar); }
+    /// [l, r]
     int query(int left, int right) { assert(0<left && left<=right); if(left==1) return query(right); return query(right) - query(left-1); }
+    /// [1, tar]
     int query(int tar) { int ans = 0; while(tar > 0) ans += tree[tar], tar -= (tar & -tar);  return ans; }
 };
 

@@ -4,11 +4,9 @@
 #define ENABLE_OFAST false
 #define CPP11_MODE false
 #define CPP17_MODE false
-#define IGNORE_UNUSED_MACRO_WARNING true
+#define IGNORE_UNUSED_MACRO_WARNING false
 
-#pragma region start
 #include <bits/stdc++.h>
-#include <cassert> // biko 기준 stdc++에 없음;;
 
 #if !ENABLE_MACRO // basic macros
 #define fastio std::ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr)
@@ -23,8 +21,6 @@ using namespace std;
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 #pragma ide diagnostic ignored "OCUnusedStructInspection"
 #pragma ide diagnostic ignored "UnreachableCallsOfFunction"
-#pragma ide diagnostic ignored "UnusedLocalVariable"
-#pragma ide diagnostic ignored "UnusedValue"
 #endif
 
 #if ENABLE_MACRO
@@ -33,10 +29,8 @@ using namespace std;
 #pragma GCC optimize("Ofast")
 #pragma GCC optimize("unroll-loops")
 #endif
-#pragma endregion // start
 
-#pragma region keyword_reassign
-
+// keyword reassign ///////////////////////////////////////////////////////////////
 #define Tpl template <typename T>
 #define Tpl64 template <typename T = i64>
 #define elif else if
@@ -86,9 +80,7 @@ template <typename Signature> using fun = std::function<Signature>;
 #define ci32 const i32 &
 #define cast static_cast
 
-#pragma endregion // keyword_reassign
-
-#pragma region consts
+// consts ///////////////////////////////////////////////////////////////
 constexpr i64
     i64max = 9223372036854775807,
     llmax  = 9223372036854775807,
@@ -99,9 +91,8 @@ constexpr i64
 constexpr f128
     pi = 3.14159265358979323846;
 const fun<void(i64, i64)> ll_nullFunc_ = [](ci64, ci64){};
-#pragma endregion consts
 
-#pragma region basic
+// basic cpp macros ///////////////////////////////////////////////////////////////
 #define forn(name, val) for(i64 name = 0; (name) < val; name++)
 #define forf(name, start, end) for(i64 name = start; name <= end; name++)
 #define forr(name, start, end) for(i64 name = start; name >= end; name--)
@@ -112,9 +103,8 @@ i64 iR_v_, iR_v2_, iR_v5_;
 #define inRep() input(iR_v_); forn(iR_v3_, iR_v_)
 #define inRep2() input(iR_v2_); forn(iR_v4_, iR_v2_)
 #define tcRep() input(iR_v5_); forf(TCN, 1, iR_v5_)
-#pragma endregion // basic
 
-#pragma region STL
+// STL macros ///////////////////////////////////////////////////////////////
 #if !CPP11_MODE
 template <typename T=i64, typename T3=less<>> using pq = std::priority_queue<T, v<T>, T3>;
 template <typename T, typename T3> inline T pop(pq<T, T3> &pq_) { T t_ = pq_.top(); pq_.pop(); return t_; }
@@ -176,10 +166,8 @@ template <typename T2, typename T1> v<T2> castVec(const T1& arr) { v<T2> ret; fo
 #else
 #define lassert(...)
 #endif
-#pragma endregion // STL
 
-#pragma region I/O
-
+// I/O macros ///////////////////////////////////////////////////////////////
 #ifdef LOCAL
 #define lfastio print()
 #else
@@ -224,13 +212,13 @@ template <typename... Args> void printf_legacy(const Args&... args) { printf(arg
 #define defIsChild(name, abbv) template <typename> struct is##name##Struct_ : std::false_type {};\
                                Tpl struct is##name##Struct_< abbv <T>> : std::true_type {};\
                                Tpl concept is##name = is##name##Struct_<T>::value;
-defIsChild(Vector_, v) defIsChild(Queue_, queue) defIsChild(Stack_, stack) defIsChild(PQ_, pq)
+defIsChild(Vector_, v) defIsChild(Queue_, queue) defIsChild(Stack_, stack) defIsChild(PQ_, pq);
 Tpl concept isStQue_ = isStack_<T> || isQueue_<T> || isPQ_<T>;
 
 struct Printf {
     str sep = " ", end;
     i32 prec = -1;
-    i64 width = -1; char fill = ' ';
+    i32 width = -1; char fill = ' ';
     bool exit = false; bool local = false;
     void operator()() {}
     template <typename ...T> void operator()(const T&... _) {
@@ -295,40 +283,18 @@ void lprintvar_(const string& names_, Args... args) {
     (print_each(args), ...);
 }
 
-#else // LOCAL
+#else
 #define lprint(...) print()
 #define lprintln(...) print()
 #define lprintvar(...) print()
-#endif // LOCAL
+#endif
 
-vl qin_data_;
-i16 qin_t_ = 0, qin_c_ = 0;
-i64 qin_h_(ci64 idx, ci64 n) {
-    if(!qin_c_) {
-        qin_t_ = n;
-        qin_data_.resize(n); forn(i, n) cin >> qin_data_[i];
-    }
-    if(++qin_c_ == qin_t_) qin_t_ = qin_c_ = 0;
-    return qin_data_[idx];
-}
-#define EXPAND_(x) x
-#define QIN_H1_(n) qin_h_(0, n)
-#define QIN_H2_(n) QIN_H1_(n), qin_h_(1, n)
-#define QIN_H3_(n) QIN_H2_(n), qin_h_(2, n)
-#define QIN_H4_(n) QIN_H3_(n), qin_h_(3, n)
-#define QIN_H5_(n) QIN_H4_(n), qin_h_(4, n)
-#define QIN_H6_(n) QIN_H5_(n), qin_h_(5, n)
-#define QIN_H7_(n) QIN_H6_(n), qin_h_(6, n)
-#define QIN_H8_(n) QIN_H7_(n), qin_h_(7, n)
-#define QIN_H9_(n) QIN_H8_(n), qin_h_(8, n)
-#define qin(n) EXPAND_(QIN_H##n##_(n))
 
 #endif // !CPP17_MODE
 
 #endif // !CPP11_MODE
-#pragma endregion // I/O
 
-#pragma region conversions
+// conversions ///////////////////////////////////////////////////////////////
 Tpl inline str tostr(const T &t) { return std::to_string(t); }
 inline str tostr(const str &t) { return t; }
 #define mac_conv_(type, sh) Tpl inline type to##type(const T &t) { return cast<type>(t); } \
@@ -336,15 +302,15 @@ inline str tostr(const str &t) { return t; }
 Tpl inline i128 toi128(const T &t) { return cast<i128>(t); }
 inline i128 toi128(const str &t) { return cast<i128>(stoull(t)); }
 mac_conv_(i64, ll) mac_conv_(i32, i) mac_conv_(u64, ull) mac_conv_(f64, d) mac_conv_(f128, ld)
-#pragma endregion // conversions
 
-#pragma region miscellaneous
+// qol //////////////////////////////////////////////////////////////////////
 template <typename T, typename T2, typename T3> T replace_if(const T& origin, const T2& cond, const T3& replacement)
     requires is_convertible_v<T2, T> && is_convertible_v<T3, T> {
     return origin == cast<T>(cond) ? cast<T>(replacement) : origin;
 }
 #define rplif replace_if
 
+// extra math ///////////////////////////////////////////////////////////////
 namespace PollardRho {
     namespace itnl {
         v<i128>base={2,3,5,7,11,13,17,19,23,29,31,37,41};mt19937 gen=mt19937(random_device()());uniform_int_distribution<i64>dis;
@@ -358,7 +324,6 @@ namespace PollardRho {
     vl getPrimes(i128 n) { vl r; while(n != 1) { i128 p = factorize(n); r.eb(p); n /= p; } return r; }
 }
 constexpr i32 dx4[] = {1, 0, -1, 0}, dy4[] = {0, 1, 0, -1};
-#pragma endregion // miscellaneous
 
 #pragma endregion // macros
 
@@ -534,97 +499,6 @@ private:
     }
 };
 
-struct Fenwick {
-    vl tree; i32 n;
-    explicit Fenwick(i32 treeSize) { n = treeSize; tree = vl(treeSize+10, 0); }
-    void update(i64 tar, ci64 val) { assert(tar>0); for(; tar<=n; tar+=tar&-tar) tree[tar] += val; }
-    /// [l, r]
-    i64 query(i32 left, i32 right) { assert(0<left && left<=right); return query(right) - query(left-1); }
-    /// [1, tar]
-    i64 query(i32 tar) { i64 ans = 0; for(; tar; tar-=(tar&-tar)) ans += tree[tar]; return ans; }
-};
-
-struct Fenwick2d {
-    v2l tree; i32 xn, yn;
-    explicit Fenwick2d(i32 xlen, i32 ylen) : xn(xlen), yn(ylen) { tree.resize(xlen+10, vl(ylen+10, 0)); }
-    void update(i32 x, i32 y, i64 v){ for(; x<=xn; x+=x&-x) for(i32 yy=y; yy<=yn; yy+=yy&-yy) tree[x][yy] += v; }
-    i64 query(i32 x, i32 y){ i64 ret = 0; for(; x; x-=x&-x) for(i32 yy=y; yy; yy-=yy&-yy) ret += tree[x][yy];
-        return ret; }
-    i64 query(i32 x1, i32 y1, i32 x2, i32 y2) { return query(x2, y2) - query(x2, y1-1) - query(x1-1, y2) + query(x1-1, y1-1); }
-};
-
-template <typename T = i64>
-class DynamicSeg {
-    v<T> tree; i64 ln, rn;
-    vi l, r;
-public:
-    explicit DynamicSeg(i64 li, i64 ri) : ln(li), rn(ri) {
-        tree.eb(); l.eb(-1); r.eb(-1);
-    }
-    void add(i64 tar, const T& val) { add(0, ln, rn, tar, val); }
-    void set(i64 tar, const T& val) { set(0, ln, rn, tar, val); }
-    T query(i64 left, i64 right) { return query(0, ln, rn, left, right); }
-private:
-    T& add(i32 p, i64 s, i64 e, i64 t, const T& v) {
-        if(s == e) return tree[p] = tree[p] + v;
-        if(t <= (s + e) / 2) {
-            if(l[p] == -1) l[p] = Size(tree), tree.eb(), l.eb(-1), r.eb(-1);
-            return tree[p] = add(l[p], s, (s+e)/2, t, v) + (r[p] == -1 ? T() : tree[r[p]]);
-        }
-        if(r[p] == -1) r[p] = Size(tree), tree.eb(), l.eb(-1), r.eb(-1);
-        return tree[p] = (l[p] == -1 ? T() : tree[l[p]]) + add(r[p], (s+e)/2+1, e, t, v);
-    }
-    T& set(i32 p, i64 s, i64 e, i64 t, const T& v) {
-        if(s == e) return tree[p] = v;
-        if(t <= (s + e) / 2) {
-            if(l[p] == -1) l[p] = Size(tree), tree.eb(), l.eb(-1), r.eb(-1);
-            return tree[p] = set(l[p], s, (s+e)/2, t, v) + (r[p] == -1 ? T() : tree[r[p]]);
-        }
-        if(r[p] == -1) r[p] = Size(tree), tree.eb(), l.eb(-1), r.eb(-1);
-        return tree[p] = (l[p] == -1 ? T() : tree[l[p]]) + set(r[p], (s+e)/2+1, e, t, v);
-    }
-    T query(i32 p, i64 s, i64 e, i64 ql, i64 qr) {
-        if(p == -1 || qr < s || e < ql) return T();
-        if(ql <= s && e <= qr) return tree[p];
-        return query(l[p], s, (s+e)/2, ql, qr) + query(r[p], (s+e)/2+1, e, ql, qr);
-    }
-};
-
-template <typename T = i64>
-class Dynamic2dSeg {
-    i64 lx, rx, ly, ry;
-    v<DynamicSeg<T>> tree;
-    vi l, r;
-public:
-    Dynamic2dSeg(i64 lxi, i64 rxi, i64 lyi, i64 ryi) : lx(lxi), rx(rxi), ly(lyi), ry(ryi) { tree.eb(ly, ry); l.eb(-1); r.eb(-1); }
-    void add(i64 tx, i64 ty, const T& val) { add(0, lx, rx, tx, ty, val); }
-    void set(i64 tx, i64 ty, const T& val) { set(0, lx, rx, tx, ty, val); }
-    T query(i64 left_x, i64 right_x, i64 left_y, i64 right_y) { return query(0, lx, rx, left_x, right_x, left_y, right_y); }
-private:
-    void add(i32 p, i64 sx, i64 ex, i64 tx, i64 ty, const T& val) {
-        tree[p].add(ty, val); if(sx == ex) return;
-        i64 mx = (sx + ex) / 2;
-        if(tx <= mx) {
-            if(l[p] == -1) l[p] = Size(tree), tree.eb(ly, ry), l.eb(-1), r.eb(-1);
-            add(l[p], sx, mx, tx, ty, val);
-        } else {
-            if(r[p] == -1) r[p] = Size(tree), tree.eb(ly, ry), l.eb(-1), r.eb(-1);
-            add(r[p], mx+1, ex, tx, ty, val);
-        }
-    }
-    void set(i32 p, i64 sx, i64 ex, i64 tx, i64 ty, const T& val) {
-        tree[p].set(ty, val); if(sx == ex) { return; } i64 mx = (sx + ex) / 2;
-        if(tx <= mx) { if(l[p] == -1) l[p] = Size(tree), tree.eb(ly, ry), l.eb(-1), r.eb(-1);
-            set(l[p], sx, mx, tx, ty, val); } else { if(r[p] == -1) r[p] = Size(tree), tree.eb(ly, ry), l.eb(-1), r.eb(-1);
-            set(r[p], mx+1, ex, tx, ty, val); }
-    }
-    T query(i32 p, i64 sx, i64 ex, i64 qlx, i64 qrx, i64 qly, i64 qry) {
-        if(p == -1 || ex < qlx || qrx < sx) return T();
-        if(qlx <= sx && ex <= qrx) return tree[p].query(qly, qry);
-        return query(l[p], sx, (sx+ex)/2, qlx, qrx, qly, qry) + query(r[p], (sx+ex)/2+1, ex, qlx, qrx, qly, qry);
-    }
-};
-
 #pragma endregion // dataStructures
 
 #pragma region Graph
@@ -665,17 +539,17 @@ public:
     Graph() = default;
     explicit Graph(ci64 maxNodeNum) { resize(maxNodeNum); }
     /// reset
-    virtual void clear() { child.clear(); parent.clear(); undir.clear(); nodeCnt = 0; unsafe = false; }
+    void clear() { child.clear(); parent.clear(); undir.clear(); nodeCnt = 0; unsafe = false; }
     void resize(ci64 maxNodeNum) {
         if(!unsafe && nodeCnt >= maxNodeNum) { cerr << "Invalid resizing"; exit(1); }
         nodeCnt = maxNodeNum + 1;
         child.resize(nodeCnt, v<EdgeType>()); parent.resize(nodeCnt, v<EdgeType>()); undir.resize(nodeCnt, v<EdgeType>());
     }
-    virtual void addUEdge(const EdgeType& edge) { undir[es_(edge)].eb(edge); undir[ee_(edge)].eb(revEdge_(edge)); }
-    template <typename... Args> void makeUEdge(Args&&... args) { EdgeType edge(std::forward<Args>(args)...);
+    void addUEdge(const EdgeType& edge) { undir[es_(edge)].eb(edge); undir[ee_(edge)].eb(revEdge_(edge)); }
+    template <typename... Args> void addUEdge(Args&&... args) { EdgeType edge(std::forward<Args>(args)...);
         undir[es_(edge)].eb(edge); undir[ee_(edge)].eb(revEdge_(edge)); }
-    virtual void addDEdge(const EdgeType& edge) { child[es_(edge)].eb(edge); parent[ee_(edge)].eb(edge); }
-    template <typename... Args> void makeDEdge(Args&&... args) { EdgeType edge(std::forward<Args>(args)...);
+    void addDEdge(const EdgeType& edge) { child[es_(edge)].eb(edge); parent[ee_(edge)].eb(edge); }
+    template <typename... Args> void addDEdge(Args&&... args) { EdgeType edge(std::forward<Args>(args)...);
         child[es_(edge)].eb(edge); parent[ee_(edge)].eb(edge); }
 
     /// child와 undir에 대한 forEach문을 지원
@@ -740,8 +614,9 @@ class UGraph : public Graph<EdgeType> { defGCFs_
                 } } } }
 public:
     void clear() { Graph<EdgeType>::clear(); useUnionFind = false; groupNum = groupSize = vl(); }
-    void addEdge(const EdgeType& edge) { Graph<EdgeType>::addUEdge(edge); if(useUnionFind) uf_union(es_(edge), ee_(edge)); }
-    template <typename... Args> void makeEdge(Args&&... args) { EdgeType edge(std::forward<Args>(args)...);
+    void addDEdge(const EdgeType&) { cerr << "Not available."; exit(1); } template <typename... Args> void addDEdge(Args&&...) { cerr << "Not available."; exit(1); }
+    void addUEdge(const EdgeType& edge) { Graph<EdgeType>::addUEdge(edge); if(useUnionFind) uf_union(es_(edge), ee_(edge)); }
+    template <typename... Args> void addUEdge(Args&&... args) { EdgeType edge(std::forward<Args>(args)...);
         Graph<EdgeType>::addUEdge(edge); if(useUnionFind) uf_union(es_(edge), ee_(edge)); }
     UGraph() = default;
     explicit UGraph(i64 maxNodeNum) : Graph<EdgeType>(maxNodeNum) { this->child = this->parent = v2<EdgeType>(); }
@@ -888,32 +763,81 @@ public:
 //@formatter:on
 #pragma endregion // structs
 
+
+// (ax+b)c+d = acx + bc + d
+
 struct tr {
     i64 v = 0;
-    tr operator+(const tr& b) const { return {v + b.v}; }
+    tr operator+(const tr& b) const { return {(v+b.v)%mod1}; }
 };
 
 struct lz {
-    bool flip = false;
-    lz operator+(ci64) const { return {true}; }
+    i64 a = 1, b = 0;
+    lz operator+(const lz& c) const {
+        return {a * c.a%mod1, (b * c.a + c.b)%mod1};
+    }
 };
 
-tr operator+(const tr& a, Dlp::iter&& iter) {
-    if(iter.lazy.flip) return {iter.end - iter.start + 1 - a.v};
-    return a;
+using lp = Lazyprop<tr, lz, lz>;
+tr operator+(const tr& a, lp::iter&& b) {
+    return {((a.v * b.lazy.a)%mod1 + b.lazy.b)%mod1};
+}
+lz operator+(const lz& a, lp::iter&& b) {
+    return {a.a * b.lazy.a % mod1, (a.b * b.lazy.a + b.lazy.b)%mod1};
 }
 
-lz operator+(const lz& a, Dlp::iter&& b) {
-    if(b.lazy.flip) return {!a.flip};
-    return a;
+v2l adj;
+vl in, out, childin, childout, par;
+vb isLeaf;
+
+i64 cur = 1;
+
+void ett(i64 node = 1, i64 par = -1) {
+    childin[node] = cur+1;
+    for(ci64 i : adj[node]) {
+        if(i == par) continue;
+        in[i] = ++cur;
+    }
+    childout[node] = cur;
+    for(ci64 i : adj[node]) {
+        if(i == par) continue;
+        ett(i, node);
+    }
+    out[node] = cur;
 }
 
 i32 main() {
     fastio;
-    in64(n, m);
-    Dlp lp(n);
-    rep(m) {
-        if(input()) println(lp.query(qin(2)).v);
-        else lp.update(qin(2), 1);
+    in64(n); adj.resize(n+1, vl());
+    in.resize(n+1); out.resize(n+1);
+    childin.resize(n+1); isLeaf.resize(n+1, true);
+    childout.resize(n+1); par.resize(n+1);
+    v<tr> arr = castVec<tr>(inArr(n));
+    forf(i, 2, n) {
+        in64(a); par[i] = a; isLeaf[a] = false;
+        adj[a].eb(i); adj[i].eb(a);
+    }
+    in[1] = 1;
+    ett();
+    v<tr> arr2(n);
+    forf(i, 1, n) arr2[in[i]-1] = arr[i-1];
+    lp lp(arr2);
+    in64(q);
+    rep(q) {
+        in64(op, v);
+        if(op == 1) {
+            in64(a, b);
+            if(v != 1) lp.update(in[par[v]], in[par[v]], {a, b});
+            lp.update(in[v], in[v], {a, b});
+            if(!isLeaf[v]) lp.update(childin[v], childout[v], {a, b});
+        }
+        elif(op == 2) {
+            in64(a, b);
+            lp.update(in[v], in[v], {a, b});
+            if(!isLeaf[v]) lp.update(childin[v], out[v], {a, b});
+        }
+        else {
+            println(lp.query(in[v]).v);
+        }
     }
 }

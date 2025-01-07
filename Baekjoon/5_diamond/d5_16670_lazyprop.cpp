@@ -8,7 +8,8 @@
 
 #pragma region start
 #include <bits/stdc++.h>
-#include <cassert> // biko 기준 stdc++에 없음;;
+// biko 기준 stdc++에 없음;;
+#include <cassert>
 
 #if !ENABLE_MACRO // basic macros
 #define fastio std::ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr)
@@ -889,31 +890,31 @@ public:
 #pragma endregion // structs
 
 struct tr {
-    i64 v = 0;
-    tr operator+(const tr& b) const { return {v + b.v}; }
+    i64 sum, mx;
+    tr operator+(const tr& b) const {
+        return { sum + b.sum, max(b.mx, mx + b.sum) };
+    }
 };
-
-struct lz {
-    bool flip = false;
-    lz operator+(ci64) const { return {true}; }
-};
-
-tr operator+(const tr& a, Dlp::iter&& iter) {
-    if(iter.lazy.flip) return {iter.end - iter.start + 1 - a.v};
-    return a;
-}
-
-lz operator+(const lz& a, Dlp::iter&& b) {
-    if(b.lazy.flip) return {!a.flip};
-    return a;
-}
 
 i32 main() {
     fastio;
-    in64(n, m);
-    Dlp lp(n);
-    rep(m) {
-        if(input()) println(lp.query(qin(2)).v);
-        else lp.update(qin(2), 1);
+    in64(q);
+    vl qrs(q);
+    Segtree<tr> seg(1000010);
+    forn(i, q) {
+        char op = input<char>();
+        if(op == '+') {
+            in64(t, d);
+            seg.set(t, {d, t+d});
+            qrs[i] = t;
+        }
+        elif(op == '-') {
+            in64(j);
+            seg.set(qrs[j-1], {0, qrs[j-1]});
+        }
+        else {
+            in64(t);
+            println(max(0LL, seg.query(1, t).mx - t));
+        }
     }
 }
