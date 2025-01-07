@@ -625,72 +625,17 @@ private:
     }
 };
 
-template <typename T = i64>
-class pst {
-    v<T> tree; vi l, r; i64 ln, rn;
-public:
-    pst(i64 leftBound, i64 rightBound) : ln(leftBound), rn(rightBound) { rep(2) tree.eb(), l.eb(0), r.eb(0); }
-    // index = [1..n]
-    explicit pst(const v<T>& arr) : ln(1), rn(Size(arr)) { tree.reserve(4*rn); rep(2) tree.eb(), l.eb(0), r.eb(0);
-        init(1, ln, rn, arr); }
-    struct iter {
-        pst* ptr = nullptr; i32 pos = 0; i64 s = INF, e = -INF;
-        T operator*() { return ptr->tree[pos]; } bool null() { return !pos; }
-        iter left() { return {ptr, ptr->l[pos], s, (s+e)/2}; } iter right() { return {ptr, ptr->r[pos], (s+e)/2+1, e}; }
-    };
-    struct root {
-        i32 pos = 0, prvPos = 0; pst* ptr = nullptr;
-        root next() {
-            root ret; ret.pos = Size(ptr->tree); ret.prvPos = pos; ret.ptr = ptr;
-            ptr->tree.eb(ptr->tree[pos]); ptr->l.eb(ptr->l[pos]); ptr->r.eb(ptr->r[pos]);
-            return ret;
-        }
-        iter getIter() { return {ptr, pos, ptr->ln, ptr->rn}; }
-        /// @returns self
-        root& add(i64 tar, const T& diff) { ptr->update(prvPos, pos, ptr->ln, ptr->rn, tar, diff, true); return *this; }
-        /// @returns self
-        root& set(i64 tar, const T& val) { ptr->update(prvPos, pos, ptr->ln, ptr->rn, tar, val, false); return *this; }
-        T query(i64 left, i64 right) { return ptr->query(pos, ptr->ln, ptr->rn, left, right); }
-    };
-    friend root; friend iter; root begin() { return { 1, 0, this }; } iter getIter() { return { this, 1, ln, rn }; }
-private:
-    T& init(i32 cur, i64 s, i64 e, const v<T>& arr) {
-        if(s == e) return tree[cur] = arr[s-1];
-        l[cur] = Size(tree); r[cur] = Size(tree)+1; rep(2) tree.eb(), l.eb(0), r.eb(0);
-        return tree[cur] = init(l[cur], s, (s+e)>>1, arr) + init(r[cur], ((s+e)>>1)+1, e, arr);
-    }
-    void update(i32 prv, i32 cur, i64 s, i64 e, i64 t, const T& d, bool isAdd) {
-        if(s == e) { if(isAdd) { tree[cur] = tree[cur] + d; } else { tree[cur] = d; } return; } i64 m = (s + e) >> 1;
-        if(t <= m) {
-            if(!l[cur] || l[cur] == l[prv]) l[cur] = Size(tree), tree.eb(tree[l[prv]]), l.eb(0), r.eb(0);
-            if(!r[cur]) r[cur] = r[prv];
-            update(l[prv], l[cur], s, m, t, d, isAdd);
-        } else {
-            if(!l[cur]) l[cur] = l[prv];
-            if(!r[cur] || r[cur] == r[prv]) r[cur] = Size(tree), tree.eb(tree[r[prv]]), l.eb(0), r.eb(0);
-            update(r[prv], r[cur], m + 1, e, t, d, isAdd);
-        }
-        tree[cur] = tree[l[cur]] + tree[r[cur]];
-    }
-    T query(i32 cur, i64 s, i64 e, i64 ql, i64 qr) {
-        if(!cur || qr < s || e < ql) { return T(); } if(ql <= s && e <= qr) return tree[cur];
-        return query(l[cur], s, (s+e)>>1, ql, qr) + query(r[cur], ((s+e)>>1)+1, e, ql, qr);
-    }
-};
-
 #pragma endregion // dataStructures
 
 #pragma region Graph
 
 struct SimpleEdge { i64 start, end; };
 struct DistEdge { i64 start, end, dist; };
-Tpl concept isEdge1_ = requires(const T& a) { a.s; a.e; }; Tpl concept isEdge2_ = requires(const T& a) { a.start; a.end; }; Tpl concept isEdge = isEdge1_<T> || isEdge2_<T>;
 
-/// node >= 0
-/// requirements : (EdgeType.s && EdgeType.e) || (EdgeType.start && EdgeType.end)
-/// detects : start/s, end/e, distance/dist/d
-template <isEdge EdgeType = SimpleEdge>
-class Graph {
+Tpl concept isEdge1_ = requires(const T& a) { a.s; a.e; };
+Tpl concept isEdge2_ = requires(const T& a) { a.start; a.end; };
+Tpl concept isEdge = isEdge1_<T> || isEdge2_<T>;
+
 #define defGCFs_ static i64 es_(const EdgeType& edge) { if constexpr(isEdge1_<EdgeType>) { return edge.s; } return edge.start; }\
                  static i64 ee_(const EdgeType& edge) { if constexpr(isEdge1_<EdgeType>) { return edge.e; } return edge.end; }\
                  static i64 ed_(const EdgeType& edge) {\
@@ -699,7 +644,12 @@ class Graph {
                      if constexpr(requires{edge.distance;}) return edge.distance;\
                      return 1;\
                  }
-    defGCFs_
+
+/// node >= 0
+/// requirements : (EdgeType.s && EdgeType.e) || (EdgeType.start && EdgeType.end)
+/// detects : start/s, end/e, distance/dist/d
+template <isEdge EdgeType = SimpleEdge>
+class Graph { defGCFs_
     static EdgeType revEdge_(EdgeType e) {
         if constexpr(isEdge1_<EdgeType>) swap(e.s, e.e);
         else if constexpr(isEdge2_<EdgeType>) swap(e.start, e.end);
@@ -980,33 +930,70 @@ public:
 //@formatter:on
 #pragma endregion // structs
 
+struct kv {
+    i64 k, v; // 필요한 멘탈 k / 얻을 수 있는 멘탈 v
+    bool operator<(const kv& b) const { if(k==b.k) return v<b.v; return k<b.k; }
+};
+
+using T = v<kv>;
+
+T operator+(const T& l, const T& r) {
+    T ret; ret.eb(-INF, l[0].v + r[0].v);
+    // k == l[i]인 경우 => l[i].k + l[i].v >= r[j].k인 최대 j
+    for(i64 i = 1, j = 0; i < Size(l) && j < Size(r); i++) {
+        while(j+1<Size(r) && l[i].k + l[i].v >= r[j+1].k) j++;
+        if(l[i].k + l[i].v >= r[j].k) ret.eb(l[i].k, l[i].v + r[j].v);
+    }
+
+    // k != l[i]인 경우 : r[j].k - l[i].v
+    // r[j].k >= l[i].v + l[i].k인 최대 i
+    // 이랬는데 l[i].k + l[i].v >= r[j+1].k => 에바;; (r[j].v를 받을 상황이 아님)
+    // 아니면 r[j].k - l[i].v >= l[i+1].k => 얘도에바;; (l[i].v를 받을 상황이 아님)
+    for(i64 i = 0, j = 1; i < Size(l) && j < Size(r); j++) {
+        while(i+1 < Size(l) && r[j].k >= l[i+1].v + l[i+1].k) i++;
+        if(j+1 < Size(r) && l[i].k + l[i].v >= r[j+1].k) continue;
+        if(i+1 < Size(l) && r[j].k - l[i].v >= l[i+1].k) continue;
+        ret.eb(r[j].k - l[i].v, l[i].v + r[j].v);
+    }
+
+    sort(ret); return ret;
+}
+
+struct seg {
+    vector<T> tree; i32 n;
+    explicit seg(const v<iii> &a) { n = Size(a); tree = v<T>(4*n, T()); init(a, 1, 1, n); }
+
+    T& init(const v<iii> &a, ci32 node, ci32 start, ci32 end) {
+        if(start==end) {
+            tree[node].eb(-INF, a[start-1][0]);
+            tree[node].eb(a[start-1][2], a[start-1][1]);
+            return tree[node];
+        }
+        else return tree[node] = init(a, node*2, start, (start+end)/2) + init(a, node*2+1, (start+end)/2+1, end);
+    }
+
+    vl qnodes;
+    i64 query(ci32 left, ci32 right, i64 v) {
+        if(left > right) return v;
+        qnodes.clear(); query(1, left, right, 1, n);
+        for(ci64 i : qnodes) {
+            auto iter = ub(tree[i], {v, INF});
+            if(iter != tree[i].begin()) v += prev(iter)->v;
+        }
+        return v;
+    }
+
+    void query(ci32 node, ci32 left, ci32 right, ci32 start, ci32 end) { if(right < start || end < left) return;
+        if(left <= start && end <= right) { qnodes.eb(node); return; }
+        query(node*2, left, right, start, (start+end)/2); query(node*2+1, left, right, (start+end)/2+1, end);
+    }
+};
+
 
 i32 main() {
     fastio;
-    in64(n, m, q);
-    vl cnt1; forf(i, 1, n) cnt1.eb(i);
-    forf(i, 1, n-1) cnt1[i] += cnt1[i-1];
-    vl book = inArr(n);
-    pst tr(1, m);
-    v<pst<i64>::root> psts(1, tr.begin());
-    for(ci64 i : book) {
-        psts.eb(psts.back().next().add(i, 1));
-    }
-    rep(q) {
-        in64(k);
-        i64 idx = lb(cnt1, k) - cnt1.begin() + 1;
-        if(idx > n) {
-            printfln()(-1, -1);
-            continue;
-        }
-        i64 ans2 = book[idx-1];
-        if(idx-1) k -= cnt1[idx-2];
-        auto iter = psts[idx].getIter();
-        while(iter.s != iter.e) {
-            auto l = iter.left();
-            if(*l >= k) iter = l;
-            else k -= *l, iter = iter.right();
-        }
-        printfln()(ans2, iter.s);
-    }
+    in64(n);
+    v<iii> arr; rep(n) arr.pb({qin(3)});
+    seg seg(arr);
+    forf(i, 1, n) println(seg.query(i+1, n, seg.query(1, i-1, 0)));
 }
