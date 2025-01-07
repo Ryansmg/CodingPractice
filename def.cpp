@@ -796,7 +796,10 @@ class Tree : public Graph<EdgeType> { defGCFs_
     bool usingHld = false;
 public:
     i64 root = -1; vl sz, dep, top, in, out, inRev;
-    void clear() { Graph<EdgeType>::clear(); sz = dep = top = in = out = inRev = vl(); usingHld = root = 0; }
+    void clear() override {
+        Graph<EdgeType>::clear(); sz = dep = top = in = out = inRev = vl(); usingHld = false; root = 0;
+        logH = 0; usingSparse = false; sparsePar = sparseDist = v2l();
+    }
     Tree() = default; // creates empty tree
     Tree(ci64 rootNode, const Graph<EdgeType>& graph) : Graph<EdgeType>(graph), root(rootNode) {
         if(!this->unsafe) { // check cycle
@@ -874,8 +877,47 @@ public:
         return a;
     }
 
-    /// returns lca using hld
-    i64 lca(ci64 a, ci64 b) { return hld(a, b, ll_nullFunc_); }
+private:
+    i64 logH = 0; v2l sparsePar, sparseDist; bool usingSparse = false;
+    void initSparse() {
+        if(usingSparse) return;
+        usingSparse = true; sparsePar.resize(this->nodeCnt, vl()); sparseDist.resize(this->nodeCnt, vl());
+        dep = vl(this->nodeCnt, 0);
+        fun<void(i64)> dfs = [&](i64 v) {
+            logH = max(logH, cast<i64>(log2(dep[v]+1)));
+            for(auto &i : this->child[v]) { i64 j = ee_(i); dep[j] = dep[v] + 1; dfs(j); }
+        }; dfs(this->root);
+        forf(v, 0, this->nodeCnt-1) {
+            if(this->parent[v].empty()) sparsePar[v].eb(v), sparseDist[v].pb(0);
+            else sparsePar[v].eb(par(v)), sparseDist[v].eb(ed_(this->parent[v][0]));
+        }
+        forn(i, logH+1) forf(v, 0, this->nodeCnt-1) {
+            sparsePar[v].eb(sparsePar[sparsePar[v][i]][i]);
+            sparseDist[v].eb(sparseDist[v][i] + sparseDist[sparsePar[v][i]][i]);
+        }
+    }
+public:
+    pair<i64, i64> sparseLca(i64 a, i64 b) { initSparse();
+        if(dep[a] > dep[b]) swap(a, b);
+        i64 depDiff = dep[b] - dep[a], dist = 0;
+        for(i64 i = logH; depDiff && i >= 0; i--)
+            if(depDiff & (1<<i)) dist += sparseDist[b][i], b = sparsePar[b][i], depDiff ^= (1<<i);
+        for(i64 i = logH; i >= 0; i--)
+            if(sparsePar[a][i] != sparsePar[b][i])
+                dist += sparseDist[a][i] + sparseDist[b][i], a = sparsePar[a][i], b = sparsePar[b][i];
+        if(a == b) return {a, dist};
+        return {sparsePar[a][0], dist + sparseDist[a][0] + sparseDist[b][0]};
+    }
+
+    /// if hld is made => returns lca using hld
+    /// else => makes sparse tree
+    i64 lca(ci64 a, ci64 b) {
+        if(usingHld) return hld(a, b, ll_nullFunc_);
+        return sparseLca(a, b).first;
+    }
+
+    /// uses sparse table
+    i64 dist(ci64 a, ci64 b) { return sparseLca(a, b).second; }
 };
 
 #pragma endregion // Graph
@@ -888,32 +930,8 @@ public:
 //@formatter:on
 #pragma endregion // structs
 
-struct tr {
-    i64 v = 0;
-    tr operator+(const tr& b) const { return {v + b.v}; }
-};
-
-struct lz {
-    bool flip = false;
-    lz operator+(ci64) const { return {true}; }
-};
-
-tr operator+(const tr& a, Dlp::iter&& iter) {
-    if(iter.lazy.flip) return {iter.end - iter.start + 1 - a.v};
-    return a;
-}
-
-lz operator+(const lz& a, Dlp::iter&& b) {
-    if(b.lazy.flip) return {!a.flip};
-    return a;
-}
 
 i32 main() {
     fastio;
-    in64(n, m);
-    Dlp lp(n);
-    rep(m) {
-        if(input()) println(lp.query(qin(2)).v);
-        else lp.update(qin(2), 1);
-    }
+
 }
