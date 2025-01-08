@@ -97,7 +97,7 @@ constexpr i64
     mod1   = 1000000007,
     mod9   = 998244353;
 constexpr f128
-    pi = 3.14159265358979323846;
+    PI = 3.14159265358979323846;
 const fun<void(i64, i64)> ll_nullFunc_ = [](ci64, ci64){};
 #pragma endregion consts
 
@@ -105,6 +105,8 @@ const fun<void(i64, i64)> ll_nullFunc_ = [](ci64, ci64){};
 #define forn(name, val) for(i64 name = 0; (name) < val; name++)
 #define forf(name, start, end) for(i64 name = start; name <= end; name++)
 #define forr(name, start, end) for(i64 name = start; name >= end; name--)
+// foreach reverse
+#define forer(something) for(something | std::views::reverse)
 #define rep(n) forn(rep_mac_name_1_, n)
 #define rep2(n) forn(rep_mac_name_2_, n)
 
@@ -153,6 +155,7 @@ inline i64 pow(ci64 a, ci64 b, ci64 mod) { return pow_(a, b, mod); }
 Tpl inline T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 Tpl inline T max(const v<T>& v_) { T ret = lim<T>::min(); for(const T &t_ : v_) { ret = max(ret, t_); } return ret; }
 Tpl inline T min(const v<T>& v_) { T ret = lim<T>::max(); for(const T &t_ : v_) { ret = min(ret, t_); } return ret; }
+inline i64 max(ci64 a, ci64 b) { return a > b ? a : b; } inline i64 min(ci64 a, ci64 b) { return a < b ? a : b; }
 Tpl inline T lcm_(const T& a, const T& b) { return a / gcd_(a, b) * b; }
 Tpl inline T sq_(const T &i) { return i * i; }
 Tpl inline T sum(const v<T>& _) { T s_ = T(); {for(const T& i_ : _) s_ += i_;} return s_; }
@@ -304,10 +307,8 @@ void lprintvar_(const string& names_, Args... args) {
 vl qin_data_;
 i16 qin_t_ = 0, qin_c_ = 0;
 i64 qin_h_(ci64 idx, ci64 n) {
-    if(!qin_c_) {
-        qin_t_ = n;
-        qin_data_.resize(n); forn(i, n) cin >> qin_data_[i];
-    }
+    if(!qin_c_) { qin_t_ = n; qin_data_.resize(n);
+        forn(i, n) cin >> qin_data_[i]; }
     if(++qin_c_ == qin_t_) qin_t_ = qin_c_ = 0;
     return qin_data_[idx];
 }
@@ -364,9 +365,6 @@ constexpr i32 dx4[] = {1, 0, -1, 0}, dy4[] = {0, 1, 0, -1};
 
 #pragma region structs
 #if !CPP17_MODE && !CPP11_MODE
-i64 moQuerySortVal = -1;
-struct moQuery { i64 i, j, order; bool operator<(const moQuery& b) const { lassert(moQuerySortVal != -1);
-        if(i/moQuerySortVal == b.i/moQuerySortVal) { return j < b.j; } return i/moQuerySortVal < b.i/moQuerySortVal; } };
 
 #pragma region dataStructures
 
@@ -400,15 +398,15 @@ public:
     struct iter {
         i32 node, start, end; T value; Segtree<T>* segPtr;
         bool leaf() const { return start == end; }
-        iter left() const { return iter(node*2, start, (start+end)/2, segPtr->tree[node*2], segPtr); }
-        iter right() const { return iter(node*2+1, (start+end)/2+1, end, segPtr->tree[node*2+1], segPtr); }
+        iter left() const { return iter(node<<1, start, (start+end)>>1, segPtr->tree[node<<1], segPtr); }
+        iter right() const { return iter(node<<1|1, ((start+end)>>1)+1, end, segPtr->tree[node<<1|1], segPtr); }
     };
     iter root() { return iter(1, 1, n, tree[1], this); }
     // ret[i] == query(i+1)
     v<T> getLeafs() { v<T> ret(n);
         fun<void(i64, i64, i64)> f = [&](i64 p, i64 s, i64 e) {
             if(s == e) ret[s-1] = tree[p];
-            else f(p*2, s, (s+e)/2), f(p*2+1, (s+e)/2+1, e); };
+            else f(p<<1, s, (s+e)>>1), f(p<<1|1, ((s+e)>>1)|1, e); };
         f(1, 1, n); return ret; }
 
     /// [1..i] 범위 합이 val 이하인 최대의 i를 리턴
@@ -422,19 +420,19 @@ public:
 protected:
     T& init(const v<T> &a, ci32 node, ci32 start, ci32 end) {
         if(start==end) return tree[node] = a[start-1];
-        else return tree[node] = init(a, node*2, start, (start+end)/2) + init(a, node*2+1, (start+end)/2+1, end);
+        else return tree[node] = init(a, node<<1, start, (start+end)>>1) + init(a, node<<1|1, ((start+end)>>1)+1, end);
     }
     T& update(ci32 node, ci32 tar, ci32 start, ci32 end, const T& diff) { if(end < tar || tar < start) return tree[node];
         if(start == end) return tree[node] = tree[node] + diff;
-        return tree[node] = update(node*2, tar, start, (start+end)/2, diff) + update(node*2+1, tar, (start+end)/2+1, end, diff);
+        return tree[node] = update(node<<1, tar, start, (start+end)>>1, diff) + update(node<<1|1, tar, ((start+end)>>1)+1, end, diff);
     }
     T& set(ci32 node, ci32 tar, ci32 start, ci32 end, const T& val) { if(end < tar || tar < start) return tree[node];
         if(start == end) return tree[node] = val;
-        return tree[node] = set(node*2, tar, start, (start+end)/2, val) + set(node*2+1, tar, (start+end)/2+1, end, val);
+        return tree[node] = set(node<<1, tar, start, (start+end)>>1, val) + set(node<<1|1, tar, ((start+end)>>1)+1, end, val);
     }
     T query(ci32 node, ci32 left, ci32 right, ci32 start, ci32 end) { if(right < start || end < left) return T();
         if(left <= start && end <= right) return tree[node];
-        return query(node*2, left, right, start, (start+end)/2) + query(node*2+1, left, right, (start+end)/2+1, end);
+        return query(node<<1, left, right, start, (start+end)>>1) + query(node<<1|1, left, right, ((start+end)>>1)+1, end);
     }
 };
 
@@ -456,18 +454,18 @@ public:
     /// tree & lazy are copied values, should not be modified
     struct iter {
         i32 node, start, end; TreeType tree; LazyType lazy; Lazyprop* segPtr;
-        iter left() { segPtr->push(node*2, start, (start+end)/2);
-            return iter(node*2, start, (start+end)/2, segPtr->tree[node*2], segPtr->lazy[node*2], segPtr); }
-        iter right() { segPtr->push(node*2+1, (start+end)/2+1, end);
-            return iter(node*2+1, (start+end)/2+1, end, segPtr->tree[node*2+1], segPtr->lazy[node*2+1], segPtr); }
+        iter left() { segPtr->push(node<<1, start, (start+end)>>1);
+            return iter(node<<1, start, (start+end)>>1, segPtr->tree[node<<1], segPtr->lazy[node<<1], segPtr); }
+        iter right() { segPtr->push(node<<1|1, ((start+end)>>1)+1, end);
+            return iter(node<<1|1, ((start+end)>>1)+1, end, segPtr->tree[node<<1|1], segPtr->lazy[node<<1|1], segPtr); }
         bool leaf() { return start == end; }
     };
 protected:
     v<TreeType> tree; v<LazyType> lazy; i32 n=-1;
     void push(i32 node, i32 start, i32 end) {
         tree[node] = tree[node] + iter(node, start, end, tree[node], lazy[node], this);
-        if(start!=end) { lazy[node*2] = lazy[node*2] + iter(node, start, end, tree[node], lazy[node], this);
-                         lazy[node*2+1] = lazy[node*2+1] + iter(node, start, end, tree[node], lazy[node], this); }
+        if(start!=end) { lazy[node<<1] = lazy[node<<1] + iter(node, start, end, tree[node], lazy[node], this);
+                         lazy[node<<1|1] = lazy[node<<1|1] + iter(node, start, end, tree[node], lazy[node], this); }
         lazy[node] = LazyType();
     }
 public:
@@ -481,22 +479,22 @@ public:
     v<TreeType> getLeafs() { v<TreeType> ret(n);
         fun<void(i64, i64, i64)> f = [&](i64 p, i64 s, i64 e) { push(p, s, e);
             if(s == e) ret[s-1] = tree[p];
-            else f(p*2, s, (s+e)/2), f(p*2+1, (s+e)/2+1, e); };
+            else f(p<<1, s, (s+e)>>1), f(p<<1|1, ((s+e)>>1)+1, e); };
         f(1, 1, n); return ret; }
 protected:
     TreeType& init(const v<TreeType> &a, i32 node, i32 start, i32 end) {
         if(start==end) return tree[node] = a[start-1];
-        else return tree[node] = init(a, node*2, start, (start+end)/2) + init(a, node*2+1, (start+end)/2+1, end);
+        else return tree[node] = init(a, node<<1, start, (start+end)>>1) + init(a, node<<1|1, ((start+end)>>1)+1, end);
     }
     TreeType& update(i32 node, i32 left, i32 right, i32 start, i32 end, UpdateType diff) {
         push(node, start, end); if(end < left || right < start) return tree[node];
         if(left <= start && end <= right) { lazy[node] = lazy[node] + diff; push(node, start, end); return tree[node]; }
-        return tree[node] = update(node*2, left, right, start, (start+end)/2, diff) + update(node*2+1, left, right, (start+end)/2+1, end, diff);
+        return tree[node] = update(node<<1, left, right, start, (start+end)>>1, diff) + update(node<<1|1, left, right, ((start+end)>>1)+1, end, diff);
     }
     TreeType query(i32 node, i32 left, i32 right, i32 start, i32 end) {
         push(node, start, end); if(right < start || end < left) return TreeType();
         if(left <= start && end <= right) return tree[node];
-        return query(node*2, left, right, start, (start+end)/2) + query(node*2+1, left, right, (start+end)/2+1, end);
+        return query(node<<1, left, right, start, (start+end)>>1) + query(node<<1|1, left, right, ((start+end)>>1)+1, end);
     }
 };
 
@@ -555,12 +553,10 @@ struct Fenwick2d {
 
 template <typename T = i64>
 class DynamicSeg {
-    v<T> tree; i64 ln, rn;
-    vi l, r;
+    v<T> tree; i64 ln, rn; vi l, r;
+    i32 next() { tree.eb(); l.eb(-1); r.eb(-1); return Size(tree)-1; }
 public:
-    explicit DynamicSeg(i64 li, i64 ri) : ln(li), rn(ri) {
-        tree.eb(); l.eb(-1); r.eb(-1);
-    }
+    explicit DynamicSeg(i64 li, i64 ri) : ln(li), rn(ri) { next(); }
     void add(i64 tar, const T& val) { add(0, ln, rn, tar, val); }
     void set(i64 tar, const T& val) { set(0, ln, rn, tar, val); }
     T query(i64 left, i64 right) { return query(0, ln, rn, left, right); }
@@ -568,19 +564,19 @@ private:
     T& add(i32 p, i64 s, i64 e, i64 t, const T& v) {
         if(s == e) return tree[p] = tree[p] + v;
         if(t <= (s + e) / 2) {
-            if(l[p] == -1) l[p] = Size(tree), tree.eb(), l.eb(-1), r.eb(-1);
+            if(l[p] == -1) l[p] = next();
             return tree[p] = add(l[p], s, (s+e)/2, t, v) + (r[p] == -1 ? T() : tree[r[p]]);
         }
-        if(r[p] == -1) r[p] = Size(tree), tree.eb(), l.eb(-1), r.eb(-1);
+        if(r[p] == -1) r[p] = next();
         return tree[p] = (l[p] == -1 ? T() : tree[l[p]]) + add(r[p], (s+e)/2+1, e, t, v);
     }
     T& set(i32 p, i64 s, i64 e, i64 t, const T& v) {
         if(s == e) return tree[p] = v;
         if(t <= (s + e) / 2) {
-            if(l[p] == -1) l[p] = Size(tree), tree.eb(), l.eb(-1), r.eb(-1);
+            if(l[p] == -1) l[p] = next();
             return tree[p] = set(l[p], s, (s+e)/2, t, v) + (r[p] == -1 ? T() : tree[r[p]]);
         }
-        if(r[p] == -1) r[p] = Size(tree), tree.eb(), l.eb(-1), r.eb(-1);
+        if(r[p] == -1) r[p] = next();
         return tree[p] = (l[p] == -1 ? T() : tree[l[p]]) + set(r[p], (s+e)/2+1, e, t, v);
     }
     T query(i32 p, i64 s, i64 e, i64 ql, i64 qr) {
@@ -592,9 +588,7 @@ private:
 
 template <typename T = i64>
 class Dynamic2dSeg {
-    i64 lx, rx, ly, ry;
-    v<DynamicSeg<T>> tree;
-    vi l, r;
+    i64 lx, rx, ly, ry; v<DynamicSeg<T>> tree; vi l, r;
 public:
     Dynamic2dSeg(i64 lxi, i64 rxi, i64 lyi, i64 ryi) : lx(lxi), rx(rxi), ly(lyi), ry(ryi) { tree.eb(ly, ry); l.eb(-1); r.eb(-1); }
     void add(i64 tx, i64 ty, const T& val) { add(0, lx, rx, tx, ty, val); }
@@ -602,7 +596,7 @@ public:
     T query(i64 left_x, i64 right_x, i64 left_y, i64 right_y) { return query(0, lx, rx, left_x, right_x, left_y, right_y); }
 private:
     void add(i32 p, i64 sx, i64 ex, i64 tx, i64 ty, const T& val) {
-        tree[p].add(ty, val); if(sx == ex) return;
+        tree[p].add(ty, val); if(sx == ex) { return; }
         i64 mx = (sx + ex) / 2;
         if(tx <= mx) {
             if(l[p] == -1) l[p] = Size(tree), tree.eb(ly, ry), l.eb(-1), r.eb(-1);
@@ -972,6 +966,111 @@ public:
 
 #pragma endregion // Graph
 
+#pragma region string
+
+class AhoCorasick {
+    i32 charCnt; char offset;
+    v<vi> con; vi finish; vi fail; i64 av = 0; bool findAvailable = false;
+    i32 next() { con.eb(charCnt, -1); finish.eb(0); fail.eb(-1); return av++; }
+public:
+    explicit AhoCorasick(i32 size = 26, char startChar = 'a') : charCnt(size), offset(startChar) { next(); }
+    void insert(const str& s, i64 idx = 0, i64 p = 0) { // s[idx] == 만들어야 할 노드
+        assert(!findAvailable);
+        if(idx == Size(s)) { finish[p] = 1; return; }
+        i32 nxt = s[idx] - offset;
+        if(con[p][nxt] == -1)  con[p][nxt] = next();
+        insert(s, idx+1, con[p][nxt]);
+    }
+    void init() {
+        queue<i32> q; q.emplace(0);
+        fail[0] = 0;
+        while(!q.empty()) {
+            i32 cur = pop(q);
+            forn(i, charCnt) {
+                if(con[cur][i] == -1) continue;
+                i32 nxt = con[cur][i], x = fail[cur];
+                if(!cur) { fail[nxt] = 0; q.emplace(nxt); continue; }
+                while(x && con[x][i] == -1) x = fail[x];
+                if(con[x][i] != -1) x = con[x][i];
+                fail[nxt] = x;
+                finish[nxt] += finish[fail[nxt]];
+                q.emplace(nxt);
+            }
+        }
+        findAvailable = true;
+    }
+    i64 find(const str& s) {
+        if(!findAvailable) init();
+        i32 cur = 0; i64 ans = 0;
+        forn(i, Size(s)) {
+            i32 idx = s[i] - offset;
+            while(cur && con[cur][idx] == -1) cur = fail[cur];
+            if(con[cur][idx] != -1) cur = con[cur][idx];
+            ans += finish[cur];
+        }
+        return ans;
+    }
+};
+
+struct KMP {
+    i64 size; vl pi; str s;
+    explicit KMP(const str& s) : size(Size(s)), pi(Size(s), 0), s(s) {
+        for(i64 j=0, i=1; i<size; i++) {
+            while(j && s[i] != s[j]) j = pi[j-1];
+            if(s[i] == s[j]) pi[i] = ++j;
+        }
+    }
+    vl findAt(const str& t) {
+        vl ans; i64 n = Size(t);
+        for(i64 i=0, j=0; i<n; i++) {
+            while(j && t[i] != s[j]) j = pi[j-1];
+            if(t[i] == s[j]) {
+                if(j == size-1) ans.eb(i-size+1), j=pi[j];
+                else j++;
+            }
+        }
+        return ans;
+    }
+};
+
+struct StringHash {
+    /// hash : 1-based index
+    vl hash; i64 p, q; bool rev;
+    vl pc; bool upc;
+    /// hash[i+1] = (hash[i] * p + s[i+1] - offset) % mod
+    /// max(char - offset) < p < mod
+    /// rev => calculates from right
+    explicit StringHash(const str& s, i64 p = mod9, i64 mod = mod1, i64 offset = 0, bool usePowCache = true, bool rev = false)
+    : p(p), q(mod), rev(rev), upc(usePowCache) {
+        if(upc) {
+            pc.resize(Size(s)+3, 1);
+            forf(i, 1, Size(s)+2) pc[i] = pc[i-1] * p % q;
+        }
+        if(rev) {
+            hash.resize(Size(s)+2);
+            forr(i, Size(s), 1) { hash[i] = (hash[i+1] * p + s[i-1] - offset) % q; }
+            return;
+        }
+        hash.resize(1, 0); hash.reserve(Size(s)+2);
+        for(const char &c : s) hash.eb((hash.back() * p + c - offset) % q);
+        hash.eb(hash.back());
+    }
+    /// 0-based index
+    inline i64 operator()(i64 l, i64 r) const { l++; r++;
+        i64 pw = upc ? pc[r-l+1] : pow(p, r-l+1, q);
+        if(!rev) return (hash[r] - hash[l-1] * pw % q + q) % q;
+        return (hash[l] - hash[r+1] * pw % q + q) % q;
+    }
+};
+
+#pragma endregion
+
+#pragma region miscellaenous
+i64 moQuerySortVal = -1;
+struct moQuery { i64 i, j, order; bool operator<(const moQuery& b) const { lassert(moQuerySortVal != -1);
+        if(i/moQuerySortVal == b.i/moQuerySortVal) { return j < b.j; } return i/moQuerySortVal < b.i/moQuerySortVal; } };
+#pragma endregion // miscellaneous
+
 #endif // !CPP17_MODE && !CPP11_MODE
 #endif // ENABLE_MACRO
 #if IGNORE_UNUSED_MACRO_WARNING
@@ -983,30 +1082,5 @@ public:
 
 i32 main() {
     fastio;
-    in64(n, m, q);
-    vl cnt1; forf(i, 1, n) cnt1.eb(i);
-    forf(i, 1, n-1) cnt1[i] += cnt1[i-1];
-    vl book = inArr(n);
-    pst tr(1, m);
-    v<pst<i64>::root> psts(1, tr.begin());
-    for(ci64 i : book) {
-        psts.eb(psts.back().next().add(i, 1));
-    }
-    rep(q) {
-        in64(k);
-        i64 idx = lb(cnt1, k) - cnt1.begin() + 1;
-        if(idx > n) {
-            printfln()(-1, -1);
-            continue;
-        }
-        i64 ans2 = book[idx-1];
-        if(idx-1) k -= cnt1[idx-2];
-        auto iter = psts[idx].getIter();
-        while(iter.s != iter.e) {
-            auto l = iter.left();
-            if(*l >= k) iter = l;
-            else k -= *l, iter = iter.right();
-        }
-        printfln()(ans2, iter.s);
-    }
+    
 }
