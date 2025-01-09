@@ -11,8 +11,5 @@ add_executable(Baekjoon_findCounterExample_fce_main Baekjoon/findCounterExample/
 add_executable(ext ext.cpp)
 
 add_executable(test test.cpp)
-add_executable(.gitignored_Winter2025_01-07_countingstars .gitignored/Winter2025/01-07/countingstars.cpp)
-add_executable(.gitignored_Winter2025_01-07_2dsegtest .gitignored/Winter2025/01-07/2dsegtest.cpp)
-add_executable(.gitignored_Winter2025_01-07_switch .gitignored/Winter2025/01-07/switch.cpp)
-add_executable(.gitignored_Winter2025_01-08_prelude .gitignored/Winter2025/01-08/prelude.cpp)
-add_executable(.gitignored_Winter2025_01-08_tetris .gitignored/Winter2025/01-08/tetris.cpp)
+
+add_executable(Baekjoon_g3_14335_dp Baekjoon/3_gold/g3_14335_dp.cpp)

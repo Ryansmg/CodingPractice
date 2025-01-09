@@ -316,7 +316,6 @@ i64 qin_h_(ci64 idx, ci64 n) {
     if(++qin_c_ == qin_t_) qin_t_ = qin_c_ = 0;
     return qin_data_[idx];
 }
-i64 QIN_H_() { i64 t; cin >> t; return t; } // qin() support
 #define EXPAND_(x) x
 #define QIN_H1_(n) qin_h_(0, n)
 #define QIN_H2_(n) QIN_H1_(n), qin_h_(1, n)
@@ -363,5 +362,15 @@ template <typename T, typename T2, typename T3> T replace_if(const T& origin, co
 
 i32 main() {
     fastio;
-    printfln()(cast<i64>('z'), cast<i64>('Z'), cast<i64>('0'), cast<i64>('9'));
+    tcRep() {
+        str s = inStr();
+        i64 ans = 0;
+        vl last(124, 0);
+        for (char c: s) {
+            i64 cnt = ans + 1 - last[c];
+            ans += cnt;
+            last[c] += cnt;
+        }
+        println(ans+1);
+    }
 }

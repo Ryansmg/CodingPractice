@@ -1,16 +1,16 @@
 #pragma region macros
 //@formatter:off
 #define ENABLE_MACRO true
-#define ENABLE_O3 false
+#define ENABLE_OFAST false
 #define CPP11_MODE false
 #define CPP17_MODE false
 #define IGNORE_UNUSED_MACRO_WARNING true
 
 #pragma region start
+#include <bits/stdc++.h>
+#include <cassert> // biko 기준 stdc++에 없음;;
 
 #if !ENABLE_MACRO // basic macros
-#include <bits/stdc++.h>
-#include <cassert>
 #define fastio std::ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr)
 #define i32 signed
 using namespace std;
@@ -29,14 +29,10 @@ using namespace std;
 
 #if ENABLE_MACRO
 
-#if ENABLE_O3
-#pragma GCC optimize("O3,unroll-loops")
-#pragma GCC target("avx2,bmi,bmi2,lzcnt,popcnt")
+#if ENABLE_OFAST
+#pragma GCC optimize("Ofast")
+#pragma GCC optimize("unroll-loops")
 #endif
-
-#include <bits/stdc++.h>
-#include <cassert> // biko 기준 stdc++에 없음;;
-
 #pragma endregion // start
 
 #pragma region keyword_reassign
@@ -58,7 +54,7 @@ using std::max, std::min, std::gcd, std::lcm, std::pow, std::swap, std::abs, std
 using std::floor, std::ceil, std::round, std::sinh, std::cosh, std::tanh, std::atan2;
 using std::less, std::greater, std::less_equal, std::greater_equal, std::all_of, std::any_of, std::hash;
 using std::stoi, std::stol, std::stoll, std::stoul, std::stoull, std::stof, std::stod, std::stold;
-using std::sort, std::stable_sort, std::shuffle, std::uniform_int_distribution, std::mt19937, std::random_device, std::reverse;
+using std::sort, std::stable_sort, std::shuffle, std::uniform_int_distribution, std::mt19937, std::random_device;
 using std::iota, std::prev, std::next, std::prev_permutation, std::next_permutation;
 using std::complex, std::polar, std::is_integral_v, std::is_convertible_v, std::is_arithmetic_v, std::is_floating_point_v, std::to_string;
 #endif
@@ -94,14 +90,14 @@ template <typename Signature> using fun = std::function<Signature>;
 
 #pragma region consts
 constexpr i64
-        i64max = 9223372036854775807,
-        llmax  = 9223372036854775807,
-        INF    = 1000000000000000000,
-        inf    = 3000000000,
-        mod1   = 1000000007,
-        mod9   = 998244353;
+    i64max = 9223372036854775807,
+    llmax  = 9223372036854775807,
+    INF    = 1000000000000000000,
+    inf    = 3000000000,
+    mod1   = 1000000007,
+    mod9   = 998244353;
 constexpr f128
-        PI = 3.14159265358979323846;
+    PI = 3.14159265358979323846;
 const fun<void(i64, i64)> ll_nullFunc_ = [](ci64, ci64){};
 #pragma endregion consts
 
@@ -345,17 +341,30 @@ mac_conv_(i64, ll) mac_conv_(i32, i) mac_conv_(u64, ull) mac_conv_(f64, d) mac_c
 
 #pragma region miscellaneous
 template <typename T, typename T2, typename T3> T replace_if(const T& origin, const T2& cond, const T3& replacement)
-requires is_convertible_v<T2, T> && is_convertible_v<T3, T> {
+    requires is_convertible_v<T2, T> && is_convertible_v<T3, T> {
     return origin == cast<T>(cond) ? cast<T>(replacement) : origin;
 }
 #define rplif replace_if
 
+namespace PollardRho {
+    namespace itnl {
+        v<i128>base={2,3,5,7,11,13,17,19,23,29,31,37,41};mt19937 gen=mt19937(random_device()());uniform_int_distribution<i64>dis;
+        bool _isPrime(i128 n,i128 a){if(a%n==0){return true;}i128 d=n-1;while(true){i128 t=pow_(a,d,n);if(t==n-1){return true;}
+        if(d%2==1){return(t==1||t==n-1);}d/= 2;}}
+    }
+    bool isPrime(i128 n){if(n<=1)return false;for(const i128&a:itnl::base){if(!itnl::_isPrime(n, a))return false;}return true;}
+    i128 factorize(i128 n){lassert(n>=2);if(n%2==0){return 2;}if(isPrime(n)){return n;}i128 x=itnl::dis(itnl::gen)%(n-2)+2,y=x,
+        c=itnl::dis(itnl::gen)%10+1,g=1;while(g==1){x=(x*x%n+c)%n;y=(y*y%n+c)%n;y=(y*y%n+c)%n;g=gcd_(x-y>0?x-y:y-x,n);
+        if(g==n)return factorize(n);}if(isPrime(g)){return g;}else return factorize(g);}
+    vl getPrimes(i128 n) { vl r; while(n != 1) { i128 p = factorize(n); r.eb(p); n /= p; } return r; }
+}
+constexpr i32 dx4[] = {1, 0, -1, 0}, dy4[] = {0, 1, 0, -1};
 #pragma endregion // miscellaneous
 
-#endif // ENABLE_MACRO
-//@formatter:on
 #pragma endregion // macros
 
+#pragma region structs
+#if !CPP17_MODE && !CPP11_MODE
 
 #pragma region dataStructures
 
@@ -378,7 +387,7 @@ Tpl concept hasOperatorMinus = requires(const T& a, const T& b) { { a - b }; };
 /// requirements: operator+(T, T)
 template <typename T = i64>
 class Segtree {
-    vector<T> tree; i32 n;
+vector<T> tree; i32 n;
 public:
     explicit Segtree(ci32 treeSize) { tree = v<T>(4*treeSize, T()); n = treeSize; }
     explicit Segtree(const v<T> &a) { n = Size(a); tree = v<T>(4*n, T()); init(a, 1, 1, n); }
@@ -428,7 +437,8 @@ protected:
 };
 
 struct GoldMine {
-    i64 mx = -INF, lmx = - INF, rmx = -INF, sum = 0; GoldMine() = default;
+    i64 mx = -INF, lmx = - INF, rmx = -INF, sum = 0;
+    GoldMine() = default;
     GoldMine(i64 a, i64 la, i64 ra, i64 s) : mx(a), lmx(la), rmx(ra), sum(s) {}
     GoldMine(i64 v) : mx(v), lmx(v), rmx(v), sum(v) {} // NOLINT(*-explicit-constructor)
     GoldMine operator+(const GoldMine&b) const { return {max({mx,b.mx,rmx+b.lmx}),max(lmx,sum+b.lmx),max(rmx+b.sum,b.rmx),sum+b.sum};}
@@ -455,7 +465,7 @@ protected:
     void push(i32 node, i32 start, i32 end) {
         tree[node] = tree[node] + iter(node, start, end, tree[node], lazy[node], this);
         if(start!=end) { lazy[node<<1] = lazy[node<<1] + iter(node, start, end, tree[node], lazy[node], this);
-            lazy[node<<1|1] = lazy[node<<1|1] + iter(node, start, end, tree[node], lazy[node], this); }
+                         lazy[node<<1|1] = lazy[node<<1|1] + iter(node, start, end, tree[node], lazy[node], this); }
         lazy[node] = LazyType();
     }
 public:
@@ -499,7 +509,6 @@ public:
     struct Line { i64 a = 0, b = llmax; i64 operator[](ci64 x) const { return a*x+b; } };
     LiChaoTree(i64 l, i64 r, bool useMaxQuery = false) : left(l), right(r) { tr.eb(); if(useMaxQuery) mode = -1; }
     void update(const Line& line) { update({mode*line.a, mode*line.b}, 0, left, right); }
-    void update(ci64 a, ci64 b) { update({mode*a, mode*b}, 0, left, right); }
     i64 query(i64 x) const { return mode*query(x, 0, left, right); }
     i64 operator[](i64 x) const { return mode*query(x, 0, left, right); }
 private:
@@ -663,32 +672,12 @@ private:
     }
 };
 
-struct PrefixSum2d {
-    v2l data;
-    PrefixSum2d()=default;
-    explicit PrefixSum2d(const v2l& arr) {
-        i64 yn = Size(arr), xn = Size(arr[0]);
-        data.resize(yn, vl());
-        forn(i, yn) forn(j, xn) {
-                if(!j) data[i].eb(arr[i][j]);
-                else data[i].eb(data[i][j-1] + arr[i][j]);
-            }
-        forn(j, xn) forf(i, 1, yn-1) data[i][j] += data[i-1][j];
-    }
-    i64 operator()(i64 ly, i64 ry, i64 lx, i64 rx) {
-        i64 ret = data[ry][rx];
-        if(lx) ret -= data[ry][lx-1];
-        if(ly) ret -= data[ly-1][rx];
-        if(lx&&ly) ret += data[ly-1][lx-1];
-        return ret;
-    }
-};
-
 #pragma endregion // dataStructures
 
 #pragma region Graph
 
-struct SimpleEdge { i64 start, end; }; struct DistEdge { i64 start, end, dist; };
+struct SimpleEdge { i64 start, end; };
+struct DistEdge { i64 start, end, dist; };
 Tpl concept isEdge1_ = requires(const T& a) { a.s; a.e; }; Tpl concept isEdge2_ = requires(const T& a) { a.start; a.end; }; Tpl concept isEdge = isEdge1_<T> || isEdge2_<T>;
 
 /// node >= 0
@@ -873,9 +862,9 @@ public:
         fun<void(i64, i64)> dfs2_ = [&](i64 cur, i64 par) { // move undir -> child & parent
             for(const auto& e : this->child[cur]) if(ee_(e) != par) dfs2_(ee_(e), cur);
             for(const auto& e : this->undir[cur]) if(ee_(e) != par) {
-                    this->child[cur].eb(e); this->parent[ee_(e)].eb(e);
-                    dfs2_(ee_(e), cur);
-                }
+                this->child[cur].eb(e); this->parent[ee_(e)].eb(e);
+                dfs2_(ee_(e), cur);
+            }
         };
         dfs2_(rootNode, -1);
         this->undir.clear();
@@ -947,9 +936,9 @@ private:
             else sparsePar[v].eb(par(v)), sparseDist[v].eb(ed_(this->parent[v][0]));
         }
         forn(i, logH+1) forf(v, 0, this->nodeCnt-1) {
-                sparsePar[v].eb(sparsePar[sparsePar[v][i]][i]);
-                sparseDist[v].eb(sparseDist[v][i] + sparseDist[sparsePar[v][i]][i]);
-            }
+            sparsePar[v].eb(sparsePar[sparsePar[v][i]][i]);
+            sparseDist[v].eb(sparseDist[v][i] + sparseDist[sparsePar[v][i]][i]);
+        }
     }
 public:
     pair<i64, i64> sparseLca(i64 a, i64 b) { initSparse();
@@ -1010,7 +999,7 @@ public:
         }
         findAvailable = true;
     }
-    i64 findAt(const str& s) {
+    i64 find(const str& s) {
         if(!findAvailable) init();
         i32 cur = 0; i64 ans = 0;
         forn(i, Size(s)) {
@@ -1063,26 +1052,47 @@ struct StringHash {
 #pragma endregion
 
 #pragma region miscellaenous
-
 i64 moQuerySortVal = -1;
 struct moQuery { i64 i, j, order; bool operator<(const moQuery& b) const { lassert(moQuerySortVal != -1);
         if(i/moQuerySortVal == b.i/moQuerySortVal) { return j < b.j; } return i/moQuerySortVal < b.i/moQuerySortVal; } };
-
-namespace PollardRho {
-    namespace itnl {
-        v<i128>base={2,3,5,7,11,13,17,19,23,29,31,37,41};mt19937 gen=mt19937(random_device()());uniform_int_distribution<i64>dis;
-        bool _isPrime(i128 n,i128 a){if(a%n==0){return true;}i128 d=n-1;while(true){i128 t=pow_(a,d,n);if(t==n-1){return true;}
-                if(d%2==1){return(t==1||t==n-1);}d/= 2;}}
-    }
-    bool isPrime(i128 n){if(n<=1)return false;for(const i128&a:itnl::base){if(!itnl::_isPrime(n, a))return false;}return true;}
-    i128 factorize(i128 n){lassert(n>=2);if(n%2==0){return 2;}if(isPrime(n)){return n;}i128 x=itnl::dis(itnl::gen)%(n-2)+2,y=x,
-                c=itnl::dis(itnl::gen)%10+1,g=1;while(g==1){x=(x*x%n+c)%n;y=(y*y%n+c)%n;y=(y*y%n+c)%n;g=gcd_(x-y>0?x-y:y-x,n);
-            if(g==n)return factorize(n);}if(isPrime(g)){return g;}else return factorize(g);}
-    vl getPrimes(i128 n) { vl r; while(n != 1) { i128 p = factorize(n); r.eb(p); n /= p; } return r; }
-}
-using namespace PollardRho;
-
 #pragma endregion // miscellaneous
 
-
+#endif // !CPP17_MODE && !CPP11_MODE
+#endif // ENABLE_MACRO
+#if IGNORE_UNUSED_MACRO_WARNING
 #pragma clang diagnostic pop
+#endif
+//@formatter:on
+#pragma endregion // structs
+
+
+i32 main() {
+    fastio;
+    in64(n);
+    vl a = inArr(n);
+    vl rev(n+1, -1);
+    forn(i, n) rev[a[i]] = i;
+    pst<i64> tr(0, n);
+    v<pst<i64>::root> psts(1, tr.begin());
+    forf(i, 1, n) psts.eb(psts.back().next().add(rev[i], 1));
+    // 1 <= l <= r <= n; 1 <= k;
+    auto get_kth_idx = [&](i64 l, i64 r, i64 k) {
+        auto pptr = psts[r].getIter(), mptr = psts[l-1].getIter();
+        while(pptr.s != pptr.e) {
+            auto lpp = pptr.left(), lmp = mptr.left();
+            i64 lv = *lpp - *lmp;
+            if(lv >= k) pptr = lpp, mptr = lmp;
+            else k -= lv, pptr = pptr.right(), mptr = mptr.right();
+        }
+        return pptr.s;
+    };
+    i64 cnt = 0;
+    fun<void(i64, i64)> solve = [&](i64 l, i64 r) {
+        if(r - l + 1 <= 1) return;
+        cnt += r - l + 1;
+        i64 midv = a[get_kth_idx(l, r, (r-l)/2+1)];
+        solve(l, midv-1); solve(midv+1, r);
+    };
+    solve(1, n);
+    println(cnt);
+}

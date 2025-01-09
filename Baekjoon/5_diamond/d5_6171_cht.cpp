@@ -94,14 +94,14 @@ template <typename Signature> using fun = std::function<Signature>;
 
 #pragma region consts
 constexpr i64
-        i64max = 9223372036854775807,
-        llmax  = 9223372036854775807,
-        INF    = 1000000000000000000,
-        inf    = 3000000000,
-        mod1   = 1000000007,
-        mod9   = 998244353;
+    i64max = 9223372036854775807,
+    llmax  = 9223372036854775807,
+    INF    = 1000000000000000000,
+    inf    = 3000000000,
+    mod1   = 1000000007,
+    mod9   = 998244353;
 constexpr f128
-        PI = 3.14159265358979323846;
+    PI = 3.14159265358979323846;
 const fun<void(i64, i64)> ll_nullFunc_ = [](ci64, ci64){};
 #pragma endregion consts
 
@@ -345,17 +345,30 @@ mac_conv_(i64, ll) mac_conv_(i32, i) mac_conv_(u64, ull) mac_conv_(f64, d) mac_c
 
 #pragma region miscellaneous
 template <typename T, typename T2, typename T3> T replace_if(const T& origin, const T2& cond, const T3& replacement)
-requires is_convertible_v<T2, T> && is_convertible_v<T3, T> {
+    requires is_convertible_v<T2, T> && is_convertible_v<T3, T> {
     return origin == cast<T>(cond) ? cast<T>(replacement) : origin;
 }
 #define rplif replace_if
 
+namespace PollardRho {
+    namespace itnl {
+        v<i128>base={2,3,5,7,11,13,17,19,23,29,31,37,41};mt19937 gen=mt19937(random_device()());uniform_int_distribution<i64>dis;
+        bool _isPrime(i128 n,i128 a){if(a%n==0){return true;}i128 d=n-1;while(true){i128 t=pow_(a,d,n);if(t==n-1){return true;}
+        if(d%2==1){return(t==1||t==n-1);}d/= 2;}}
+    }
+    bool isPrime(i128 n){if(n<=1)return false;for(const i128&a:itnl::base){if(!itnl::_isPrime(n, a))return false;}return true;}
+    i128 factorize(i128 n){lassert(n>=2);if(n%2==0){return 2;}if(isPrime(n)){return n;}i128 x=itnl::dis(itnl::gen)%(n-2)+2,y=x,
+        c=itnl::dis(itnl::gen)%10+1,g=1;while(g==1){x=(x*x%n+c)%n;y=(y*y%n+c)%n;y=(y*y%n+c)%n;g=gcd_(x-y>0?x-y:y-x,n);
+        if(g==n)return factorize(n);}if(isPrime(g)){return g;}else return factorize(g);}
+    vl getPrimes(i128 n) { vl r; while(n != 1) { i128 p = factorize(n); r.eb(p); n /= p; } return r; }
+}
+constexpr i32 dx4[] = {1, 0, -1, 0}, dy4[] = {0, 1, 0, -1};
 #pragma endregion // miscellaneous
 
-#endif // ENABLE_MACRO
-//@formatter:on
 #pragma endregion // macros
 
+#pragma region structs
+#if !CPP17_MODE && !CPP11_MODE
 
 #pragma region dataStructures
 
@@ -378,7 +391,7 @@ Tpl concept hasOperatorMinus = requires(const T& a, const T& b) { { a - b }; };
 /// requirements: operator+(T, T)
 template <typename T = i64>
 class Segtree {
-    vector<T> tree; i32 n;
+vector<T> tree; i32 n;
 public:
     explicit Segtree(ci32 treeSize) { tree = v<T>(4*treeSize, T()); n = treeSize; }
     explicit Segtree(const v<T> &a) { n = Size(a); tree = v<T>(4*n, T()); init(a, 1, 1, n); }
@@ -455,7 +468,7 @@ protected:
     void push(i32 node, i32 start, i32 end) {
         tree[node] = tree[node] + iter(node, start, end, tree[node], lazy[node], this);
         if(start!=end) { lazy[node<<1] = lazy[node<<1] + iter(node, start, end, tree[node], lazy[node], this);
-            lazy[node<<1|1] = lazy[node<<1|1] + iter(node, start, end, tree[node], lazy[node], this); }
+                         lazy[node<<1|1] = lazy[node<<1|1] + iter(node, start, end, tree[node], lazy[node], this); }
         lazy[node] = LazyType();
     }
 public:
@@ -578,39 +591,6 @@ private:
 };
 
 template <typename T = i64>
-class Dynamic2dSeg {
-    i64 lx, rx, ly, ry; v<DynamicSeg<T>> tree; vi l, r;
-public:
-    Dynamic2dSeg(i64 lxi, i64 rxi, i64 lyi, i64 ryi) : lx(lxi), rx(rxi), ly(lyi), ry(ryi) { tree.eb(ly, ry); l.eb(-1); r.eb(-1); }
-    void add(i64 tx, i64 ty, const T& val) { add(0, lx, rx, tx, ty, val); }
-    void set(i64 tx, i64 ty, const T& val) { set(0, lx, rx, tx, ty, val); }
-    T query(i64 left_x, i64 right_x, i64 left_y, i64 right_y) { return query(0, lx, rx, left_x, right_x, left_y, right_y); }
-private:
-    void add(i32 p, i64 sx, i64 ex, i64 tx, i64 ty, const T& val) {
-        tree[p].add(ty, val); if(sx == ex) { return; }
-        i64 mx = (sx + ex) / 2;
-        if(tx <= mx) {
-            if(l[p] == -1) l[p] = Size(tree), tree.eb(ly, ry), l.eb(-1), r.eb(-1);
-            add(l[p], sx, mx, tx, ty, val);
-        } else {
-            if(r[p] == -1) r[p] = Size(tree), tree.eb(ly, ry), l.eb(-1), r.eb(-1);
-            add(r[p], mx+1, ex, tx, ty, val);
-        }
-    }
-    void set(i32 p, i64 sx, i64 ex, i64 tx, i64 ty, const T& val) {
-        tree[p].set(ty, val); if(sx == ex) { return; } i64 mx = (sx + ex) / 2;
-        if(tx <= mx) { if(l[p] == -1) l[p] = Size(tree), tree.eb(ly, ry), l.eb(-1), r.eb(-1);
-            set(l[p], sx, mx, tx, ty, val); } else { if(r[p] == -1) r[p] = Size(tree), tree.eb(ly, ry), l.eb(-1), r.eb(-1);
-            set(r[p], mx+1, ex, tx, ty, val); }
-    }
-    T query(i32 p, i64 sx, i64 ex, i64 qlx, i64 qrx, i64 qly, i64 qry) {
-        if(p == -1 || ex < qlx || qrx < sx) return T();
-        if(qlx <= sx && ex <= qrx) return tree[p].query(qly, qry);
-        return query(l[p], sx, (sx+ex)/2, qlx, qrx, qly, qry) + query(r[p], (sx+ex)/2+1, ex, qlx, qrx, qly, qry);
-    }
-};
-
-template <typename T = i64>
 class pst {
     v<T> tree; vi l, r; i64 ln, rn;
 public:
@@ -660,27 +640,6 @@ private:
     T query(i32 cur, i64 s, i64 e, i64 ql, i64 qr) {
         if(!cur || qr < s || e < ql) { return T(); } if(ql <= s && e <= qr) return tree[cur];
         return query(l[cur], s, (s+e)>>1, ql, qr) + query(r[cur], ((s+e)>>1)+1, e, ql, qr);
-    }
-};
-
-struct PrefixSum2d {
-    v2l data;
-    PrefixSum2d()=default;
-    explicit PrefixSum2d(const v2l& arr) {
-        i64 yn = Size(arr), xn = Size(arr[0]);
-        data.resize(yn, vl());
-        forn(i, yn) forn(j, xn) {
-                if(!j) data[i].eb(arr[i][j]);
-                else data[i].eb(data[i][j-1] + arr[i][j]);
-            }
-        forn(j, xn) forf(i, 1, yn-1) data[i][j] += data[i-1][j];
-    }
-    i64 operator()(i64 ly, i64 ry, i64 lx, i64 rx) {
-        i64 ret = data[ry][rx];
-        if(lx) ret -= data[ry][lx-1];
-        if(ly) ret -= data[ly-1][rx];
-        if(lx&&ly) ret += data[ly-1][lx-1];
-        return ret;
     }
 };
 
@@ -873,9 +832,9 @@ public:
         fun<void(i64, i64)> dfs2_ = [&](i64 cur, i64 par) { // move undir -> child & parent
             for(const auto& e : this->child[cur]) if(ee_(e) != par) dfs2_(ee_(e), cur);
             for(const auto& e : this->undir[cur]) if(ee_(e) != par) {
-                    this->child[cur].eb(e); this->parent[ee_(e)].eb(e);
-                    dfs2_(ee_(e), cur);
-                }
+                this->child[cur].eb(e); this->parent[ee_(e)].eb(e);
+                dfs2_(ee_(e), cur);
+            }
         };
         dfs2_(rootNode, -1);
         this->undir.clear();
@@ -947,9 +906,9 @@ private:
             else sparsePar[v].eb(par(v)), sparseDist[v].eb(ed_(this->parent[v][0]));
         }
         forn(i, logH+1) forf(v, 0, this->nodeCnt-1) {
-                sparsePar[v].eb(sparsePar[sparsePar[v][i]][i]);
-                sparseDist[v].eb(sparseDist[v][i] + sparseDist[sparsePar[v][i]][i]);
-            }
+            sparsePar[v].eb(sparsePar[sparsePar[v][i]][i]);
+            sparseDist[v].eb(sparseDist[v][i] + sparseDist[sparsePar[v][i]][i]);
+        }
     }
 public:
     pair<i64, i64> sparseLca(i64 a, i64 b) { initSparse();
@@ -1063,26 +1022,72 @@ struct StringHash {
 #pragma endregion
 
 #pragma region miscellaenous
-
 i64 moQuerySortVal = -1;
 struct moQuery { i64 i, j, order; bool operator<(const moQuery& b) const { lassert(moQuerySortVal != -1);
         if(i/moQuerySortVal == b.i/moQuerySortVal) { return j < b.j; } return i/moQuerySortVal < b.i/moQuerySortVal; } };
-
-namespace PollardRho {
-    namespace itnl {
-        v<i128>base={2,3,5,7,11,13,17,19,23,29,31,37,41};mt19937 gen=mt19937(random_device()());uniform_int_distribution<i64>dis;
-        bool _isPrime(i128 n,i128 a){if(a%n==0){return true;}i128 d=n-1;while(true){i128 t=pow_(a,d,n);if(t==n-1){return true;}
-                if(d%2==1){return(t==1||t==n-1);}d/= 2;}}
-    }
-    bool isPrime(i128 n){if(n<=1)return false;for(const i128&a:itnl::base){if(!itnl::_isPrime(n, a))return false;}return true;}
-    i128 factorize(i128 n){lassert(n>=2);if(n%2==0){return 2;}if(isPrime(n)){return n;}i128 x=itnl::dis(itnl::gen)%(n-2)+2,y=x,
-                c=itnl::dis(itnl::gen)%10+1,g=1;while(g==1){x=(x*x%n+c)%n;y=(y*y%n+c)%n;y=(y*y%n+c)%n;g=gcd_(x-y>0?x-y:y-x,n);
-            if(g==n)return factorize(n);}if(isPrime(g)){return g;}else return factorize(g);}
-    vl getPrimes(i128 n) { vl r; while(n != 1) { i128 p = factorize(n); r.eb(p); n /= p; } return r; }
-}
-using namespace PollardRho;
-
 #pragma endregion // miscellaneous
 
-
+#endif // !CPP17_MODE && !CPP11_MODE
+#endif // ENABLE_MACRO
+#if IGNORE_UNUSED_MACRO_WARNING
 #pragma clang diagnostic pop
+#endif
+//@formatter:on
+#pragma endregion // structs
+
+
+i32 main() {
+    fastio;
+    in64(n);
+    v<ii> arr; rep(n) arr.pb({qin(2)});
+    sort(arr);
+    v<ii> arr2;
+
+    // 완전히 겹치는 것 제거
+    i64 prvMaxH = -INF;
+    forr(i, n-1, 0) {
+        if(prvMaxH >= arr[i][1]) continue;
+        prvMaxH = max(prvMaxH, arr[i][1]);
+        arr2.eb(arr[i]);
+    }
+
+    LiChaoTree lct(1, 1000000);
+    i64 m = Size(arr2);
+    vl ans(m); ans[0] = arr2[0][0] * arr2[0][1];
+    lct.update(arr2[0][0], 0);
+    forf(i, 1, m-1) {
+        ans[i] = min(lct.query(arr2[i][1]), ans[i-1] + arr2[i][0]*arr2[i][1]);
+        lct.update(arr2[i][0], ans[i-1]);
+    }
+    println(ans.back());
+
+//    in64(n, q);
+//    vl fruit(1, -1); inArr(fruit, n);
+//    Graph g(n); rep(n-1) g.makeUEdge(qin(2));
+//    Tree t(1, g); g.clear();
+//    v<pst<i64>::root> psts(n+1);
+//    pst<i64> tr(1, n);
+//    psts[0] = tr.begin();
+//    fun<void(i64, i64)> initPst = [&](i64 cur, i64 par) {
+//        psts[cur] = psts[par].next().add(fruit[cur], 1);
+//        for(auto &[s, e] : t.child[cur]) initPst(e, s);
+//    };
+//    initPst(1, 0);
+//    rep(q) {
+//        in64(s, e);
+//        i64 lca = t.lca(s, e);
+//        auto p1 = psts[s].getIter(), p2 = psts[e].getIter(), m1 = psts[lca].getIter(), m2 = psts[0].getIter();
+//        if(lca != 1) m2 = psts[t.par(lca)].getIter();
+//        i64 all = *p1 + *p2 - *m1 - *m2;
+//        i64 ans = -1;
+//        while(p1.s != p1.e) {
+//            auto lp1 = p1.left(), lp2 = p2.left(), lm1 = m1.left(), lm2 = m2.left();
+//            i64 lv = *lp1 + *lp2 - *lm1 - *lm2, rv = *p1 + *p2 - *m1 - *m2 - lv;
+//            if(lv > all/2) p1 = lp1, p2 = lp2, m1 = lm1, m2 = lm2;
+//            else if(rv > all / 2) p1 = p1.right(), p2 = p2.right(), m1 = m1.right(), m2 = m2.right();
+//            else break;
+//        }
+//        if(p1.s == p1.e) ans = p1.s;
+//        println(ans);
+//    }
+}
