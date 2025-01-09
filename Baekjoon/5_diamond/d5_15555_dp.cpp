@@ -485,247 +485,6 @@ i64 operator+(ci64 a, const Lazyprop<i64, SumLazy, i64>::iter& b) { return a + (
 
 #define Dlp Lazyprop<tr, lz, i64>
 
-struct SimpleEdge { i64 start, end; }; struct DistEdge { i64 start, end, dist; };
-Tpl concept isEdge1_ = requires(const T& a) { a.s; a.e; }; Tpl concept isEdge2_ = requires(const T& a) { a.start; a.end; }; Tpl concept isEdge = isEdge1_<T> || isEdge2_<T>;
-
-/// node >= 0
-/// requirements : (EdgeType.s && EdgeType.e) || (EdgeType.start && EdgeType.end)
-/// detects : start/s, end/e, distance/dist/d
-template <isEdge EdgeType = SimpleEdge>
-class Graph {
-#define defGCFs_ static i64 es_(const EdgeType& edge) { if constexpr(isEdge1_<EdgeType>) { return edge.s; } return edge.start; }\
-                 static i64 ee_(const EdgeType& edge) { if constexpr(isEdge1_<EdgeType>) { return edge.e; } return edge.end; }\
-                 static i64 ed_(const EdgeType& edge) {\
-                     if constexpr(requires{edge.d;}) return edge.d;\
-                     if constexpr(requires{edge.dist;}) return edge.dist;\
-                     if constexpr(requires{edge.distance;}) return edge.distance;\
-                     return 1;\
-                 }
-    defGCFs_
-    static EdgeType revEdge_(EdgeType e) {
-        if constexpr(isEdge1_<EdgeType>) swap(e.s, e.e);
-        else if constexpr(isEdge2_<EdgeType>) swap(e.start, e.end);
-        return e;
-    }
-public:
-    i64 nodeCnt = 0; // (maxNodeNumber) + 1
-    v2<EdgeType> child, parent, undir;
-    /// disables all error check if true
-    /// increases performance
-    bool unsafe = false;
-
-    Graph() = default;
-    explicit Graph(ci64 maxNodeNum) { resize(maxNodeNum); }
-    /// reset
-    virtual void clear() { child.clear(); parent.clear(); undir.clear(); nodeCnt = 0; unsafe = false; }
-    void resize(ci64 maxNodeNum) {
-        if(!unsafe && nodeCnt >= maxNodeNum) { cerr << "Invalid resizing"; exit(1); }
-        nodeCnt = maxNodeNum + 1;
-        child.resize(nodeCnt, v<EdgeType>()); parent.resize(nodeCnt, v<EdgeType>()); undir.resize(nodeCnt, v<EdgeType>());
-    }
-    virtual void addUEdge(const EdgeType& edge) { undir[es_(edge)].eb(edge); undir[ee_(edge)].eb(revEdge_(edge)); }
-    template <typename... Args> void makeUEdge(Args&&... args) { EdgeType edge(std::forward<Args>(args)...);
-        undir[es_(edge)].eb(edge); undir[ee_(edge)].eb(revEdge_(edge)); }
-    virtual void addDEdge(const EdgeType& edge) { child[es_(edge)].eb(edge); parent[ee_(edge)].eb(edge); }
-    template <typename... Args> void makeDEdge(Args&&... args) { EdgeType edge(std::forward<Args>(args)...);
-        child[es_(edge)].eb(edge); parent[ee_(edge)].eb(edge); }
-
-    /// child와 undir에 대한 forEach문을 지원
-    class Connection {
-        Graph<EdgeType>* g; i64 n;
-    public:
-        explicit Connection(Graph<EdgeType>* gp, i64 node) : g(gp), n(node) { }
-        class Iter {
-            friend class Connection;
-            Graph<EdgeType>* g; v<EdgeType>::iterator cur; i64 n;
-            Iter(Graph<EdgeType>* gp, v<EdgeType>::iterator i, i64 N) : g(gp), cur(i), n(N) {}
-        public:
-            Iter& operator++() { ++cur; if(cur == g->child[n].end()) { cur = g->undir[n].begin(); } return *this; }
-            bool operator!=(const Iter& o) const { return cur != o.cur; }
-            EdgeType& operator*() { return *cur; }
-        };
-        Iter begin() { return Iter(g, g->child[n].begin(), n); }
-        Iter end() { return Iter(g, g->undir[n].end(), n); }
-    };
-    Connection getConnection(i64 node) { return Connection(this, node); }
-
-    /// Complexity : O(ElogV)
-    /// @returns {minDist, parent}
-    pair<vl, vl> dijkstra(i64 startNode) {
-        vl dist(nodeCnt, INF), par(nodeCnt, -1); pq<pair<i64, i64>, greater<>> q; q.emplace(0, startNode); dist[startNode] = 0;
-        while(!q.empty()) {
-            auto [d, cur] = pop(q); if(d > dist[cur]) continue;
-            for(const auto& i : getConnection(cur)) {
-                if(!unsafe && ed_(i) < 0) { cerr << "Negative distance is not allowed."; exit(1); }
-                i64 nxt = ee_(i), nxtCost = d + ed_(i);
-                if(nxtCost < dist[nxt]) { dist[nxt] = nxtCost; q.emplace(nxtCost, nxt); par[nxt] = cur; }
-            }
-        }
-        return {dist, par};
-    }
-    /// Complexity : O(N)
-    v<EdgeType> getConnectionArr(i64 node) { v<EdgeType> ret; for(const auto& e : child[node]) ret.eb(e); for(const auto& e : undir[node]) ret.eb(e); return ret; }
-    Graph& setUnsafe(bool _ = true) { unsafe = _; return *this; }
-};
-
-class UF {
-    bool useUnionFind = false; i64 n{};
-    vl groupNum, groupSize;
-    i64 uf_find(i64 tar) { if(groupNum[tar] == tar) return tar;
-        return groupNum[tar] = uf_find(groupNum[tar]); }
-    void uf_union(i64 a, i64 b) {
-        if(uf_find(a) == uf_find(b)) return;
-        if(groupSize[uf_find(a)] < groupSize[uf_find(b)]) swap(a, b);
-        groupSize[uf_find(a)] += groupSize[uf_find(b)]; groupSize[uf_find(b)] = 0; groupNum[uf_find(b)] = uf_find(a);
-    }
-    void uf_init() {
-        if(useUnionFind) { return; } useUnionFind = true;
-        groupNum.resize(n, -1); groupSize.resize(n, 0);
-        forn(i, n) groupNum[i] = i, groupSize[i] = 1;
-    }
-public:
-    void merge(ci64 a, ci64 b) { uf_init(); uf_union(a, b); }
-    explicit UF(i64 maxNodeNum) : n(maxNodeNum+1) { }
-    /// union-find ( 0 <= group < nodeCnt ), O(N) (calls uf_find for all nodes)
-    /// @return {[node] = group}
-    [[nodiscard]] vl getAllGroup() { uf_init(); forn(i, n) groupNum[i] = uf_find(i);
-        return groupNum; }
-    vl getAllGroupSize() { uf_init(); return groupSize; }
-    /// union-find ( 0 <= group < nodeCnt ), O(1) (O(N) at first uf call)
-    i64 group(i64 node) { uf_init(); return uf_find(node); }
-    /// union-find ( 0 <= group < nodeCnt ), O(1) (O(N) at first uf call)
-    i64 size(i64 group) { uf_init(); return groupSize[group]; }
-};
-
-template <typename EdgeType>
-class Tree : public Graph<EdgeType> { defGCFs_
-    bool usingHld = false;
-public:
-    i64 root = -1; vl sz, dep, top, in, out, inRev;
-    void clear() override {
-        Graph<EdgeType>::clear(); sz = dep = top = in = out = inRev = vl(); usingHld = false; root = 0;
-        logH = 0; usingSparse = false; sparsePar = sparseDist = v2l();
-    }
-    Tree() = default; // creates empty tree
-    Tree(ci64 rootNode, const Graph<EdgeType>& graph) : Graph<EdgeType>(graph), root(rootNode) {
-        if(!this->unsafe) { // check cycle
-            vb vis(this->nodeCnt, false);
-            bool hasCycle = false;
-            fun<void(i64, i64)> dfs_ = [&](i64 cur, i64 par) {
-                if(hasCycle) return;
-                if(vis[cur]) { hasCycle = true; return; }
-                vis[cur] = true;
-                for(const auto& e : this->child[cur]) if(ee_(e) != par) dfs_(ee_(e), cur);
-                for(const auto& e : this->undir[cur]) if(ee_(e) != par) dfs_(ee_(e), cur);
-            };
-            dfs_(rootNode, -1);
-            if(hasCycle) { cerr << "Cycle detected while constructing Tree"; exit(1); }
-        }
-        fun<void(i64, i64)> dfs2_ = [&](i64 cur, i64 par) { // move undir -> child & parent
-            for(const auto& e : this->child[cur]) if(ee_(e) != par) dfs2_(ee_(e), cur);
-            for(const auto& e : this->undir[cur]) if(ee_(e) != par) {
-                    this->child[cur].eb(e); this->parent[ee_(e)].eb(e);
-                    dfs2_(ee_(e), cur);
-                }
-        };
-        dfs2_(rootNode, -1);
-        this->undir.clear();
-    }
-
-    i64 par(i64 node) { if(!this->unsafe) assert(this->parent[node].size() == 1);
-        return es_(this->parent[node][0]); }
-
-    /// euler tour technique (range: [1, n])
-    /// saves results at in & out. new edges does not update the results.
-    /// Complexity : O(N)
-    pair<vl, vl> getInOut() {
-        in = vl(this->nodeCnt, -1), out = in; i64 cur = 0;
-        fun<void(i64)> f = [&](i64 p) { in[p] = ++cur;
-            for(const auto& e : this->child[p]) f(ee_(e));
-            out[p] = cur; };
-        f(root); return {in, out};
-    }
-
-    /// heavy_light decomposition
-    void initHld() {
-        sz = dep = top = in = out = inRev = vl(this->nodeCnt, 0); usingHld = true;
-        i64 pv = 0; top[this->root] = this->root;
-        // sz & dep & par, reconstruct
-        fun<void(i64)> dfs1 = [&](i64 v) {
-            sz[v] = 1;
-            for(auto &i : this->child[v]) {
-                i64 j = ee_(i); dep[j] = dep[v] + 1; dfs1(j); sz[v] += sz[j];
-                if(sz[j] > sz[ee_(this->child[v][0])]) swap(i, this->child[v][0]);
-            }
-        }; dfs1(this->root);
-        // in & out & top
-        fun<void(i64)> dfs2 = [&](i64 v) {
-            in[v] = ++pv;
-            for(const auto& i : this->child[v]) {
-                i64 j = ee_(i); top[j] = (j == ee_(this->child[v][0])) ? top[v] : j; dfs2(j); }
-            out[v] = pv;
-        }; dfs2(this->root);
-        forn(i, this->nodeCnt) inRev[in[i]] = i;
-    }
-
-    /// calls func(ettNum1, ettNum2) (ettNum1 <= ettNum2)
-    /// for decomposed chains for a ~ b
-    /// calls initHld() automatically if you didn't
-    /// @returns lca(a, b)
-    i64 hld(i64 a, i64 b, const fun<void(i64, i64)> &func) {
-        if(!usingHld) initHld();
-        while(top[a] != top[b]) {
-            if(dep[top[a]] < dep[top[b]]) swap(a, b);
-            i64 st = top[a]; func(in[st], in[a]); a = par(st);
-        }
-        if(dep[a] > dep[b]) swap(a, b);
-        func(in[a], in[b]);
-        return a;
-    }
-
-private:
-    i64 logH = 0; v2l sparsePar, sparseDist; bool usingSparse = false;
-    void initSparse() {
-        if(usingSparse) return;
-        usingSparse = true; sparsePar.resize(this->nodeCnt, vl()); sparseDist.resize(this->nodeCnt, vl());
-        dep = vl(this->nodeCnt, 0);
-        fun<void(i64)> dfs = [&](i64 v) {
-            logH = max(logH, cast<i64>(log2(dep[v]+1)));
-            for(auto &i : this->child[v]) { i64 j = ee_(i); dep[j] = dep[v] + 1; dfs(j); }
-        }; dfs(this->root);
-        forf(v, 0, this->nodeCnt-1) {
-            if(this->parent[v].empty()) sparsePar[v].eb(v), sparseDist[v].pb(0);
-            else sparsePar[v].eb(par(v)), sparseDist[v].eb(ed_(this->parent[v][0]));
-        }
-        forn(i, logH+1) forf(v, 0, this->nodeCnt-1) {
-                sparsePar[v].eb(sparsePar[sparsePar[v][i]][i]);
-                sparseDist[v].eb(sparseDist[v][i] + sparseDist[sparsePar[v][i]][i]);
-            }
-    }
-public:
-    pair<i64, i64> sparseLca(i64 a, i64 b) { initSparse();
-        if(dep[a] > dep[b]) swap(a, b);
-        i64 depDiff = dep[b] - dep[a], dist = 0;
-        for(i64 i = logH; depDiff && i >= 0; i--)
-            if(depDiff & (1<<i)) dist += sparseDist[b][i], b = sparsePar[b][i], depDiff ^= (1<<i);
-        for(i64 i = logH; i >= 0; i--)
-            if(sparsePar[a][i] != sparsePar[b][i])
-                dist += sparseDist[a][i] + sparseDist[b][i], a = sparsePar[a][i], b = sparsePar[b][i];
-        if(a == b) return {a, dist};
-        return {sparsePar[a][0], dist + sparseDist[a][0] + sparseDist[b][0]};
-    }
-
-    /// if hld is made => returns lca using hld
-    /// else => makes sparse tree
-    i64 lca(ci64 a, ci64 b) {
-        if(usingHld) return hld(a, b, ll_nullFunc_);
-        return sparseLca(a, b).first;
-    }
-
-    /// uses sparse table
-    i64 dist(ci64 a, ci64 b) { return sparseLca(a, b).second; }
-};
-
 
 #endif // ENABLE_MACRO
 #if IGNORE_UNUSED_MACRO_WARNING
@@ -737,5 +496,25 @@ public:
 
 i32 main() {
     fastio;
-
+    in64(n, m);
+    v<str> arr;
+    rep(n) arr.eb(inStr());
+    i64 ans = 0;
+    forn(d, n + m) {
+        i64 prey = 0, prex = 0;
+        for(i64 y = d, x = 0; 0 <= y && x < m; y--, x++) {
+            if(y >= n) continue;
+            if(arr[y][x] != 'G') {
+                prey = max(prey, prex), prex = max(prey, prex);
+                continue;
+            }
+            bool down = y && arr[y-1][x] == 'R' && y+1 < n && arr[y+1][x] == 'W';
+            bool right = x && arr[y][x-1] == 'R' && x+1 < m && arr[y][x+1] == 'W';
+            i64 tprey = max(prex, prey + down), tprex = max(prex + right, prey);
+            prey = tprey; prex = tprex;
+        }
+        lprintvar(prey, prex);
+        ans += max(prey, prex);
+    }
+    println(ans);
 }

@@ -94,14 +94,14 @@ template <typename Signature> using fun = std::function<Signature>;
 
 #pragma region consts
 constexpr i64
-        i64max = 9223372036854775807,
-        llmax  = 9223372036854775807,
-        INF    = 1000000000000000000,
-        inf    = 3000000000,
-        mod1   = 1000000007,
-        mod9   = 998244353;
+    i64max = 9223372036854775807,
+    llmax  = 9223372036854775807,
+    INF    = 1000000000000000000,
+    inf    = 3000000000,
+    mod1   = 1000000007,
+    mod9   = 998244353;
 constexpr f128
-        PI = 3.14159265358979323846;
+    PI = 3.14159265358979323846;
 const fun<void(i64, i64)> ll_nullFunc_ = [](ci64, ci64){};
 #pragma endregion consts
 
@@ -316,6 +316,7 @@ i64 qin_h_(ci64 idx, ci64 n) {
     if(++qin_c_ == qin_t_) qin_t_ = qin_c_ = 0;
     return qin_data_[idx];
 }
+i64 QIN_H_() { i64 t; cin >> t; return t; } // qin() support
 #define EXPAND_(x) x
 #define QIN_H1_(n) qin_h_(0, n)
 #define QIN_H2_(n) QIN_H1_(n), qin_h_(1, n)
@@ -345,232 +346,144 @@ mac_conv_(i64, ll) mac_conv_(i32, i) mac_conv_(u64, ull) mac_conv_(f64, d) mac_c
 
 #pragma region miscellaneous
 template <typename T, typename T2, typename T3> T replace_if(const T& origin, const T2& cond, const T3& replacement)
-requires is_convertible_v<T2, T> && is_convertible_v<T3, T> {
+    requires is_convertible_v<T2, T> && is_convertible_v<T3, T> {
     return origin == cast<T>(cond) ? cast<T>(replacement) : origin;
 }
 #define rplif replace_if
 
 #pragma endregion // miscellaneous
 
-#endif // ENABLE_MACRO
-#pragma endregion // macros
+#pragma endregion
 
+#pragma region structs
 
-#pragma region dataStructures
-
-struct GoldMine {
-    i64 mx = -INF, lmx = - INF, rmx = -INF, sum = 0; GoldMine() = default;
-    GoldMine(i64 a, i64 la, i64 ra, i64 s) : mx(a), lmx(la), rmx(ra), sum(s) {}
-    GoldMine(i64 v) : mx(v), lmx(v), rmx(v), sum(v) {} // NOLINT(*-explicit-constructor)
-    GoldMine operator+(const GoldMine&b) const { return {max({mx,b.mx,rmx+b.lmx}),max(lmx,sum+b.lmx),max(rmx+b.sum,b.rmx),sum+b.sum};}
-};
-
-class LiChaoTree {
-public:
-    struct Line { i64 a = 0, b = llmax; i64 operator[](ci64 x) const { return a*x+b; } };
-    LiChaoTree(i64 l, i64 r, bool useMaxQuery = false) : left(l), right(r) { tr.eb(); if(useMaxQuery) mode = -1; }
-    void update(const Line& line) { update({mode*line.a, mode*line.b}, 0, left, right); }
-    void update(ci64 a, ci64 b) { update({mode*a, mode*b}, 0, left, right); }
-    void updateAt(ci64 l, ci64 r, const Line& line) { updateAt(l, r, 0, left, right, {mode*line.a, mode*line.b}); }
-    i64 query(i64 x) const { return mode*query(x, 0, left, right); }
-    i64 operator[](i64 x) const { return mode*query(x, 0, left, right); }
-private:
-    struct Node { i32 l = -1, r = -1; Line line = Line(); };
-    v<Node> tr; i64 left, right; i64 mode = 1;
-    void updateAt(i64 l, i64 r, i64 p, i64 s, i64 e, const Line& line) {
-        if(r < s || e < l) return;
-        if(l <= s && e <= r) { update(line, p, s, e); return; }
-        if(tr[p].l == -1) tr[p].l = Size(tr), tr.eb();
-        if(tr[p].r == -1) tr[p].r = Size(tr), tr.eb();
-        updateAt(l, r, tr[p].l, s, (s+e)/2, line);
-        updateAt(l, r, tr[p].r, (s+e)/2+1, e, line);
-    }
-    void update(const Line& line, i64 p, i64 s, i64 e) {
-        i64 m = (s + e) >> 1; Line low = tr[p].line, high = line;
-        if(low[s] > high[s]) swap(low, high);
-        if(low[e] <= high[e]) { tr[p].line = low; return; }
-        if(low[m] < high[m]) {
-            tr[p].line = low;
-            if(tr[p].r == -1) tr[p].r = Size(tr), tr.eb();
-            update(high, tr[p].r, m+1, e);
-        } else {
-            tr[p].line = high;
-            if(tr[p].l == -1) tr[p].l = Size(tr), tr.eb();
-            update(low, tr[p].l, s, m);
-        }
-    }
-    i64 query(i64 x, i64 p, i64 s, i64 e) const {
-        if(p == -1) { return llmax; } i64 m = (s + e) >> 1;
-        if(x <= m) return min(tr[p].line[x], query(x, tr[p].l, s, m));
-        return min(tr[p].line[x], query(x, tr[p].r, m+1, e));
-    }
-};
-
-struct Fenwick {
-    vl tree; i32 n;
-    explicit Fenwick(i32 treeSize) { n = treeSize; tree = vl(treeSize+10, 0); }
-    void update(i64 tar, ci64 val) { assert(tar>0); for(; tar<=n; tar+=tar&-tar) tree[tar] += val; }
-    /// [l, r]
-    i64 query(i32 left, i32 right) { assert(0<left && left<=right); return query(right) - query(left-1); }
-    /// [1, tar]
-    i64 query(i32 tar) { i64 ans = 0; for(; tar; tar-=(tar&-tar)) ans += tree[tar]; return ans; }
-};
-
-struct Fenwick2d {
-    v2l tree; i32 xn, yn;
-    explicit Fenwick2d(i32 xlen, i32 ylen) : xn(xlen), yn(ylen) { tree.resize(xlen+10, vl(ylen+10, 0)); }
-    void update(i32 x, i32 y, i64 v){ for(; x<=xn; x+=x&-x) for(i32 yy=y; yy<=yn; yy+=yy&-yy) tree[x][yy] += v; }
-    i64 query(i32 x, i32 y){ i64 ret = 0; for(; x; x-=x&-x) for(i32 yy=y; yy; yy-=yy&-yy) ret += tree[x][yy];
-        return ret; }
-    i64 query(i32 x1, i32 y1, i32 x2, i32 y2) { return query(x2, y2) - query(x2, y1-1) - query(x1-1, y2) + query(x1-1, y1-1); }
-};
-
+/// requirements: (T + T), add -> (T += i64), set -> (T = i64)
 template <typename T = i64>
-class DynamicSeg {
-    v<T> tree; i64 ln, rn; vi l, r;
-    i32 next() { tree.eb(); l.eb(-1); r.eb(-1); return Size(tree)-1; }
-public:
-    explicit DynamicSeg(i64 li, i64 ri) : ln(li), rn(ri) { next(); }
-    void add(i64 tar, const T& val) { add(0, ln, rn, tar, val); }
-    void set(i64 tar, const T& val) { set(0, ln, rn, tar, val); }
-    T query(i64 left, i64 right) { return query(0, ln, rn, left, right); }
-private:
-    T& add(i32 p, i64 s, i64 e, i64 t, const T& v) {
-        if(s == e) return tree[p] = tree[p] + v;
-        if(t <= (s + e) / 2) {
-            if(l[p] == -1) l[p] = next();
-            return tree[p] = add(l[p], s, (s+e)/2, t, v) + (r[p] == -1 ? T() : tree[r[p]]);
-        }
-        if(r[p] == -1) r[p] = next();
-        return tree[p] = (l[p] == -1 ? T() : tree[l[p]]) + add(r[p], (s+e)/2+1, e, t, v);
-    }
-    T& set(i32 p, i64 s, i64 e, i64 t, const T& v) {
-        if(s == e) return tree[p] = v;
-        if(t <= (s + e) / 2) {
-            if(l[p] == -1) l[p] = next();
-            return tree[p] = set(l[p], s, (s+e)/2, t, v) + (r[p] == -1 ? T() : tree[r[p]]);
-        }
-        if(r[p] == -1) r[p] = next();
-        return tree[p] = (l[p] == -1 ? T() : tree[l[p]]) + set(r[p], (s+e)/2+1, e, t, v);
-    }
-    T query(i32 p, i64 s, i64 e, i64 ql, i64 qr) {
-        if(p == -1 || qr < s || e < ql) return T();
-        if(ql <= s && e <= qr) return tree[p];
-        return query(l[p], s, (s+e)/2, ql, qr) + query(r[p], (s+e)/2+1, e, ql, qr);
-    }
+struct iterSeg {
+    v<T> tree; i32 n=-1;
+    explicit iterSeg(const v<T> &arr) { n = Size(arr); tree = v<T>(2*n+10, T());
+        for(i32 i=n, j=0; i<2*n; i++, j++) tree[i] = arr[j];
+        for(i32 i=n-1; i>0; i--) tree[i] = tree[i<<1] + tree[i<<1|1];  }
+    explicit iterSeg(ci32 i) { tree = v<T>(i*2+10, T()); n = i; }
+    void add(i32 tar, i64 val) { tar--; tree[n+tar]+=val; for(i32 i=n+tar; i>1; i>>=1) tree[i>>1]=tree[i]+tree[i^1]; }
+    void set(i32 tar, i64 val) { tar--; tree[n+tar]=val; for(i32 i=n+tar; i>1; i>>=1) tree[i>>1]=tree[i]+tree[i^1]; }
+    T query(i32 left, i32 right) { left--; i64 l = n+left, r = n+right; T ans = T();
+        for(; l<r; l>>=1, r>>=1) { if(l&1) { ans = ans + tree[l++]; } if(r&1) { ans = ans + tree[--r]; } } return ans; }
 };
 
-template <typename T = i64>
-class Dynamic2dSeg {
-    i64 lx, rx, ly, ry; v<DynamicSeg<T>> tree; vi l, r;
-public:
-    Dynamic2dSeg(i64 lxi, i64 rxi, i64 lyi, i64 ryi) : lx(lxi), rx(rxi), ly(lyi), ry(ryi) { tree.eb(ly, ry); l.eb(-1); r.eb(-1); }
-    void add(i64 tx, i64 ty, const T& val) { add(0, lx, rx, tx, ty, val); }
-    void set(i64 tx, i64 ty, const T& val) { set(0, lx, rx, tx, ty, val); }
-    T query(i64 left_x, i64 right_x, i64 left_y, i64 right_y) { return query(0, lx, rx, left_x, right_x, left_y, right_y); }
-private:
-    void add(i32 p, i64 sx, i64 ex, i64 tx, i64 ty, const T& val) {
-        tree[p].add(ty, val); if(sx == ex) { return; }
-        i64 mx = (sx + ex) / 2;
-        if(tx <= mx) {
-            if(l[p] == -1) l[p] = Size(tree), tree.eb(ly, ry), l.eb(-1), r.eb(-1);
-            add(l[p], sx, mx, tx, ty, val);
-        } else {
-            if(r[p] == -1) r[p] = Size(tree), tree.eb(ly, ry), l.eb(-1), r.eb(-1);
-            add(r[p], mx+1, ex, tx, ty, val);
-        }
-    }
-    void set(i32 p, i64 sx, i64 ex, i64 tx, i64 ty, const T& val) {
-        tree[p].set(ty, val); if(sx == ex) { return; } i64 mx = (sx + ex) / 2;
-        if(tx <= mx) { if(l[p] == -1) l[p] = Size(tree), tree.eb(ly, ry), l.eb(-1), r.eb(-1);
-            set(l[p], sx, mx, tx, ty, val); } else { if(r[p] == -1) r[p] = Size(tree), tree.eb(ly, ry), l.eb(-1), r.eb(-1);
-            set(r[p], mx+1, ex, tx, ty, val); }
-    }
-    T query(i32 p, i64 sx, i64 ex, i64 qlx, i64 qrx, i64 qly, i64 qry) {
-        if(p == -1 || ex < qlx || qrx < sx) return T();
-        if(qlx <= sx && ex <= qrx) return tree[p].query(qly, qry);
-        return query(l[p], sx, (sx+ex)/2, qlx, qrx, qly, qry) + query(r[p], (sx+ex)/2+1, ex, qlx, qrx, qly, qry);
-    }
-};
+Tpl concept hasOperatorMinus = requires(const T& a, const T& b) { { a - b }; };
 
+/// requirements: operator+(T, T)
 template <typename T = i64>
-class pst {
-    v<T> tree; vi l, r; i64 ln, rn;
+class Segtree {
+    vector<T> tree; i32 n;
 public:
-    pst(i64 leftBound, i64 rightBound) : ln(leftBound), rn(rightBound) { rep(2) tree.eb(), l.eb(0), r.eb(0); }
-    // index = [1..n]
-    explicit pst(const v<T>& arr) : ln(1), rn(Size(arr)) { tree.reserve(4*rn); rep(2) tree.eb(), l.eb(0), r.eb(0);
-        init(1, ln, rn, arr); }
+    explicit Segtree(ci32 treeSize) { tree = v<T>(4*treeSize, T()); n = treeSize; }
+    explicit Segtree(const v<T> &a) { n = Size(a); tree = v<T>(4*n, T()); init(a, 1, 1, n); }
+    void set(ci32 tar, const T& val) { set(1, tar, 1, n, val); }
+    void update(ci32 tar, const T& diff) { update(1, tar, 1, n, diff); }
+    T query(ci32 left, ci32 right) { return query(1, left, right, 1, n); }
+    T query(ci32 tar) { return query(tar, tar); }
     struct iter {
-        pst* ptr = nullptr; i32 pos = 0; i64 s = INF, e = -INF;
-        T operator*() { return ptr->tree[pos]; } bool null() { return !pos; }
-        iter left() { return {ptr, ptr->l[pos], s, (s+e)/2}; } iter right() { return {ptr, ptr->r[pos], (s+e)/2+1, e}; }
+        i32 node, start, end; T value; Segtree<T>* segPtr;
+        bool leaf() const { return start == end; }
+        iter left() const { return iter(node<<1, start, (start+end)>>1, segPtr->tree[node<<1], segPtr); }
+        iter right() const { return iter(node<<1|1, ((start+end)>>1)+1, end, segPtr->tree[node<<1|1], segPtr); }
     };
-    struct root {
-        i32 pos = 0, prvPos = 0; pst* ptr = nullptr;
-        root next() {
-            root ret; ret.pos = Size(ptr->tree); ret.prvPos = pos; ret.ptr = ptr;
-            ptr->tree.eb(ptr->tree[pos]); ptr->l.eb(ptr->l[pos]); ptr->r.eb(ptr->r[pos]);
-            return ret;
-        }
-        iter getIter() { return {ptr, pos, ptr->ln, ptr->rn}; }
-        /// @returns self
-        root& add(i64 tar, const T& diff) { ptr->update(prvPos, pos, ptr->ln, ptr->rn, tar, diff, true); return *this; }
-        /// @returns self
-        root& set(i64 tar, const T& val) { ptr->update(prvPos, pos, ptr->ln, ptr->rn, tar, val, false); return *this; }
-        T query(i64 left, i64 right) { return ptr->query(pos, ptr->ln, ptr->rn, left, right); }
-    };
-    friend root; friend iter; root begin() { return { 1, 0, this }; }
-private:
-    T& init(i32 cur, i64 s, i64 e, const v<T>& arr) {
-        if(s == e) return tree[cur] = arr[s-1];
-        l[cur] = Size(tree); r[cur] = Size(tree)+1; rep(2) tree.eb(), l.eb(0), r.eb(0);
-        return tree[cur] = init(l[cur], s, (s+e)>>1, arr) + init(r[cur], ((s+e)>>1)+1, e, arr);
-    }
-    void update(i32 prv, i32 cur, i64 s, i64 e, i64 t, const T& d, bool isAdd) {
-        if(s == e) { if(isAdd) { tree[cur] = tree[cur] + d; } else { tree[cur] = d; } return; } i64 m = (s + e) >> 1;
-        if(t <= m) {
-            if(!l[cur] || l[cur] == l[prv]) l[cur] = Size(tree), tree.eb(tree[l[prv]]), l.eb(0), r.eb(0);
-            if(!r[cur]) r[cur] = r[prv];
-            update(l[prv], l[cur], s, m, t, d, isAdd);
-        } else {
-            if(!l[cur]) l[cur] = l[prv];
-            if(!r[cur] || r[cur] == r[prv]) r[cur] = Size(tree), tree.eb(tree[r[prv]]), l.eb(0), r.eb(0);
-            update(r[prv], r[cur], m + 1, e, t, d, isAdd);
-        }
-        tree[cur] = tree[l[cur]] + tree[r[cur]];
-    }
-    T query(i32 cur, i64 s, i64 e, i64 ql, i64 qr) {
-        if(!cur || qr < s || e < ql) { return T(); } if(ql <= s && e <= qr) return tree[cur];
-        return query(l[cur], s, (s+e)>>1, ql, qr) + query(r[cur], ((s+e)>>1)+1, e, ql, qr);
-    }
-};
-using pstIter = pst<i64>::iter; using pstRoot = pst<i64>::root;
+    iter root() { return iter(1, 1, n, tree[1], this); }
+    // ret[i] == query(i+1)
+    v<T> getLeafs() { v<T> ret(n);
+        fun<void(i64, i64, i64)> f = [&](i64 p, i64 s, i64 e) {
+            if(s == e) ret[s-1] = tree[p];
+            else f(p<<1, s, (s+e)>>1), f(p<<1|1, ((s+e)>>1)|1, e); };
+        f(1, 1, n); return ret; }
 
-struct PrefixSum2d {
-    v2l data;
-    PrefixSum2d()=default;
-    explicit PrefixSum2d(const v2l& arr) {
-        i64 yn = Size(arr), xn = Size(arr[0]);
-        data.resize(yn, vl());
-        forn(i, yn) forn(j, xn) {
-            if(!j) data[i].eb(arr[i][j]);
-            else data[i].eb(data[i][j-1] + arr[i][j]);
-        }
-        forn(j, xn) forf(i, 1, yn-1) data[i][j] += data[i-1][j];
+    /// [1..i] 범위 합이 val 이하인 최대의 i를 리턴
+    iter strcc_(bi,nSearch)(T val) requires hasOperatorMinus<T> {
+        iter cur = root();
+        while(!cur.leaf()) { iter l = cur.left();
+            if(val <= l.value) cur = l;
+            else val = val - l.value, cur = cur.right(); }
+        return cur;
     }
-    i64 operator()(i64 ly, i64 ry, i64 lx, i64 rx) {
-        i64 ret = data[ry][rx];
-        if(lx) ret -= data[ry][lx-1];
-        if(ly) ret -= data[ly-1][rx];
-        if(lx&&ly) ret += data[ly-1][lx-1];
-        return ret;
+protected:
+    T& init(const v<T> &a, ci32 node, ci32 start, ci32 end) {
+        if(start==end) return tree[node] = a[start-1];
+        else return tree[node] = init(a, node<<1, start, (start+end)>>1) + init(a, node<<1|1, ((start+end)>>1)+1, end);
+    }
+    T& update(ci32 node, ci32 tar, ci32 start, ci32 end, const T& diff) { if(end < tar || tar < start) return tree[node];
+        if(start == end) return tree[node] = tree[node] + diff;
+        return tree[node] = update(node<<1, tar, start, (start+end)>>1, diff) + update(node<<1|1, tar, ((start+end)>>1)+1, end, diff);
+    }
+    T& set(ci32 node, ci32 tar, ci32 start, ci32 end, const T& val) { if(end < tar || tar < start) return tree[node];
+        if(start == end) return tree[node] = val;
+        return tree[node] = set(node<<1, tar, start, (start+end)>>1, val) + set(node<<1|1, tar, ((start+end)>>1)+1, end, val);
+    }
+    T query(ci32 node, ci32 left, ci32 right, ci32 start, ci32 end) { if(right < start || end < left) return T();
+        if(left <= start && end <= right) return tree[node];
+        return query(node<<1, left, right, start, (start+end)>>1) + query(node<<1|1, left, right, ((start+end)>>1)+1, end);
     }
 };
 
-#pragma endregion // dataStructures
+struct SumLazy;
 
-#pragma region Graph
+/// requirements: (TreeType + TreeType), (LazyType + UpdateType), (TreeType + LazyIter&&), (LazyType + LazyIter&&)
+/// <br> usage: node merge, node update, lazy update, lazy update
+template <typename TreeType = i64, typename LazyType = SumLazy, typename UpdateType = i64>
+class Lazyprop {
+public:
+    /// tree & lazy are copied values, should not be modified
+    struct iter {
+        i32 node, start, end; TreeType tree; LazyType lazy; Lazyprop* segPtr;
+        iter left() { segPtr->push(node<<1, start, (start+end)>>1);
+            return iter(node<<1, start, (start+end)>>1, segPtr->tree[node<<1], segPtr->lazy[node<<1], segPtr); }
+        iter right() { segPtr->push(node<<1|1, ((start+end)>>1)+1, end);
+            return iter(node<<1|1, ((start+end)>>1)+1, end, segPtr->tree[node<<1|1], segPtr->lazy[node<<1|1], segPtr); }
+        bool leaf() { return start == end; }
+    };
+protected:
+    v<TreeType> tree; v<LazyType> lazy; i32 n=-1;
+    void push(i32 node, i32 start, i32 end) {
+        tree[node] = tree[node] + iter(node, start, end, tree[node], lazy[node], this);
+        if(start!=end) { lazy[node<<1] = lazy[node<<1] + iter(node, start, end, tree[node], lazy[node], this);
+            lazy[node<<1|1] = lazy[node<<1|1] + iter(node, start, end, tree[node], lazy[node], this); }
+        lazy[node] = LazyType();
+    }
+public:
+    explicit Lazyprop(i32 treeSize) { tree = v<TreeType>(4*treeSize, TreeType()); lazy = v<LazyType>(4*treeSize, LazyType()); n = treeSize; }
+    explicit Lazyprop(const v<TreeType> &a) : Lazyprop((i32) a.size()) { init(a, 1, 1, n); }
+    void update(i32 left, i32 right, UpdateType diff) { update(1, left, right, 1, n, diff); }
+    TreeType query(i32 left, i32 right) { return query(1, left, right, 1, n); }
+    TreeType query(i32 tar) { return query(tar, tar); }
+    iter root() { push(1, 1, n); return iter(1, 1, n, tree[1], lazy[1], this); }
+    // ret[i] == query(i+1)
+    v<TreeType> getLeafs() { v<TreeType> ret(n);
+        fun<void(i64, i64, i64)> f = [&](i64 p, i64 s, i64 e) { push(p, s, e);
+            if(s == e) ret[s-1] = tree[p];
+            else f(p<<1, s, (s+e)>>1), f(p<<1|1, ((s+e)>>1)+1, e); };
+        f(1, 1, n); return ret; }
+protected:
+    TreeType& init(const v<TreeType> &a, i32 node, i32 start, i32 end) {
+        if(start==end) return tree[node] = a[start-1];
+        else return tree[node] = init(a, node<<1, start, (start+end)>>1) + init(a, node<<1|1, ((start+end)>>1)+1, end);
+    }
+    TreeType& update(i32 node, i32 left, i32 right, i32 start, i32 end, UpdateType diff) {
+        push(node, start, end); if(end < left || right < start) return tree[node];
+        if(left <= start && end <= right) { lazy[node] = lazy[node] + diff; push(node, start, end); return tree[node]; }
+        return tree[node] = update(node<<1, left, right, start, (start+end)>>1, diff) + update(node<<1|1, left, right, ((start+end)>>1)+1, end, diff);
+    }
+    TreeType query(i32 node, i32 left, i32 right, i32 start, i32 end) {
+        push(node, start, end); if(right < start || end < left) return TreeType();
+        if(left <= start && end <= right) return tree[node];
+        return query(node<<1, left, right, start, (start+end)>>1) + query(node<<1|1, left, right, ((start+end)>>1)+1, end);
+    }
+};
+
+struct SumLazy { i64 v = 0; SumLazy operator+(ci64 i) const { return SumLazy(v+i); }
+    SumLazy operator+(const Lazyprop<i64, SumLazy, i64>::iter& i) const { return SumLazy(v+i.lazy.v); } };
+i64 operator+(ci64 a, const Lazyprop<i64, SumLazy, i64>::iter& b) { return a + (b.end - b.start + 1) * b.lazy.v; }
+
+#define Dlp Lazyprop<tr, lz, i64>
 
 struct SimpleEdge { i64 start, end; }; struct DistEdge { i64 start, end, dist; };
 Tpl concept isEdge1_ = requires(const T& a) { a.s; a.e; }; Tpl concept isEdge2_ = requires(const T& a) { a.start; a.end; }; Tpl concept isEdge = isEdge1_<T> || isEdge2_<T>;
@@ -653,52 +566,6 @@ public:
     /// Complexity : O(N)
     v<EdgeType> getConnectionArr(i64 node) { v<EdgeType> ret; for(const auto& e : child[node]) ret.eb(e); for(const auto& e : undir[node]) ret.eb(e); return ret; }
     Graph& setUnsafe(bool _ = true) { unsafe = _; return *this; }
-};
-
-template <typename EdgeType = SimpleEdge>
-class UGraph : public Graph<EdgeType> { defGCFs_
-    bool useUnionFind = false; vl groupNum, groupSize;
-    i64 uf_find(i64 tar) { if(groupNum[tar] == tar) return tar;
-        return groupNum[tar] = uf_find(groupNum[tar]); }
-    void uf_union(i64 a, i64 b) {
-        if(uf_find(a) == uf_find(b)) return;
-        if(groupSize[uf_find(a)] < groupSize[uf_find(b)]) swap(a, b);
-        groupSize[uf_find(a)] += groupSize[uf_find(b)]; groupSize[uf_find(b)] = 0; groupNum[uf_find(b)] = uf_find(a);
-    }
-    void uf_init() {
-        if(useUnionFind) { return; } useUnionFind = true;
-        vb vis(this->nodeCnt, false); groupNum.resize(this->nodeCnt, -1); groupSize.resize(this->nodeCnt, 0);
-        forn(i, this->nodeCnt) groupNum[i] = i;
-        forn(i, this->nodeCnt) {
-            if(vis[i]) { continue; } queue<i64> bfs; bfs.emplace(i); vis[i] = true; groupSize[i]++;
-            while(!bfs.empty()) {
-                i64 cur = pop(bfs);
-                for(const auto& e : this->undir[cur]) {
-                    i64 dest = ee_(e); if(vis[dest]) continue;
-                    vis[dest] = true; groupNum[dest] = i; groupSize[i]++; bfs.emplace(dest);
-                } } } }
-public:
-    void clear() { Graph<EdgeType>::clear(); useUnionFind = false; groupNum = groupSize = vl(); }
-    void addEdge(const EdgeType& edge) { Graph<EdgeType>::addUEdge(edge); if(useUnionFind) uf_union(es_(edge), ee_(edge)); }
-    template <typename... Args> void makeEdge(Args&&... args) { EdgeType edge(std::forward<Args>(args)...);
-        Graph<EdgeType>::addUEdge(edge); if(useUnionFind) uf_union(es_(edge), ee_(edge)); }
-    UGraph() = default;
-    explicit UGraph(i64 maxNodeNum) : Graph<EdgeType>(maxNodeNum) { this->child = this->parent = v2<EdgeType>(); }
-    explicit UGraph(const Graph<EdgeType>& g) : Graph<EdgeType>(g) { if(this->unsafe) return;
-        for(const auto& arr : this->child) if(Size(arr)) { cerr << "Not a valid UGraph."; exit(1); }
-        this->child = this->parent = v2<EdgeType>(); }
-    void resize(i64 maxNodeNum) { if(!this->unsafe && this->nodeCnt >= maxNodeNum) { cerr << "Invalid resizing"; exit(1); }
-        i64 preNodeCnt = this->nodeCnt; this->nodeCnt = maxNodeNum + 1; this->undir.resize(this->nodeCnt, v<EdgeType>());
-        if(useUnionFind) forf(i, preNodeCnt, maxNodeNum) { groupNum.eb(i); groupSize.eb(1); } }
-    /// union-find ( 0 <= group < nodeCnt ), O(N) (calls uf_find for all nodes)
-    /// @return {[node] = group}
-    [[nodiscard]] vl getAllGroup() { uf_init(); forn(i, this->nodeCnt) groupNum[i] = uf_find(i);
-        return groupNum; }
-    vl getAllGroupSize() { uf_init(); return groupSize; }
-    /// union-find ( 0 <= group < nodeCnt ), O(1) (O(N) at first uf call)
-    i64 getGroup(i64 node) { uf_init(); return uf_find(node); }
-    /// union-find ( 0 <= group < nodeCnt ), O(1) (O(N) at first uf call)
-    i64 getGroupSize(i64 group) { uf_init(); return groupSize[group]; }
 };
 
 class UF {
@@ -859,114 +726,75 @@ public:
     i64 dist(ci64 a, ci64 b) { return sparseLca(a, b).second; }
 };
 
-#pragma endregion // Graph
 
-#pragma region string
-
-class AhoCorasick {
-    i32 charCnt; char offset;
-    v<vi> con; vi finish; vi fail; i64 av = 0; bool findAvailable = false;
-    i32 next() { con.eb(charCnt, -1); finish.eb(0); fail.eb(-1); return av++; }
-public:
-    explicit AhoCorasick(i32 size = 26, char startChar = 'a') : charCnt(size), offset(startChar) { next(); }
-    void insert(const str& s, i64 idx = 0, i64 p = 0) { // s[idx] == 만들어야 할 노드
-        assert(!findAvailable);
-        if(idx == Size(s)) { finish[p] = 1; return; }
-        i32 nxt = s[idx] - offset;
-        if(con[p][nxt] == -1)  con[p][nxt] = next();
-        insert(s, idx+1, con[p][nxt]);
-    }
-    void init() {
-        queue<i32> q; q.emplace(0);
-        fail[0] = 0;
-        while(!q.empty()) {
-            i32 cur = pop(q);
-            forn(i, charCnt) {
-                if(con[cur][i] == -1) continue;
-                i32 nxt = con[cur][i], x = fail[cur];
-                if(!cur) { fail[nxt] = 0; q.emplace(nxt); continue; }
-                while(x && con[x][i] == -1) x = fail[x];
-                if(con[x][i] != -1) x = con[x][i];
-                fail[nxt] = x;
-                finish[nxt] += finish[fail[nxt]];
-                q.emplace(nxt);
-            }
-        }
-        findAvailable = true;
-    }
-    i64 findAt(const str& s) {
-        if(!findAvailable) init();
-        i32 cur = 0; i64 ans = 0;
-        forn(i, Size(s)) {
-            i32 idx = s[i] - offset;
-            while(cur && con[cur][idx] == -1) cur = fail[cur];
-            if(con[cur][idx] != -1) cur = con[cur][idx];
-            ans += finish[cur];
-        }
-        return ans;
-    }
-};
-
-struct KMP {
-    i64 size; vl pi; str s;
-    explicit KMP(const str& s) : size(Size(s)), pi(Size(s), 0), s(s) {
-        for(i64 j=0, i=1; i<size; i++) {
-            while(j && s[i] != s[j]) j = pi[j-1];
-            if(s[i] == s[j]) pi[i] = ++j;
-        }
-    }
-    vl findAt(const str& t) {
-        vl ans; i64 n = Size(t);
-        for(i64 i=0, j=0; i<n; i++) {
-            while(j && t[i] != s[j]) j = pi[j-1];
-            if(t[i] == s[j]) {
-                if(j == size-1) ans.eb(i-size+1), j=pi[j];
-                else j++;
-            }
-        }
-        return ans;
-    }
-};
-
-struct StringHash {
-    vl hash, pc; i64 p, q;
-    explicit StringHash(const str& s, i64 p = mod9, i64 mod = mod1, i64 offset = 0) : p(p), q(mod) {
-        pc.reserve(Size(s)+2); pc.resize(1, 1);
-        hash.reserve(Size(s)+2); hash.resize(1, 0);
-        for(const char &c : s) {
-            hash.eb((hash.back() * p + c - offset) % q);
-            pc.eb(pc.back() * p % q);
-        }
-    }
-    /// 0-based index
-    inline i64 operator()(ci64 l, ci64 r) const {
-        return (hash[r+1] - hash[l] * pc[r-l+1] % q + q) % q;
-    }
-};
-
-#pragma endregion
-
-#pragma region miscellaenous
-
-i64 moQuerySortVal = -1;
-struct moQuery { i64 i, j, order; bool operator<(const moQuery& b) const { lassert(moQuerySortVal != -1);
-        if(i/moQuerySortVal == b.i/moQuerySortVal) { return j < b.j; } return i/moQuerySortVal < b.i/moQuerySortVal; } };
-
-namespace PollardRho {
-    namespace itnl {
-        v<i128>base={2,3,5,7,11,13,17,19,23,29,31,37,41};mt19937 gen=mt19937(random_device()());uniform_int_distribution<i64>dis;
-        bool _isPrime(i128 n,i128 a){if(a%n==0){return true;}i128 d=n-1;while(true){i128 t=pow_(a,d,n);if(t==n-1){return true;}
-                if(d%2==1){return(t==1||t==n-1);}d/= 2;}}
-    }
-    bool isPrime(i128 n){if(n<=1)return false;for(const i128&a:itnl::base){if(!itnl::_isPrime(n, a))return false;}return true;}
-    i128 factorize(i128 n){lassert(n>=2);if(n%2==0){return 2;}if(isPrime(n)){return n;}i128 x=itnl::dis(itnl::gen)%(n-2)+2,y=x,
-                c=itnl::dis(itnl::gen)%10+1,g=1;while(g==1){x=(x*x%n+c)%n;y=(y*y%n+c)%n;y=(y*y%n+c)%n;g=gcd_(x-y>0?x-y:y-x,n);
-            if(g==n)return factorize(n);}if(isPrime(g)){return g;}else return factorize(g);}
-    vl getPrimes(i128 n) { vl r; while(n != 1) { i128 p = factorize(n); r.eb(p); n /= p; } return r; }
-}
-using namespace PollardRho;
-
-#pragma endregion // miscellaneous
-
-
+#endif // ENABLE_MACRO
+#if IGNORE_UNUSED_MACRO_WARNING
 #pragma clang diagnostic pop
+#endif
+//@formatter:on
+#pragma endregion // macros
+
+class LiChaoTree {
+public:
+    struct Line { i64 a = 0, b = llmax; i64 operator[](ci64 x) const { return a*x+b; } };
+    LiChaoTree(i64 l, i64 r, bool useMaxQuery = false) : left(l), right(r) { tr.eb(); if(useMaxQuery) mode = -1; }
+    void update(const Line& line) { update({mode*line.a, mode*line.b}, 0, left, right); }
+    void update(ci64 a, ci64 b) { update({mode*a, mode*b}, 0, left, right); }
+    void updateAt(ci64 l, ci64 r, const Line& line) { updateAt(l, r, 0, left, right, {mode*line.a, mode*line.b}); }
+    i64 query(i64 x) const { return mode*query(x, 0, left, right); }
+    i64 operator[](i64 x) const { return mode*query(x, 0, left, right); }
+private:
+    struct Node { i32 l = -1, r = -1; Line line = Line(); };
+    v<Node> tr; i64 left, right; i64 mode = 1;
+    void updateAt(i64 l, i64 r, i64 p, i64 s, i64 e, const Line& line) {
+        if(r < s || e < l) return;
+        if(l <= s && e <= r) { update(line, p, s, e); return; }
+        if(tr[p].l == -1) tr[p].l = Size(tr), tr.eb();
+        if(tr[p].r == -1) tr[p].r = Size(tr), tr.eb();
+        updateAt(l, r, tr[p].l, s, (s+e)/2, line);
+        updateAt(l, r, tr[p].r, (s+e)/2+1, e, line);
+    }
+    void update(const Line& line, i64 p, i64 s, i64 e) {
+        i64 m = (s + e) >> 1; Line low = tr[p].line, high = line;
+        if(low[s] > high[s]) swap(low, high);
+        if(low[e] <= high[e]) { tr[p].line = low; return; }
+        if(low[m] < high[m]) {
+            tr[p].line = low;
+            if(tr[p].r == -1) tr[p].r = Size(tr), tr.eb();
+            update(high, tr[p].r, m+1, e);
+        } else {
+            tr[p].line = high;
+            if(tr[p].l == -1) tr[p].l = Size(tr), tr.eb();
+            update(low, tr[p].l, s, m);
+        }
+    }
+    i64 query(i64 x, i64 p, i64 s, i64 e) const {
+        if(p == -1) { return llmax; } i64 m = (s + e) >> 1;
+        if(x <= m) return min(tr[p].line[x], query(x, tr[p].l, s, m));
+        return min(tr[p].line[x], query(x, tr[p].r, m+1, e));
+    }
+};
+
+// 대충 i일째에 산 식재료의 신선도 = n + Fi
+// i일째에 필요한 신선도 = Li + i
+// i일째에 (Fj+j=F)로 만든 요리의 맛 = (F-i) * Ci
+// k일에 요리를 한다 == max(dp[j] + Fj * Ci - iCi)
+
+// i일에 산 음식으로 j일에 요리를 한다 == max((Fi + i)Cj - jCj + dp[j+1]) (i<=j, Lj+j <= Fi+i)
+
+i32 main() {
+    fastio;
+    in64(n);
+    vl dp(n+2, -INF), f(n+1), c(n+1), l(n+1);
+    dp[n+1] = 0;
+    forf(i, 1, n) input(f[i]);
+    forf(i, 1, n) input(c[i]);
+    forf(i, 1, n) input(l[i]);
+    LiChaoTree lct(0, 300010, true);
+    forr(i, n, 1) {
+        if(dp[i+1] != -INF) lct.updateAt(l[i]+i, 300010, {c[i], -i*c[i] + dp[i+1]});
+        dp[i] = max(lct.query(f[i]+i), -INF);
+    }
+    if(dp[1] == -INF) println("Impossible");
+    else println(dp[1]);
+}
