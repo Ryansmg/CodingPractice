@@ -12,4 +12,8 @@ add_executable(ext ext.cpp)
 
 add_executable(test test.cpp)
 
-add_executable(Baekjoon_g3_14335_dp Baekjoon/3_gold/g3_14335_dp.cpp)
+
+add_executable(.gitignored_Winter2025_01-10_kong .gitignored/Winter2025/01-10/kong.cpp)
+add_executable(.gitignored_Winter2025_01-10_element .gitignored/Winter2025/01-10/element.cpp)
+add_executable(.gitignored_Winter2025_01-10_twolist .gitignored/Winter2025/01-10/twolist.cpp)
+add_executable(.gitignored_Winter2025_01-10_moon .gitignored/Winter2025/01-10/moon.cpp)
