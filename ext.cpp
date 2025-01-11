@@ -358,6 +358,137 @@ requires is_convertible_v<T2, T> && is_convertible_v<T3, T> {
 
 #pragma region dataStructures
 
+/// requirements: (T + T), add -> (T += i64), set -> (T = i64)
+template <typename T = i64>
+struct iterSeg {
+    v<T> tree; i32 n=-1;
+    explicit iterSeg(const v<T> &arr) { n = Size(arr); tree = v<T>(2*n+10, T());
+        for(i32 i=n, j=0; i<2*n; i++, j++) tree[i] = arr[j];
+        for(i32 i=n-1; i>0; i--) tree[i] = tree[i<<1] + tree[i<<1|1];  }
+    explicit iterSeg(ci32 i) { tree = v<T>(i*2+10, T()); n = i; }
+    void add(i32 tar, i64 val) { tar--; tree[n+tar]+=val; for(i32 i=n+tar; i>1; i>>=1) tree[i>>1]=tree[i]+tree[i^1]; }
+    void set(i32 tar, i64 val) { tar--; tree[n+tar]=val; for(i32 i=n+tar; i>1; i>>=1) tree[i>>1]=tree[i]+tree[i^1]; }
+    T query(i32 left, i32 right) { left--; i64 l = n+left, r = n+right; T ans = T();
+        for(; l<r; l>>=1, r>>=1) { if(l&1) { ans = ans + tree[l++]; } if(r&1) { ans = ans + tree[--r]; } } return ans; }
+};
+
+Tpl concept hasOperatorMinus = requires(const T& a, const T& b) { { a - b }; };
+
+/// requirements: operator+(T, T)
+template <typename T = i64>
+class Segtree {
+    vector<T> tree; i32 n;
+public:
+    Segtree() : n(0) {}
+    explicit Segtree(ci32 treeSize) { tree = v<T>(4*treeSize, T()); n = treeSize; }
+    explicit Segtree(const v<T> &a) { n = Size(a); tree = v<T>(4*n, T()); init(a, 1, 1, n); }
+    void set(ci32 tar, const T& val) { set(1, tar, 1, n, val); }
+    void update(ci32 tar, const T& diff) { update(1, tar, 1, n, diff); }
+    T query(ci32 left, ci32 right) { if(left > right) { return T(); } return query(1, left, right, 1, n); }
+    T query(ci32 tar) { return query(tar, tar); }
+    struct iter {
+        i32 node, start, end; T value; Segtree<T>* segPtr;
+        bool leaf() const { return start == end; }
+        iter left() const { return iter(node<<1, start, (start+end)>>1, segPtr->tree[node<<1], segPtr); }
+        iter right() const { return iter(node<<1|1, ((start+end)>>1)+1, end, segPtr->tree[node<<1|1], segPtr); }
+    };
+    iter root() { return iter(1, 1, n, tree[1], this); }
+    // ret[i] == query(i+1)
+    v<T> getLeafs() { v<T> ret(n);
+        fun<void(i64, i64, i64)> f = [&](i64 p, i64 s, i64 e) {
+            if(s == e) ret[s-1] = tree[p];
+            else f(p<<1, s, (s+e)>>1), f(p<<1|1, ((s+e)>>1)|1, e); };
+        f(1, 1, n); return ret; }
+
+    /// [1..i] 범위 합이 val 이하인 최대의 i를 리턴
+    iter strcc_(bi,nSearch)(T val) requires hasOperatorMinus<T> {
+        iter cur = root();
+        while(!cur.leaf()) { iter l = cur.left();
+            if(val <= l.value) cur = l;
+            else val = val - l.value, cur = cur.right(); }
+        return cur;
+    }
+protected:
+    T& init(const v<T> &a, ci32 node, ci32 start, ci32 end) {
+        if(start==end) return tree[node] = a[start-1];
+        else return tree[node] = init(a, node<<1, start, (start+end)>>1) + init(a, node<<1|1, ((start+end)>>1)+1, end);
+    }
+    T& update(ci32 node, ci32 tar, ci32 start, ci32 end, const T& diff) { if(end < tar || tar < start) return tree[node];
+        if(start == end) return tree[node] = tree[node] + diff;
+        return tree[node] = update(node<<1, tar, start, (start+end)>>1, diff) + update(node<<1|1, tar, ((start+end)>>1)+1, end, diff);
+    }
+    T& set(ci32 node, ci32 tar, ci32 start, ci32 end, const T& val) { if(end < tar || tar < start) return tree[node];
+        if(start == end) return tree[node] = val;
+        return tree[node] = set(node<<1, tar, start, (start+end)>>1, val) + set(node<<1|1, tar, ((start+end)>>1)+1, end, val);
+    }
+    T query(ci32 node, ci32 left, ci32 right, ci32 start, ci32 end) { if(right < start || end < left) return T();
+        if(left <= start && end <= right) return tree[node];
+        return query(node<<1, left, right, start, (start+end)>>1) + query(node<<1|1, left, right, ((start+end)>>1)+1, end);
+    }
+};
+
+
+struct SumLazy;
+
+/// requirements: (TreeType + TreeType), (LazyType + UpdateType), (TreeType + LazyIter&&), (LazyType + LazyIter&&)
+/// <br> usage: node merge, node update, lazy update, lazy update
+template <typename TreeType = i64, typename LazyType = SumLazy, typename UpdateType = i64>
+class Lazyprop {
+public:
+    /// tree & lazy are copied values, should not be modified
+    struct iter {
+        i32 node, start, end; TreeType tree; LazyType lazy; Lazyprop* segPtr;
+        iter left() { segPtr->push(node<<1, start, (start+end)>>1);
+            return iter(node<<1, start, (start+end)>>1, segPtr->tree[node<<1], segPtr->lazy[node<<1], segPtr); }
+        iter right() { segPtr->push(node<<1|1, ((start+end)>>1)+1, end);
+            return iter(node<<1|1, ((start+end)>>1)+1, end, segPtr->tree[node<<1|1], segPtr->lazy[node<<1|1], segPtr); }
+        bool leaf() { return start == end; }
+    };
+protected:
+    v<TreeType> tree; v<LazyType> lazy; i32 n=-1;
+    void push(i32 node, i32 start, i32 end) {
+        tree[node] = tree[node] + iter(node, start, end, tree[node], lazy[node], this);
+        if(start!=end) { lazy[node<<1] = lazy[node<<1] + iter(node, start, end, tree[node], lazy[node], this);
+            lazy[node<<1|1] = lazy[node<<1|1] + iter(node, start, end, tree[node], lazy[node], this); }
+        lazy[node] = LazyType();
+    }
+public:
+    explicit Lazyprop(i32 treeSize) { tree = v<TreeType>(4*treeSize, TreeType()); lazy = v<LazyType>(4*treeSize, LazyType()); n = treeSize; }
+    explicit Lazyprop(const v<TreeType> &a) : Lazyprop((i32) a.size()) { init(a, 1, 1, n); }
+    void update(i32 left, i32 right, UpdateType diff) { if(left > right) { return; } update(1, left, right, 1, n, diff); }
+    TreeType query(i32 left, i32 right) { if(left > right) { return TreeType(); } return query(1, left, right, 1, n); }
+    TreeType query(i32 tar) { return query(tar, tar); }
+    iter root() { push(1, 1, n); return iter(1, 1, n, tree[1], lazy[1], this); }
+    // ret[i] == query(i+1)
+    v<TreeType> getLeafs() { v<TreeType> ret(n);
+        fun<void(i64, i64, i64)> f = [&](i64 p, i64 s, i64 e) { push(p, s, e);
+            if(s == e) ret[s-1] = tree[p];
+            else f(p<<1, s, (s+e)>>1), f(p<<1|1, ((s+e)>>1)+1, e); };
+        f(1, 1, n); return ret; }
+protected:
+    TreeType& init(const v<TreeType> &a, i32 node, i32 start, i32 end) {
+        if(start==end) return tree[node] = a[start-1];
+        else return tree[node] = init(a, node<<1, start, (start+end)>>1) + init(a, node<<1|1, ((start+end)>>1)+1, end);
+    }
+    TreeType& update(i32 node, i32 left, i32 right, i32 start, i32 end, UpdateType diff) {
+        push(node, start, end); if(end < left || right < start) return tree[node];
+        if(left <= start && end <= right) { lazy[node] = lazy[node] + diff; push(node, start, end); return tree[node]; }
+        return tree[node] = update(node<<1, left, right, start, (start+end)>>1, diff) + update(node<<1|1, left, right, ((start+end)>>1)+1, end, diff);
+    }
+    TreeType query(i32 node, i32 left, i32 right, i32 start, i32 end) {
+        push(node, start, end); if(right < start || end < left) return TreeType();
+        if(left <= start && end <= right) return tree[node];
+        return query(node<<1, left, right, start, (start+end)>>1) + query(node<<1|1, left, right, ((start+end)>>1)+1, end);
+    }
+};
+
+struct SumLazy { i64 v = 0; SumLazy operator+(ci64 i) const { return SumLazy(v+i); }
+    SumLazy operator+(const Lazyprop<i64, SumLazy, i64>::iter& i) const { return SumLazy(v+i.lazy.v); } };
+i64 operator+(ci64 a, const Lazyprop<i64, SumLazy, i64>::iter& b) { return a + (b.end - b.start + 1) * b.lazy.v; }
+
+#define Dlp Lazyprop<tr, lz, i64>
+
+
 struct GoldMine {
     i64 mx = -INF, lmx = - INF, rmx = -INF, sum = 0; GoldMine() = default;
     GoldMine(i64 a, i64 la, i64 ra, i64 s) : mx(a), lmx(la), rmx(ra), sum(s) {}
@@ -368,6 +499,7 @@ struct GoldMine {
 class LiChaoTree {
 public:
     struct Line { i64 a = 0, b = llmax; i64 operator[](ci64 x) const { return a*x+b; } };
+    LiChaoTree() : left(0), right(0) {}
     LiChaoTree(i64 l, i64 r, bool useMaxQuery = false) : left(l), right(r) { tr.eb(); if(useMaxQuery) mode = -1; }
     void update(const Line& line) { update({mode*line.a, mode*line.b}, 0, left, right); }
     void update(ci64 a, ci64 b) { update({mode*a, mode*b}, 0, left, right); }
@@ -406,12 +538,13 @@ private:
     }
 };
 
+/// 1-based index
 struct Fenwick {
     vl tree; i32 n;
     explicit Fenwick(i32 treeSize) { n = treeSize; tree = vl(treeSize+10, 0); }
-    void update(i64 tar, ci64 val) { assert(tar>0); for(; tar<=n; tar+=tar&-tar) tree[tar] += val; }
+    void update(i64 tar, ci64 val) { if(tar <= 0) { return; } for(; tar<=n; tar+=tar&-tar) tree[tar] += val; }
     /// [l, r]
-    i64 query(i32 left, i32 right) { assert(0<left && left<=right); return query(right) - query(left-1); }
+    i64 query(i32 left, i32 right) { if(left > right) { return 0; } left = max(left, 1LL); return query(right) - query(left-1); }
     /// [1, tar]
     i64 query(i32 tar) { i64 ans = 0; for(; tar; tar-=(tar&-tar)) ans += tree[tar]; return ans; }
 };
@@ -492,6 +625,66 @@ private:
         return query(l[p], sx, (sx+ex)/2, qlx, qrx, qly, qry) + query(r[p], (sx+ex)/2+1, ex, qlx, qrx, qly, qry);
     }
 };
+
+
+struct SpSumLazy;
+
+/// requirements: (TreeType + TreeType), (LazyType + UpdateType), (TreeType + LazyIter&&), (LazyType + LazyIter&&)
+/// <br> usage: node merge, node update, lazy update, lazy update
+template <typename TreeType = i64, typename LazyType = SpSumLazy, typename UpdateType = i64>
+class SparseSeg {
+    v<TreeType> tree; v<LazyType> lazy; vi l, r; i64 ln, rn;
+    i32 next() { tree.eb(); lazy.eb(); l.eb(-1); r.eb(-1); return Size(tree)-1; }
+public:
+    SparseSeg(i64 li, i64 ri) : ln(li), rn(ri) { next(); push(0, ln, rn); }
+    /// tree & lazy are copied values, should not be modified
+    struct iter {
+        i32 node, start, end; TreeType tree; LazyType lazy; SparseSeg* segPtr;
+        iter left() {
+            assert(segPtr->l[node] != -1);
+            segPtr->push(segPtr->l[node], start, (start+end)>>1);
+            return iter(segPtr->l[node], start, (start+end)>>1, segPtr->tree[segPtr->l[node]], segPtr->lazy[segPtr->l[node]], segPtr);
+        }
+        iter right() {
+            assert(segPtr->r[node] != -1);
+            segPtr->push(segPtr->r[node], ((start+end)>>1)+1, end);
+            return iter(segPtr->r[node], ((start+end)>>1)+1, end, segPtr->tree[segPtr->r[node]], segPtr->lazy[segPtr->r[node]], segPtr);
+        }
+        bool leaf() { return start == end; }
+    };
+    void update(i64 left, i64 right, const UpdateType& val) { update(0, ln, rn, left, right, val); }
+    TreeType query(i64 left, i64 right) { return query(0, ln, rn, left, right); }
+private:
+    void push(i64 p, i64 s, i64 e) {
+        tree[p] = tree[p] + iter(p, s, e, tree[p], lazy[p], this);
+        if(s != e) {
+            if(l[p] == -1) l[p] = next();
+            lazy[l[p]] = lazy[l[p]] + iter(p, s, e, tree[p], lazy[p], this);
+            if(r[p] == -1) r[p] = next();
+            lazy[r[p]] = lazy[r[p]] + iter(p, s, e, tree[p], lazy[p], this);
+        }
+        lazy[p] = LazyType();
+    }
+    TreeType& update(i64 p, i64 s, i64 e, i64 ql, i64 qr, const UpdateType& v) {
+        push(p, s, e);
+        if(qr < s || e < ql) return tree[p];
+        if(ql <= s && e <= qr) { lazy[p] = lazy[p] + v; push(p, s, e); return tree[p]; }
+        i64 m = (s + e) >> 1;
+        return tree[p] = update(l[p], s, m, ql, qr, v) + update(r[p], m+1, e, ql, qr, v);
+    }
+    TreeType query(i64 p, i64 s, i64 e, i64 ql, i64 qr) {
+        push(p, s, e);
+        if(qr < s || e < ql) return TreeType();
+        if(ql <= s && e <= qr) return tree[p];
+        i64 m = (s + e) >> 1;
+        return query(l[p], s, m, ql, qr) + query(r[p], m+1, e, ql, qr);
+    }
+};
+
+struct SpSumLazy { i64 v = 0; SpSumLazy operator+(ci64 i) const { return SpSumLazy(v+i); }
+    SpSumLazy operator+(const SparseSeg<i64, SpSumLazy, i64>::iter& i) const { return SpSumLazy(v+i.lazy.v); } };
+i64 operator+(ci64 a, const SparseSeg<i64, SpSumLazy, i64>::iter& b) { return a + (b.end - b.start + 1) * b.lazy.v; }
+
 
 template <typename T = i64>
 class pst {
@@ -947,6 +1140,21 @@ struct StringHash {
 #pragma endregion
 
 #pragma region miscellaenous
+
+template <i64 mod>
+struct ModInt {
+    i64 v = 0;
+    ModInt(i64 val) : v((val%mod+mod) % mod) {} // NOLINT(*-explicit-constructor)
+    explicit operator i64() { return v; }
+    ModInt operator+(const ModInt& b) const { return {(v + b.v) % mod}; }
+    ModInt operator-(const ModInt& b) const { return {(v - b.v + mod) % mod}; }
+    ModInt operator*(const ModInt& b) const { return {(v * b.v) % mod}; }
+    ModInt& operator+=(const ModInt& b) { v = (v + b.v) % mod; return *this; }
+    ModInt& operator-=(const ModInt& b) { v = (v - b.v + mod) % mod; return *this; }
+    ModInt& operator*=(const ModInt& b) { v = (v * b.v) % mod; return *this; }
+};
+template <i64 mod> istream& operator>>(istream& in, ModInt<mod>& t) { in >> t.v; return in; }
+template <i64 mod> ostream& operator<<(ostream& out, const ModInt<mod>& t) { out << t.v; return out; }
 
 i64 moQuerySortVal = -1;
 struct moQuery { i64 i, j, order; bool operator<(const moQuery& b) const { lassert(moQuerySortVal != -1);
