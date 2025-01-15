@@ -206,6 +206,8 @@ i32 main() {
     constexpr i64 log_flush_rate = 1;
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "Simplify"
     fastio;
     timeLimit = timeLimit * 3 + 100; i64 tc = 0;
     while(true) {
@@ -220,11 +222,11 @@ i32 main() {
         // generate (possibly) wrong answer
         system(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\findCounterExample\target.exe)");
         tarCl = clock() - cl; cl = clock();
-        
+
         ifstream ans(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\z.etcBJ\ans.txt)"),
             output(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\z.etcBJ\output.txt)");
         str s1, s2;
-        long long line = 1;
+        long long line = 0;
         while(!ans.eof()) {
             if(output.eof()) { cout << "short output\n"; }
             assert(!output.eof());
@@ -247,5 +249,6 @@ i32 main() {
         if(tc % log_flush_rate == 0) cout.flush();
         if(tarCl > timeLimit && stop_at_TLE_encounter) cerr << "Time Limit Exceeded" << endl;
         if(stop_at_TLE_encounter) assert(tarCl <= timeLimit);
+#pragma clang diagnostic pop
     }
 }

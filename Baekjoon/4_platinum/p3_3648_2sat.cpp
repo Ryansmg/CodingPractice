@@ -787,7 +787,7 @@ struct PrefixSum2d {
 
 #pragma region graph
 
-struct SimpleEdge { i64 start, end; }; struct DistEdge { i64 start, end, dist; }; struct SimpleI32Edge { i32 start, end; };
+struct SimpleEdge { i64 start, end; }; struct DistEdge { i64 start, end, dist; };
 Tpl concept isEdge1_ = requires(const T& a) { a.s; a.e; }; Tpl concept isEdge2_ = requires(const T& a) { a.start; a.end; }; Tpl concept isEdge = isEdge1_<T> || isEdge2_<T>;
 
 /// node >= 0
@@ -819,9 +819,9 @@ public:
     Graph() = default;
     explicit Graph(ci64 maxNodeNum) { resize(maxNodeNum); }
     /// reset
-    virtual void clear() { child = parent = undir = v2<EdgeType>(); nodeCnt = 0; unsafe = false; }
+    virtual void clear() { child.clear(); parent.clear(); undir.clear(); nodeCnt = 0; unsafe = false; }
     void resize(ci64 maxNodeNum) {
-        if(!unsafe && nodeCnt > maxNodeNum) { cerr << "Invalid resizing"; exit(1); }
+        if(!unsafe && nodeCnt >= maxNodeNum) { cerr << "Invalid resizing"; exit(1); }
         nodeCnt = maxNodeNum + 1;
         child.resize(nodeCnt, v<EdgeType>()); parent.resize(nodeCnt, v<EdgeType>()); undir.resize(nodeCnt, v<EdgeType>());
     }
@@ -831,23 +831,7 @@ public:
     virtual void addDEdge(const EdgeType& edge) { child[es_(edge)].eb(edge); parent[ee_(edge)].eb(edge); }
     template <typename... Args> void makeDEdge(Args&&... args) { EdgeType edge(std::forward<Args>(args)...);
         child[es_(edge)].eb(edge); parent[ee_(edge)].eb(edge); }
-    void removeDuplicateEdge() {
-        fun<void(v2<EdgeType>&)> f = [&](v2<EdgeType>& k) {
-            for(auto &arr : k) {
-                sort(arr, [&](const EdgeType& a, const EdgeType& b) {
-                   if(es_(a) == es_(b)) {
-                       if(ee_(a) == ee_(b)) return ed_(a) < ed_(b);
-                       return ee_(a) < ee_(b);
-                   }
-                   return es_(a) < es_(b);
-                });
-                arr.erase(std::unique(arr.begin(), arr.end(), [&](const EdgeType& a, const EdgeType& b) {
-                    return es_(a) == es_(b) && ee_(a) == ee_(b) && ed_(a) == ed_(b);
-                }), arr.end());
-            }
-        };
-        f(child); f(parent); f(undir);
-    }
+
     /// child와 undir에 대한 forEach문을 지원
     class Connection {
         Graph<EdgeType>* g; i64 n;
@@ -889,7 +873,6 @@ public:
 template <isEdge EdgeType = SimpleEdge>
 class DGraph : public Graph<EdgeType> { defGCFs_
 public:
-    explicit DGraph() = default;
     explicit DGraph(i64 maxNodeNum) : Graph<EdgeType>(maxNodeNum) {}
     explicit DGraph(const Graph<EdgeType>& g) : Graph<EdgeType>(g) {
         if(!this->unsafe) for(const auto& arr : this->undir) if(!arr.empty()) { cerr << "Not a valid DGraph.\n"; exit(1); }
@@ -925,25 +908,6 @@ public:
             f(i);
         }
         reverse(ret); return ret;
-    }
-};
-
-template <isEdge EdgeType = SimpleEdge>
-class Dag : public DGraph<EdgeType> {
-public:
-    /// does not check cycles.
-    explicit Dag(const DGraph<EdgeType>& g) : DGraph<EdgeType>(g) { }
-    vl topologySort(const set<i64>& ignore = l_nullSet_) {
-        vl ret, inDegree(this->nodeCnt); i64 n = 0;
-        forn(i, this->nodeCnt) inDegree[i] = Size(this->parent[i]);
-        queue<i64> q;
-        forn(i, this->nodeCnt) { if(ignore.contains(i)) { continue; } ++n; if(!inDegree[i]) q.emplace(i); }
-        rep(n) {
-            if(q.empty()) { cerr << "Dag has cycles!\n"; exit(1); }
-            i64 x = pop(q); ret.eb(x);
-            for(const auto& [X, i] : this->child[x]) if(--inDegree[i] == 0) q.emplace(i);
-        }
-        return ret;
     }
 };
 
@@ -1259,42 +1223,6 @@ public:
     }
 };
 
-
-/// 1 ~ n
-class TwoSat {
-    i64 n = 0; DGraph<SimpleI32Edge> g;
-public:
-    TwoSat() = default;
-    explicit TwoSat(i64 boolCount) : n(boolCount), g(boolCount*2+1) {}
-    /// a or b, a : true, -a : false
-    /// 1 <= a,b <= n
-    void add(i64 a, i64 b) {
-        a = a < 0 ? (-a) * 2 + 1 : a * 2;
-        b = b < 0 ? (-b) * 2 + 1 : b * 2;
-        g.makeDEdge(a^1, b); g.makeDEdge(b^1, a);
-    }
-    /// a : true, -a : false
-    /// 1 <= a,b <= n
-    void add(i64 a) { add(a, a); }
-    bool possible() {
-        v2l sccs = g.getScc({0}); vl sccId(n*2+2, -1);
-        forn(i, Size(sccs)) for(ci64 j : sccs[i]) sccId[j] = i;
-        forf(i, 1, n) if(sccId[2*i] == sccId[2*i+1]) return false;
-        return true;
-    }
-    /// @returns an empty vector if not possible
-    /// <br> returns arr[i] = (i+1) if possible
-    vb getAns() {
-        v2l sccs = g.getScc({0}); vl sccId(n*2+2, -1);
-        forn(i, Size(sccs)) for(ci64 j : sccs[i]) sccId[j] = i;
-        forf(i, 1, n) if(sccId[2*i] == sccId[2*i+1]) return {};
-        vi ansi(n, -1);
-        for(const vl& scc : sccs) for(ci64 i : scc) if(ansi[i/2-1] == -1) ansi[i/2-1] = (i&1) ? 1 : 0;
-        vb ans; for(ci32 i : ansi) ans.eb(i);
-        return ans;
-    }
-};
-
 #pragma endregion // Graph
 
 #pragma region string
@@ -1434,54 +1362,30 @@ using namespace PollardRho;
 
 
 i32 main() {
-    fastio;
-//    filein; ansout;
-    tcRep() {
-        in64(n, m); // y, x => y*m + x + 1
-        v<str> arr; rep(n) arr.eb(inStr());
-        v2<i32> bid(n, v<i32>(m, -1)); // bid*4+(uldr=1234)
-        i32 curBid = 0;
-        forn(y, n) forn(x, m) if(arr[y][x] == 'B') bid[y][x]=curBid++;
-        TwoSat ts(4*curBid);
-        i32 UP=1, LEFT=2, DOWN=3, RIGHT=4;
-        auto id = [&](i64 y, i64 x, i32 dir) {
-            return bid[y][x]*4+dir;
-        };
-        i64 black = 0, white = 0;
-        forn(y, n) forn(x, m) {
-            if(arr[y][x] == 'B') { black++;
-                bool up = y && arr[y - 1][x] == 'W', down = y < n - 1 && arr[y + 1][x] == 'W';
-                bool left = x && arr[y][x - 1] == 'W', right = x < m - 1 && arr[y][x + 1] == 'W';
-                if(up && down) ts.add(id(y, x, UP), id(y, x, DOWN)), ts.add(-id(y, x, UP), -id(y, x, DOWN));
-                elif(up) ts.add(id(y, x, UP));
-                elif(down) ts.add(id(y, x, DOWN));
-                else { println("NO"); goto end; }
-
-                if(left && right) ts.add(id(y, x, LEFT), id(y, x, RIGHT)), ts.add(-id(y, x, LEFT), -id(y, x, RIGHT));
-                elif(left) ts.add(id(y, x, LEFT));
-                elif(right) ts.add(id(y, x, RIGHT));
-                else { println("NO"); goto end; }
-            }
-            elif(arr[y][x] == 'W') { white++;
-                vl dx{-1, 0, 1, 0}, dy{0, 1, 0, -1};
-                vi ddir{RIGHT, UP, LEFT, DOWN};
-                vl ids;
-                forn(i, 4) {
-                    if(y+dy[i]<0 || y+dy[i] >= n || x+dx[i]<0 || x+dx[i] >= m) continue;
-                    i64 nx = x + dx[i], ny = y + dy[i];
-                    if(arr[ny][nx]=='B') ids.eb(id(ny, nx, ddir[i]));
-                }
-                if(Size(ids) == 1) ts.add(ids[0]);
-                elif(Size(ids) == 2) ts.add(-ids[0], -ids[1]);
-                elif(Size(ids) == 3) ts.add(-ids[0], -ids[1]), ts.add(-ids[0], -ids[2]), ts.add(-ids[1], -ids[2]);
-                elif(Size(ids) == 4) {
-                    ts.add(-ids[0], -ids[1]); ts.add(-ids[0], -ids[2]); ts.add(-ids[0], -ids[3]);
-                    ts.add(-ids[1], -ids[2]); ts.add(-ids[1], -ids[3]); ts.add(-ids[2], -ids[3]);
-                }
-                else { println("NO"); goto end; }
+    lfastio;
+    i64 n;
+    // n이 true => n*2, false => n*2+1
+    while(cin >> n) {
+        in64(m);
+        DGraph g(n * 2 + 1);
+        rep(m) {
+            in64(a, b);
+            a = a < 0 ? (-a) * 2 + 1 : a * 2;
+            b = b < 0 ? (-b) * 2 + 1 : b * 2;
+            g.makeDEdge(a ^ 1, b);
+            g.makeDEdge(b ^ 1, a);
+        }
+        g.makeDEdge(3, 2);
+        v2l sccs = g.getScc({0});
+        vl sccId(n * 2 + 2, -1);
+        forn(i, Size(sccs)) for(ci64 j: sccs[i]) sccId[j] = i;
+        bool flag = true;
+        forf(i, 1, n) {
+            if(sccId[2 * i] == sccId[2 * i + 1]) {
+                flag = false;
+                break;
             }
         }
-        println(black*2==white && ts.possible() ? "YES" : "NO");
-        end:{}
+        println(flag ? "yes" : "no");
     }
 }

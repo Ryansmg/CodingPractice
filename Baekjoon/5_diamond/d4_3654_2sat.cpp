@@ -1259,42 +1259,6 @@ public:
     }
 };
 
-
-/// 1 ~ n
-class TwoSat {
-    i64 n = 0; DGraph<SimpleI32Edge> g;
-public:
-    TwoSat() = default;
-    explicit TwoSat(i64 boolCount) : n(boolCount), g(boolCount*2+1) {}
-    /// a or b, a : true, -a : false
-    /// 1 <= a,b <= n
-    void add(i64 a, i64 b) {
-        a = a < 0 ? (-a) * 2 + 1 : a * 2;
-        b = b < 0 ? (-b) * 2 + 1 : b * 2;
-        g.makeDEdge(a^1, b); g.makeDEdge(b^1, a);
-    }
-    /// a : true, -a : false
-    /// 1 <= a,b <= n
-    void add(i64 a) { add(a, a); }
-    bool possible() {
-        v2l sccs = g.getScc({0}); vl sccId(n*2+2, -1);
-        forn(i, Size(sccs)) for(ci64 j : sccs[i]) sccId[j] = i;
-        forf(i, 1, n) if(sccId[2*i] == sccId[2*i+1]) return false;
-        return true;
-    }
-    /// @returns an empty vector if not possible
-    /// <br> returns arr[i] = (i+1) if possible
-    vb getAns() {
-        v2l sccs = g.getScc({0}); vl sccId(n*2+2, -1);
-        forn(i, Size(sccs)) for(ci64 j : sccs[i]) sccId[j] = i;
-        forf(i, 1, n) if(sccId[2*i] == sccId[2*i+1]) return {};
-        vi ansi(n, -1);
-        for(const vl& scc : sccs) for(ci64 i : scc) if(ansi[i/2-1] == -1) ansi[i/2-1] = (i&1) ? 1 : 0;
-        vb ans; for(ci32 i : ansi) ans.eb(i);
-        return ans;
-    }
-};
-
 #pragma endregion // Graph
 
 #pragma region string
@@ -1432,10 +1396,41 @@ using namespace PollardRho;
 #pragma clang diagnostic pop
 //@formatter:on
 
+/// 1 ~ n
+class TwoSat {
+    i64 n = 0; DGraph<SimpleI32Edge> g;
+public:
+    TwoSat() = default;
+    explicit TwoSat(i64 boolCount) : n(boolCount), g(boolCount*2+1) {}
+    // a or b, a : true, -a : false
+    void add(i64 a, i64 b) {
+        a = a < 0 ? (-a) * 2 + 1 : a * 2;
+        b = b < 0 ? (-b)*2+1 : b*2;
+        g.makeDEdge(a^1, b); g.makeDEdge(b^1, a);
+    }
+    // a : true, -a : false
+    void add(i64 a) { add(a, a); }
+    bool possible() {
+        v2l sccs = g.getScc({0}); vl sccId(n*2+2, -1);
+        forn(i, Size(sccs)) for(ci64 j : sccs[i]) sccId[j] = i;
+        forf(i, 1, n) if(sccId[2*i] == sccId[2*i+1]) return false;
+        return true;
+    }
+    /// @returns an empty vector if not possible
+    /// <br> returns arr[i] = (i+1) if possible
+    vb getAns() {
+        v2l sccs = g.getScc({0}); vl sccId(n*2+2, -1);
+        forn(i, Size(sccs)) for(ci64 j : sccs[i]) sccId[j] = i;
+        forf(i, 1, n) if(sccId[2*i] == sccId[2*i+1]) return {};
+        vi ansi(n, -1);
+        for(const vl& scc : sccs) for(ci64 i : scc) if(ansi[i/2-1] == -1) ansi[i/2-1] = (i&1) ? 1 : 0;
+        vb ans; for(ci32 i : ansi) ans.eb(i);
+        return ans;
+    }
+};
 
 i32 main() {
     fastio;
-//    filein; ansout;
     tcRep() {
         in64(n, m); // y, x => y*m + x + 1
         v<str> arr; rep(n) arr.eb(inStr());

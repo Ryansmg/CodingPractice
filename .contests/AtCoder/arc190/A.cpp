@@ -58,10 +58,7 @@ using std::stoi, std::stol, std::stoll, std::stoul, std::stoull, std::stof, std:
 using std::sort, std::stable_sort, std::shuffle, std::uniform_int_distribution, std::mt19937, std::random_device, std::reverse;
 using std::iota, std::prev, std::next, std::prev_permutation, std::next_permutation;
 using std::complex, std::polar, std::is_integral_v, std::is_convertible_v, std::is_arithmetic_v, std::is_floating_point_v, std::to_string;
-#if !CPP17_MODE
-using std::popcount;
-#endif // !CPP17_MODE
-#endif // CPP11_MODE else
+#endif
 
 #include <ext/pb_ds/assoc_container.hpp>
 #include <ext/pb_ds/tree_policy.hpp>
@@ -80,7 +77,7 @@ template <typename T, typename T2> using umap = std::unordered_map<T, T2>;
 Tpl using uset = std::unordered_set<T>;
 Tpl using v = std::vector<T>; Tpl using v2 = v<v<T>>;
 using vl = v<i64>; using v2l = v2<i64>; using vi = v<i32>; using vb = v<bool>;
-using ii = array<i64, 2>; using iii = array<i64, 3>; using iiii = array<i64, 4>; using iiiii = array<i64, 5>;
+using ii = array<i64, 2>; using iii = array<i64, 3>;
 Tpl using lim = std::numeric_limits<T>;
 template <typename Signature> using fun = std::function<Signature>;
 #define int i64
@@ -94,21 +91,15 @@ template <typename Signature> using fun = std::function<Signature>;
 
 #pragma region consts
 constexpr i64
-    i64max = 9223372036854775807,
-    llmax  = 9223372036854775807,
-    lmax   = 9223372036854771557,
-    INFIN  = 4000155715571557000,
-    INF    = 1000000000000000000,
-    inf    = 3000000000,
-    i32max = 2147483647,
-    imax   = 2147481557,
-    iinf   = 2000000000,
-    mod1   = 1000000007,
-    mod9   = 998244353;
+        i64max = 9223372036854775807,
+        llmax  = 9223372036854775807,
+        INF    = 1000000000000000000,
+        inf    = 3000000000,
+        mod1   = 1000000007,
+        mod9   = 998244353;
 constexpr f128
-    PI = 3.14159265358979323846;
+        PI = 3.14159265358979323846;
 const fun<void(i64, i64)> ll_nullFunc_ = [](ci64, ci64){};
-const set<i64> l_nullSet_;
 #pragma endregion consts
 
 #pragma region basic
@@ -151,7 +142,6 @@ Tpl inline i64 Size(const T &_) { return static_cast<i64>(_.size()); }
 
 Tpl inline T pop(stack<T> &st) { T t_ = st.top(); st.pop(); return t_; }
 Tpl inline T pop(queue<T> &q) { T t_ = q.front(); q.pop(); return t_; }
-Tpl inline T pop(v<T> &arr) { T t_ = arr.back(); arr.pop_back(); return t_; }
 Tpl inline void reverse(T &_) { reverse(all(_)); } Tpl inline T reversed(T _) { reverse(all(_)); return _; }
 Tpl inline void sort(T &_) { sort(all(_)); } Tpl inline T sorted(T _) { sort(all(_)); return _; }
 template <typename T, typename Cmp> inline void sort(T& arr, const Cmp& cmp) { sort(all(arr), cmp); }
@@ -227,8 +217,8 @@ template <typename... T> inline void print(const T&... a_) { using expander = i3
 template <typename ...T> inline void println(const T&... a_) { print(a_...); cout << '\n'; }
 template <typename... T> inline void input(T&... a_) { using expander = i32[]; (void)expander{0, (std::cin >> a_, 0)...}; }
 #else
-template <typename ...T> inline void rprint(const T&... a_) { (cout << ... << a_); } inline void rprint() {}
-template <typename ...T> inline void rprintln(const T&... a_) { (cout << ... << a_); cout << '\n'; } inline void rprintln() { cout << '\n'; }
+template <typename ...T> inline void print(const T&... a_) { (cout << ... << a_); } inline void print() {}
+template <typename ...T> inline void println(const T&... a_) { (cout << ... << a_); cout << '\n'; } inline void println() { cout << '\n'; }
 template <typename ...T> inline void input(T&... a_) { (cin >> ... >> a_); }
 #define in64(...) i64 __VA_ARGS__; input(__VA_ARGS__)
 
@@ -246,7 +236,7 @@ struct Printf {
     i32 prec = -1;
     i64 width = -1; char fill = ' ';
     bool exit = false; bool local = false;
-    void operator()() { cout << end; }
+    void operator()() {}
     template <typename ...T> void operator()(const T&... _) {
 #ifdef LOCAL
         prf_imp_(_...);
@@ -291,8 +281,6 @@ private:
 #define lprintfln(...) printfln(__VA_ARGS__).setLocal()
 #define printfExit(...) printfln(__VA_ARGS__).setExit()
 #define printExit(...) printfln().setExit()(__VA_ARGS__)
-#define print(...) printf()(__VA_ARGS__)
-#define println(...) printfln()(__VA_ARGS__)
 
 #ifdef LOCAL
 #define lprint print
@@ -354,45 +342,66 @@ mac_conv_(i64, ll) mac_conv_(i32, i) mac_conv_(u64, ull) mac_conv_(f64, d) mac_c
 #pragma endregion // conversions
 
 #pragma region miscellaneous
-template <typename T, typename T2, typename T3> inline T replace_if(const T& origin, const T2& cond, const T3& replacement)
-    requires is_convertible_v<T2, T> && is_convertible_v<T3, T> {
+template <typename T, typename T2, typename T3> T replace_if(const T& origin, const T2& cond, const T3& replacement)
+requires is_convertible_v<T2, T> && is_convertible_v<T3, T> {
     return origin == cast<T>(cond) ? cast<T>(replacement) : origin;
 }
-#define rplf replace_if
-
-template <typename T, typename Func> inline v<T> funVec(ci64 len, const Func& f) { v<T> ret; forn(i, len) { ret.pb(f(i)); } return ret; }
-template <typename T, typename T2> inline void setMin(T& tar, const T2& val) requires is_convertible_v<T2, T> {
-    if(cast<T>(val) < tar) tar = cast<T>(val);
-}
-template <typename T, typename T2> inline void setMax(T& tar, const T2& val) requires is_convertible_v<T2, T> {
-    if(cast<T>(val) > tar) tar = cast<T>(val);
-}
+#define rplif replace_if
 
 #pragma endregion // miscellaneous
 
 
 #endif // ENABLE_MACRO
-#pragma clang diagnostic pop // remove at ext
-//@formatter:on              // remove at ext
+#pragma clang diagnostic pop
+//@formatter:on
 #pragma endregion // macros
 
 
 i32 main() {
     fastio;
-    inputout;
-    println(1);
-    println("3 3");
-    i64 blackCnt = randInt(0, 3);
-    v2<char> arr(3, v<char>(3, '.'));
-    i64 y = -1, x = -1;
-    rep(blackCnt) {
-        while(y == -1 || arr[y][x] != '.') y = randInt(0, 2), x = randInt(0, 2);
-        arr[y][x] = 'B';
+    in64(n, m);
+    v<iii> qs;
+    forn(i, m) qs.pb({qin(2), i});
+    sort(qs, [](const iii& a, const iii& b) -> bool {
+        if(a[0] != b[0]) return a[0] < b[0];
+        return a[1] > b[1];
+    });
+    if(m == 1) {
+        if(qs[0][0] == 1 && qs[0][1] == n) printExit("1\n1");
+        else printExit(-1);
     }
-    y = -1, x = -1;
-    rep(blackCnt*2) {
-        while(y == -1 || arr[y][x] != '.') y = randInt(0, 2), x = randInt(0, 2);
-        arr[y][x] = 'W';
+    i64 minEnd = INF, meidx = -1;
+    i64 maxEnd = -INF, mxidx = -1;
+    vi ans(m, 0);
+    if(qs[0][0] == 1 && qs[0][1] == n) {
+        ans[qs[0][2]] = 1;
+        println(1);
+        printExit(ans);
     }
-    for(const auto &a : arr) printfln(.sep="")(a);
+    forn(i, m) {
+        if(minEnd < qs[i][0]) {
+            ans[meidx] = 2; ans[qs[i][2]] = 2;
+            println(2);
+            printExit(ans);
+        }
+        if(maxEnd >= qs[i][1]) {
+            ans[mxidx] = 1; ans[qs[i][2]] = 2;
+            println(2);
+            printExit(ans);
+        }
+        if(minEnd > qs[i][1]) minEnd = qs[i][1], meidx = qs[i][2];
+        if(maxEnd < qs[i][1]) maxEnd = qs[i][1], mxidx = qs[i][2];
+    }
+    if(qs[0][0] == 1 && qs[m-1][1] == n && qs[0][1] >= qs[m-1][0]) {
+        ans[qs[0][2]] = ans[qs[m-1][2]] = 1;
+        println(2);
+        printExit(ans);
+    }
+    if(m == 2) {
+        if(qs[0][0] == 1 && qs[1][1] == n) printExit("2\n1 1");
+        printExit(-1);
+    }
+    ans[qs[0][2]] = 1, ans[qs[1][2]] = 2, ans[qs[2][2]] = 1;
+    println(3);
+    printfln()(ans);
 }

@@ -80,7 +80,7 @@ template <typename T, typename T2> using umap = std::unordered_map<T, T2>;
 Tpl using uset = std::unordered_set<T>;
 Tpl using v = std::vector<T>; Tpl using v2 = v<v<T>>;
 using vl = v<i64>; using v2l = v2<i64>; using vi = v<i32>; using vb = v<bool>;
-using ii = array<i64, 2>; using iii = array<i64, 3>; using iiii = array<i64, 4>; using iiiii = array<i64, 5>;
+using ii = array<i64, 2>; using iii = array<i64, 3>;
 Tpl using lim = std::numeric_limits<T>;
 template <typename Signature> using fun = std::function<Signature>;
 #define int i64
@@ -108,7 +108,6 @@ constexpr i64
 constexpr f128
     PI = 3.14159265358979323846;
 const fun<void(i64, i64)> ll_nullFunc_ = [](ci64, ci64){};
-const set<i64> l_nullSet_;
 #pragma endregion consts
 
 #pragma region basic
@@ -151,7 +150,6 @@ Tpl inline i64 Size(const T &_) { return static_cast<i64>(_.size()); }
 
 Tpl inline T pop(stack<T> &st) { T t_ = st.top(); st.pop(); return t_; }
 Tpl inline T pop(queue<T> &q) { T t_ = q.front(); q.pop(); return t_; }
-Tpl inline T pop(v<T> &arr) { T t_ = arr.back(); arr.pop_back(); return t_; }
 Tpl inline void reverse(T &_) { reverse(all(_)); } Tpl inline T reversed(T _) { reverse(all(_)); return _; }
 Tpl inline void sort(T &_) { sort(all(_)); } Tpl inline T sorted(T _) { sort(all(_)); return _; }
 template <typename T, typename Cmp> inline void sort(T& arr, const Cmp& cmp) { sort(all(arr), cmp); }
@@ -246,7 +244,7 @@ struct Printf {
     i32 prec = -1;
     i64 width = -1; char fill = ' ';
     bool exit = false; bool local = false;
-    void operator()() { cout << end; }
+    void operator()() {}
     template <typename ...T> void operator()(const T&... _) {
 #ifdef LOCAL
         prf_imp_(_...);
@@ -361,38 +359,38 @@ template <typename T, typename T2, typename T3> inline T replace_if(const T& ori
 #define rplf replace_if
 
 template <typename T, typename Func> inline v<T> funVec(ci64 len, const Func& f) { v<T> ret; forn(i, len) { ret.pb(f(i)); } return ret; }
-template <typename T, typename T2> inline void setMin(T& tar, const T2& val) requires is_convertible_v<T2, T> {
-    if(cast<T>(val) < tar) tar = cast<T>(val);
-}
-template <typename T, typename T2> inline void setMax(T& tar, const T2& val) requires is_convertible_v<T2, T> {
-    if(cast<T>(val) > tar) tar = cast<T>(val);
+template <typename T, typename T2> inline void setMin(T& tar, const T2& val)
+    requires is_convertible_v<T2, T> {
+    tar = min(tar, cast<T>(val));
 }
 
 #pragma endregion // miscellaneous
 
 
 #endif // ENABLE_MACRO
-#pragma clang diagnostic pop // remove at ext
-//@formatter:on              // remove at ext
+#pragma clang diagnostic pop
+//@formatter:on
 #pragma endregion // macros
 
 
 i32 main() {
     fastio;
-    inputout;
-    println(1);
-    println("3 3");
-    i64 blackCnt = randInt(0, 3);
-    v2<char> arr(3, v<char>(3, '.'));
-    i64 y = -1, x = -1;
-    rep(blackCnt) {
-        while(y == -1 || arr[y][x] != '.') y = randInt(0, 2), x = randInt(0, 2);
-        arr[y][x] = 'B';
+    in64(n, m);
+    vl w(1, -1);
+    inArr(w, n);
+    v2l adj(n+1, vl());
+    rep(m) {
+        in64(a, b);
+        adj[a].eb(b); adj[b].eb(a);
     }
-    y = -1, x = -1;
-    rep(blackCnt*2) {
-        while(y == -1 || arr[y][x] != '.') y = randInt(0, 2), x = randInt(0, 2);
-        arr[y][x] = 'W';
-    }
-    for(const auto &a : arr) printfln(.sep="")(a);
+    i64 ans = inf;
+    fun<void(vb, i64, i64)> f = [&](const vb& vis, i64 cur, i64 a) {
+        vb vis2 = vis; i64 a2 = a;
+        for(ci64 i : adj[cur]) if(!vis[i]) vis2[i] = true, a2 += w[i];
+        if(cur == n) { ans = min(ans, a2); return; }
+        for(ci64 i : adj[cur]) if(!vis[i]) f(vis2, i, a2);
+    };
+    vb v(n+1, false); v[1] = true;
+    f(v, 1, w[1]);
+    println(ans);
 }

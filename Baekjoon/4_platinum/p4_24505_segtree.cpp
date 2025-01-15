@@ -58,10 +58,7 @@ using std::stoi, std::stol, std::stoll, std::stoul, std::stoull, std::stof, std:
 using std::sort, std::stable_sort, std::shuffle, std::uniform_int_distribution, std::mt19937, std::random_device, std::reverse;
 using std::iota, std::prev, std::next, std::prev_permutation, std::next_permutation;
 using std::complex, std::polar, std::is_integral_v, std::is_convertible_v, std::is_arithmetic_v, std::is_floating_point_v, std::to_string;
-#if !CPP17_MODE
-using std::popcount;
-#endif // !CPP17_MODE
-#endif // CPP11_MODE else
+#endif
 
 #include <ext/pb_ds/assoc_container.hpp>
 #include <ext/pb_ds/tree_policy.hpp>
@@ -80,7 +77,7 @@ template <typename T, typename T2> using umap = std::unordered_map<T, T2>;
 Tpl using uset = std::unordered_set<T>;
 Tpl using v = std::vector<T>; Tpl using v2 = v<v<T>>;
 using vl = v<i64>; using v2l = v2<i64>; using vi = v<i32>; using vb = v<bool>;
-using ii = array<i64, 2>; using iii = array<i64, 3>; using iiii = array<i64, 4>; using iiiii = array<i64, 5>;
+using ii = array<i64, 2>; using iii = array<i64, 3>;
 Tpl using lim = std::numeric_limits<T>;
 template <typename Signature> using fun = std::function<Signature>;
 #define int i64
@@ -96,19 +93,13 @@ template <typename Signature> using fun = std::function<Signature>;
 constexpr i64
         i64max = 9223372036854775807,
         llmax  = 9223372036854775807,
-        lmax   = 9223372036854771557,
-        INFIN  = 4000155715571557000,
         INF    = 1000000000000000000,
         inf    = 3000000000,
-        i32max = 2147483647,
-        imax   = 2147481557,
-        iinf   = 2000000000,
         mod1   = 1000000007,
         mod9   = 998244353;
 constexpr f128
         PI = 3.14159265358979323846;
 const fun<void(i64, i64)> ll_nullFunc_ = [](ci64, ci64){};
-const set<i64> l_nullSet_;
 #pragma endregion consts
 
 #pragma region basic
@@ -151,7 +142,6 @@ Tpl inline i64 Size(const T &_) { return static_cast<i64>(_.size()); }
 
 Tpl inline T pop(stack<T> &st) { T t_ = st.top(); st.pop(); return t_; }
 Tpl inline T pop(queue<T> &q) { T t_ = q.front(); q.pop(); return t_; }
-Tpl inline T pop(v<T> &arr) { T t_ = arr.back(); arr.pop_back(); return t_; }
 Tpl inline void reverse(T &_) { reverse(all(_)); } Tpl inline T reversed(T _) { reverse(all(_)); return _; }
 Tpl inline void sort(T &_) { sort(all(_)); } Tpl inline T sorted(T _) { sort(all(_)); return _; }
 template <typename T, typename Cmp> inline void sort(T& arr, const Cmp& cmp) { sort(all(arr), cmp); }
@@ -227,8 +217,8 @@ template <typename... T> inline void print(const T&... a_) { using expander = i3
 template <typename ...T> inline void println(const T&... a_) { print(a_...); cout << '\n'; }
 template <typename... T> inline void input(T&... a_) { using expander = i32[]; (void)expander{0, (std::cin >> a_, 0)...}; }
 #else
-template <typename ...T> inline void rprint(const T&... a_) { (cout << ... << a_); } inline void rprint() {}
-template <typename ...T> inline void rprintln(const T&... a_) { (cout << ... << a_); cout << '\n'; } inline void rprintln() { cout << '\n'; }
+template <typename ...T> inline void print(const T&... a_) { (cout << ... << a_); } inline void print() {}
+template <typename ...T> inline void println(const T&... a_) { (cout << ... << a_); cout << '\n'; } inline void println() { cout << '\n'; }
 template <typename ...T> inline void input(T&... a_) { (cin >> ... >> a_); }
 #define in64(...) i64 __VA_ARGS__; input(__VA_ARGS__)
 
@@ -291,8 +281,6 @@ private:
 #define lprintfln(...) printfln(__VA_ARGS__).setLocal()
 #define printfExit(...) printfln(__VA_ARGS__).setExit()
 #define printExit(...) printfln().setExit()(__VA_ARGS__)
-#define print(...) printf()(__VA_ARGS__)
-#define println(...) printfln()(__VA_ARGS__)
 
 #ifdef LOCAL
 #define lprint print
@@ -354,22 +342,13 @@ mac_conv_(i64, ll) mac_conv_(i32, i) mac_conv_(u64, ull) mac_conv_(f64, d) mac_c
 #pragma endregion // conversions
 
 #pragma region miscellaneous
-template <typename T, typename T2, typename T3> inline T replace_if(const T& origin, const T2& cond, const T3& replacement)
+template <typename T, typename T2, typename T3> T replace_if(const T& origin, const T2& cond, const T3& replacement)
 requires is_convertible_v<T2, T> && is_convertible_v<T3, T> {
     return origin == cast<T>(cond) ? cast<T>(replacement) : origin;
 }
-#define rplf replace_if
-
-template <typename T, typename Func> inline v<T> funVec(ci64 len, const Func& f) { v<T> ret; forn(i, len) { ret.pb(f(i)); } return ret; }
-template <typename T, typename T2> inline void setMin(T& tar, const T2& val) requires is_convertible_v<T2, T> {
-    if(cast<T>(val) < tar) tar = cast<T>(val);
-}
-template <typename T, typename T2> inline void setMax(T& tar, const T2& val) requires is_convertible_v<T2, T> {
-    if(cast<T>(val) > tar) tar = cast<T>(val);
-}
+#define rplif replace_if
 
 #pragma endregion // miscellaneous
-
 
 #endif // ENABLE_MACRO
 #pragma endregion // macros
@@ -377,7 +356,7 @@ template <typename T, typename T2> inline void setMax(T& tar, const T2& val) req
 
 #pragma region dataStructures
 
-/// requirements: (T + T), add -> (T += i64)
+/// requirements: (T + T), add -> (T += i64), set -> (T = i64)
 template <typename T = i64>
 struct iterSeg {
     v<T> tree; i32 n=-1;
@@ -402,7 +381,6 @@ public:
     explicit Segtree(ci32 treeSize) { tree = v<T>(4*treeSize, T()); n = treeSize; }
     explicit Segtree(const v<T> &a) { n = Size(a); tree = v<T>(4*n, T()); init(a, 1, 1, n); }
     void set(ci32 tar, const T& val) { set(1, tar, 1, n, val); }
-    void add(ci32 tar, const T& diff) { update(1, tar, 1, n, diff); }
     void update(ci32 tar, const T& diff) { update(1, tar, 1, n, diff); }
     T query(ci32 left, ci32 right) { if(left > right) { return T(); } return query(1, left, right, 1, n); }
     T query(ci32 tar) { return query(tar, tar); }
@@ -417,7 +395,7 @@ public:
     v<T> getLeafs() { v<T> ret(n);
         fun<void(i64, i64, i64)> f = [&](i64 p, i64 s, i64 e) {
             if(s == e) ret[s-1] = tree[p];
-            else f(p<<1, s, (s+e)>>1), f(p<<1|1, ((s+e)>>1)+1, e); };
+            else f(p<<1, s, (s+e)>>1), f(p<<1|1, ((s+e)>>1)|1, e); };
         f(1, 1, n); return ret; }
 
     /// [1..i] 범위 합이 val 이하인 최대의 i를 리턴
@@ -562,7 +540,7 @@ private:
 Tpl64 struct Fenwick {
     v<T> tree; i32 n;
     explicit Fenwick(i32 treeSize) { n = treeSize; tree = v<T>(treeSize+10, T()); }
-    void add(i32 tar, const T& val) { if(tar <= 0) { return; } for(; tar<=n; tar+=tar&-tar) tree[tar] += val; }
+    void update(i32 tar, const T& val) { if(tar <= 0) { return; } for(; tar<=n; tar+=tar&-tar) tree[tar] += val; }
     /// [l, r]
     T query(i32 left, i32 right) { if(left > right) { return T(); } left = max(left, 1LL); return query(right) - query(left-1); }
     /// [1, tar]
@@ -787,7 +765,7 @@ struct PrefixSum2d {
 
 #pragma region graph
 
-struct SimpleEdge { i64 start, end; }; struct DistEdge { i64 start, end, dist; }; struct SimpleI32Edge { i32 start, end; };
+struct SimpleEdge { i64 start, end; }; struct DistEdge { i64 start, end, dist; };
 Tpl concept isEdge1_ = requires(const T& a) { a.s; a.e; }; Tpl concept isEdge2_ = requires(const T& a) { a.start; a.end; }; Tpl concept isEdge = isEdge1_<T> || isEdge2_<T>;
 
 /// node >= 0
@@ -819,9 +797,9 @@ public:
     Graph() = default;
     explicit Graph(ci64 maxNodeNum) { resize(maxNodeNum); }
     /// reset
-    virtual void clear() { child = parent = undir = v2<EdgeType>(); nodeCnt = 0; unsafe = false; }
+    virtual void clear() { child.clear(); parent.clear(); undir.clear(); nodeCnt = 0; unsafe = false; }
     void resize(ci64 maxNodeNum) {
-        if(!unsafe && nodeCnt > maxNodeNum) { cerr << "Invalid resizing"; exit(1); }
+        if(!unsafe && nodeCnt >= maxNodeNum) { cerr << "Invalid resizing"; exit(1); }
         nodeCnt = maxNodeNum + 1;
         child.resize(nodeCnt, v<EdgeType>()); parent.resize(nodeCnt, v<EdgeType>()); undir.resize(nodeCnt, v<EdgeType>());
     }
@@ -831,23 +809,7 @@ public:
     virtual void addDEdge(const EdgeType& edge) { child[es_(edge)].eb(edge); parent[ee_(edge)].eb(edge); }
     template <typename... Args> void makeDEdge(Args&&... args) { EdgeType edge(std::forward<Args>(args)...);
         child[es_(edge)].eb(edge); parent[ee_(edge)].eb(edge); }
-    void removeDuplicateEdge() {
-        fun<void(v2<EdgeType>&)> f = [&](v2<EdgeType>& k) {
-            for(auto &arr : k) {
-                sort(arr, [&](const EdgeType& a, const EdgeType& b) {
-                   if(es_(a) == es_(b)) {
-                       if(ee_(a) == ee_(b)) return ed_(a) < ed_(b);
-                       return ee_(a) < ee_(b);
-                   }
-                   return es_(a) < es_(b);
-                });
-                arr.erase(std::unique(arr.begin(), arr.end(), [&](const EdgeType& a, const EdgeType& b) {
-                    return es_(a) == es_(b) && ee_(a) == ee_(b) && ed_(a) == ed_(b);
-                }), arr.end());
-            }
-        };
-        f(child); f(parent); f(undir);
-    }
+
     /// child와 undir에 대한 forEach문을 지원
     class Connection {
         Graph<EdgeType>* g; i64 n;
@@ -884,67 +846,6 @@ public:
     /// Complexity : O(N)
     v<EdgeType> getConnectionArr(i64 node) { v<EdgeType> ret; for(const auto& e : child[node]) ret.eb(e); for(const auto& e : undir[node]) ret.eb(e); return ret; }
     Graph& setUnsafe(bool _ = true) { unsafe = _; return *this; }
-};
-
-template <isEdge EdgeType = SimpleEdge>
-class DGraph : public Graph<EdgeType> { defGCFs_
-public:
-    explicit DGraph() = default;
-    explicit DGraph(i64 maxNodeNum) : Graph<EdgeType>(maxNodeNum) {}
-    explicit DGraph(const Graph<EdgeType>& g) : Graph<EdgeType>(g) {
-        if(!this->unsafe) for(const auto& arr : this->undir) if(!arr.empty()) { cerr << "Not a valid DGraph.\n"; exit(1); }
-    }
-    /// SCC들은 위상 정렬되어 반환됨
-    /// SCC 안 노드들은 번호 순서대로 정렬됨
-    v2l getScc(const set<i64>& ignore = l_nullSet_) {
-        vb finished(this->nodeCnt, false);
-        vl id(this->nodeCnt, -1); i64 curId = 0;
-        vl st; v2l ret;
-        fun<i64(i64)> f = [&](i64 node) {
-            id[node] = ++curId; st.pb(node);
-            i64 parent = id[node];
-            for(const auto& e : this->child[node]) {
-                i64 i = ee_(e);
-                if(id[i] == -1) parent = min(parent, f(i));
-                else if(!finished[i]) parent = min(parent, id[i]);
-            }
-            if(parent == id[node]) {
-                vl scc;
-                while(true) {
-                    i64 top = st.back(); st.pop_back();
-                    scc.eb(top); finished[top] = true;
-                    if(top == node) break;
-                }
-                sort(scc); ret.eb(scc);
-            }
-            return parent;
-        };
-        forn(i, this->nodeCnt) {
-            if(ignore.contains(i)) continue;
-            if(finished[i]) continue;
-            f(i);
-        }
-        reverse(ret); return ret;
-    }
-};
-
-template <isEdge EdgeType = SimpleEdge>
-class Dag : public DGraph<EdgeType> {
-public:
-    /// does not check cycles.
-    explicit Dag(const DGraph<EdgeType>& g) : DGraph<EdgeType>(g) { }
-    vl topologySort(const set<i64>& ignore = l_nullSet_) {
-        vl ret, inDegree(this->nodeCnt); i64 n = 0;
-        forn(i, this->nodeCnt) inDegree[i] = Size(this->parent[i]);
-        queue<i64> q;
-        forn(i, this->nodeCnt) { if(ignore.contains(i)) { continue; } ++n; if(!inDegree[i]) q.emplace(i); }
-        rep(n) {
-            if(q.empty()) { cerr << "Dag has cycles!\n"; exit(1); }
-            i64 x = pop(q); ret.eb(x);
-            for(const auto& [X, i] : this->child[x]) if(--inDegree[i] == 0) q.emplace(i);
-        }
-        return ret;
-    }
 };
 
 template <typename EdgeType = SimpleEdge>
@@ -1151,150 +1052,6 @@ public:
     i64 dist(ci64 a, ci64 b) { return sparseLca(a, b).second; }
 };
 
-
-class Flow {
-public:
-    i64 maxFlow = 0, source = -1, sink = -1;
-protected:
-    i64 maxNodeN = -1, edgeCount = -1;
-    vl capacity, edgeFlow, revEdge;
-    v<iii> edges; v2l con; vl visited;
-public:
-    Flow() = default;
-    Flow(i64 MaxNodeNum, i64 Source, i64 Sink) {
-        maxNodeN = MaxNodeNum; source = Source; sink = Sink;
-        con = v2l(maxNodeN+10, vl());
-        visited = vl(maxNodeN+10, -1);
-        assert(Source <= MaxNodeNum && Sink <= MaxNodeNum);
-    }
-    void addEdge(i64 start, i64 end, i64 Capacity, i64 Dist = 0) {
-        assert(start <= maxNodeN && end <= maxNodeN);
-        assert(Capacity >= 0);
-        edgeCount++; edges.push_back({start, end, Dist});
-        capacity.push_back(Capacity); edgeFlow.push_back(0);
-        revEdge.push_back(edgeCount+1); con[start].push_back(edgeCount);
-        edgeCount++; edges.push_back({end, start, -Dist});
-        capacity.push_back(0); edgeFlow.push_back(0);
-        revEdge.push_back(edgeCount-1); con[end].push_back(edgeCount);
-    }
-
-    /// returns true if successes
-    virtual bool run() {
-        while(true) {
-            for(i64 &i : visited) i = -1;
-            queue<i64> bfs; bfs.push(source);
-            while (!bfs.empty()) {
-                i64 cur = bfs.front(); bfs.pop();
-                for (i64 edge: con[cur]) {
-                    if (capacity[edge] - edgeFlow[edge] > 0 && visited[edges[edge][1]] == -1) {
-                        bfs.push(edges[edge][1]);
-                        visited[edges[edge][1]] = edge;
-                        if (edges[edge][1] == sink) break;
-                    }
-                }
-                if (visited[sink] != -1) break;
-            }
-            if (visited[sink] == -1) break;
-
-            i64 tempFlow = llmax;
-            for (i64 i = sink; i != source; i = edges[visited[i]][0])
-                tempFlow = min(tempFlow, capacity[visited[i]] - edgeFlow[visited[i]]);
-
-            for (i64 i = sink; i != source; i = edges[visited[i]][0]) {
-                edgeFlow[visited[i]] += tempFlow;
-                edgeFlow[revEdge[visited[i]]] -= tempFlow;
-            }
-            maxFlow += tempFlow;
-        }
-        return true;
-    }
-};
-
-class Mcmf : public Flow {
-protected:
-    vl dist;
-public:
-    i64 distSum = 0;
-    Mcmf(i64 MaxNodeNum, i64 Source, i64 Sink) : Flow(MaxNodeNum, Source, Sink) { dist = vl(MaxNodeNum+10); }
-    /// returns true if succeeds
-    bool run() override {
-        while(true) {
-            for(i64 &i : visited) i = -1;
-            for(i64 &i : dist) i = INF;
-            v<bool> inQueue(maxNodeN+10, false);
-            vl cycle(maxNodeN+10, 0);
-            queue<int> spfa; spfa.push(source);
-            dist[source] = 0;
-            while (!spfa.empty()) {
-                i64 cur = spfa.front(); spfa.pop();
-                inQueue[cur] = false;
-                cycle[cur]++;
-                if(cycle[cur] >= maxNodeN) return false;
-                for (ci64 edge: con[cur]) {
-                    if (capacity[edge] - edgeFlow[edge] > 0 &&
-                        dist[edges[edge][1]] > dist[cur] + edges[edge][2]) {
-                        dist[edges[edge][1]] = dist[cur] + edges[edge][2];
-                        visited[edges[edge][1]] = edge;
-                        if(!inQueue[edges[edge][1]]) {
-                            spfa.push(edges[edge][1]);
-                            inQueue[edges[edge][1]] = true;
-                        }
-                    }
-                }
-            }
-            if (visited[sink] == -1) break;
-
-            i64 tempFlow = llmax;
-            for (i64 i = sink; i != source; i = edges[visited[i]][0])
-                tempFlow = min(tempFlow, capacity[visited[i]] - edgeFlow[visited[i]]);
-
-            for (i64 i = sink; i != source; i = edges[visited[i]][0]) {
-                edgeFlow[visited[i]] += tempFlow;
-                edgeFlow[revEdge[visited[i]]] -= tempFlow;
-            }
-            maxFlow += tempFlow;
-            distSum += dist[sink] * tempFlow;
-        }
-        return true;
-    }
-};
-
-
-/// 1 ~ n
-class TwoSat {
-    i64 n = 0; DGraph<SimpleI32Edge> g;
-public:
-    TwoSat() = default;
-    explicit TwoSat(i64 boolCount) : n(boolCount), g(boolCount*2+1) {}
-    /// a or b, a : true, -a : false
-    /// 1 <= a,b <= n
-    void add(i64 a, i64 b) {
-        a = a < 0 ? (-a) * 2 + 1 : a * 2;
-        b = b < 0 ? (-b) * 2 + 1 : b * 2;
-        g.makeDEdge(a^1, b); g.makeDEdge(b^1, a);
-    }
-    /// a : true, -a : false
-    /// 1 <= a,b <= n
-    void add(i64 a) { add(a, a); }
-    bool possible() {
-        v2l sccs = g.getScc({0}); vl sccId(n*2+2, -1);
-        forn(i, Size(sccs)) for(ci64 j : sccs[i]) sccId[j] = i;
-        forf(i, 1, n) if(sccId[2*i] == sccId[2*i+1]) return false;
-        return true;
-    }
-    /// @returns an empty vector if not possible
-    /// <br> returns arr[i] = (i+1) if possible
-    vb getAns() {
-        v2l sccs = g.getScc({0}); vl sccId(n*2+2, -1);
-        forn(i, Size(sccs)) for(ci64 j : sccs[i]) sccId[j] = i;
-        forf(i, 1, n) if(sccId[2*i] == sccId[2*i+1]) return {};
-        vi ansi(n, -1);
-        for(const vl& scc : sccs) for(ci64 i : scc) if(ansi[i/2-1] == -1) ansi[i/2-1] = (i&1) ? 1 : 0;
-        vb ans; for(ci32 i : ansi) ans.eb(i);
-        return ans;
-    }
-};
-
 #pragma endregion // Graph
 
 #pragma region string
@@ -1400,15 +1157,6 @@ struct ModInt {
 template <i64 mod> istream& operator>>(istream& in, ModInt<mod>& t) { in >> t.v; return in; }
 template <i64 mod> ostream& operator<<(ostream& out, const ModInt<mod>& t) { out << t.v; return out; }
 
-#define defStructIO_(name) istream& operator>>(istream& in, name& t) { in >> t.v; return in; }\
-                           ostream& operator<<(ostream& out, const name& t) { out << t.v; return out; }
-
-struct MxSs { i64 v = -INFIN; MxSs operator+(const MxSs& b) const { return { max(v, b.v) }; }
-bool operator<(const MxSs& b) const { return v < b.v; } explicit operator i64() const { return v; }};
-struct MnSs { i64 v = INFIN; MnSs operator+(const MnSs& b) const { return { min(v, b.v) }; }
-bool operator<(const MnSs& b) const { return v < b.v; } explicit operator i64() const { return v; }};
-defStructIO_(MxSs) defStructIO_(MnSs)
-
 i64 moQuerySortVal = -1;
 struct moQuery { i64 i, j, order; bool operator<(const moQuery& b) const { lassert(moQuerySortVal != -1);
         if(i/moQuerySortVal == b.i/moQuerySortVal) { return j < b.j; } return i/moQuerySortVal < b.i/moQuerySortVal; } };
@@ -1435,53 +1183,17 @@ using namespace PollardRho;
 
 i32 main() {
     fastio;
-//    filein; ansout;
-    tcRep() {
-        in64(n, m); // y, x => y*m + x + 1
-        v<str> arr; rep(n) arr.eb(inStr());
-        v2<i32> bid(n, v<i32>(m, -1)); // bid*4+(uldr=1234)
-        i32 curBid = 0;
-        forn(y, n) forn(x, m) if(arr[y][x] == 'B') bid[y][x]=curBid++;
-        TwoSat ts(4*curBid);
-        i32 UP=1, LEFT=2, DOWN=3, RIGHT=4;
-        auto id = [&](i64 y, i64 x, i32 dir) {
-            return bid[y][x]*4+dir;
-        };
-        i64 black = 0, white = 0;
-        forn(y, n) forn(x, m) {
-            if(arr[y][x] == 'B') { black++;
-                bool up = y && arr[y - 1][x] == 'W', down = y < n - 1 && arr[y + 1][x] == 'W';
-                bool left = x && arr[y][x - 1] == 'W', right = x < m - 1 && arr[y][x + 1] == 'W';
-                if(up && down) ts.add(id(y, x, UP), id(y, x, DOWN)), ts.add(-id(y, x, UP), -id(y, x, DOWN));
-                elif(up) ts.add(id(y, x, UP));
-                elif(down) ts.add(id(y, x, DOWN));
-                else { println("NO"); goto end; }
-
-                if(left && right) ts.add(id(y, x, LEFT), id(y, x, RIGHT)), ts.add(-id(y, x, LEFT), -id(y, x, RIGHT));
-                elif(left) ts.add(id(y, x, LEFT));
-                elif(right) ts.add(id(y, x, RIGHT));
-                else { println("NO"); goto end; }
-            }
-            elif(arr[y][x] == 'W') { white++;
-                vl dx{-1, 0, 1, 0}, dy{0, 1, 0, -1};
-                vi ddir{RIGHT, UP, LEFT, DOWN};
-                vl ids;
-                forn(i, 4) {
-                    if(y+dy[i]<0 || y+dy[i] >= n || x+dx[i]<0 || x+dx[i] >= m) continue;
-                    i64 nx = x + dx[i], ny = y + dy[i];
-                    if(arr[ny][nx]=='B') ids.eb(id(ny, nx, ddir[i]));
-                }
-                if(Size(ids) == 1) ts.add(ids[0]);
-                elif(Size(ids) == 2) ts.add(-ids[0], -ids[1]);
-                elif(Size(ids) == 3) ts.add(-ids[0], -ids[1]), ts.add(-ids[0], -ids[2]), ts.add(-ids[1], -ids[2]);
-                elif(Size(ids) == 4) {
-                    ts.add(-ids[0], -ids[1]); ts.add(-ids[0], -ids[2]); ts.add(-ids[0], -ids[3]);
-                    ts.add(-ids[1], -ids[2]); ts.add(-ids[1], -ids[3]); ts.add(-ids[2], -ids[3]);
-                }
-                else { println("NO"); goto end; }
-            }
+    in64(n);
+    vl cur(n, 1);
+    vl arr = inArr(n);
+    rep(10) {
+        vl nxt(n);
+        Fenwick<ModInt<>> seg(n);
+        forn(i, n) {
+            nxt[i] = cast<i64>(seg.query(1, arr[i]-1));
+            seg.update(arr[i], cur[i]);
         }
-        println(black*2==white && ts.possible() ? "YES" : "NO");
-        end:{}
+        cur = nxt;
     }
+    println(sum(cur) % mod1);
 }

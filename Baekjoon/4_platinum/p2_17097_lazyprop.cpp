@@ -4,6 +4,7 @@
 #define ENABLE_O3 false
 #define CPP11_MODE false
 #define CPP17_MODE false
+#define IGNORE_UNUSED_MACRO_WARNING true
 
 #pragma region start
 
@@ -15,6 +16,7 @@
 using namespace std;
 #endif
 
+#if IGNORE_UNUSED_MACRO_WARNING
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedMacroInspection"
 #pragma ide diagnostic ignored "OCUnusedTypeAliasInspection"
@@ -23,6 +25,7 @@ using namespace std;
 #pragma ide diagnostic ignored "UnreachableCallsOfFunction"
 #pragma ide diagnostic ignored "UnusedLocalVariable"
 #pragma ide diagnostic ignored "UnusedValue"
+#endif
 
 #if ENABLE_MACRO
 
@@ -58,10 +61,7 @@ using std::stoi, std::stol, std::stoll, std::stoul, std::stoull, std::stof, std:
 using std::sort, std::stable_sort, std::shuffle, std::uniform_int_distribution, std::mt19937, std::random_device, std::reverse;
 using std::iota, std::prev, std::next, std::prev_permutation, std::next_permutation;
 using std::complex, std::polar, std::is_integral_v, std::is_convertible_v, std::is_arithmetic_v, std::is_floating_point_v, std::to_string;
-#if !CPP17_MODE
-using std::popcount;
-#endif // !CPP17_MODE
-#endif // CPP11_MODE else
+#endif
 
 #include <ext/pb_ds/assoc_container.hpp>
 #include <ext/pb_ds/tree_policy.hpp>
@@ -80,7 +80,7 @@ template <typename T, typename T2> using umap = std::unordered_map<T, T2>;
 Tpl using uset = std::unordered_set<T>;
 Tpl using v = std::vector<T>; Tpl using v2 = v<v<T>>;
 using vl = v<i64>; using v2l = v2<i64>; using vi = v<i32>; using vb = v<bool>;
-using ii = array<i64, 2>; using iii = array<i64, 3>; using iiii = array<i64, 4>; using iiiii = array<i64, 5>;
+using ii = array<i64, 2>; using iii = array<i64, 3>;
 Tpl using lim = std::numeric_limits<T>;
 template <typename Signature> using fun = std::function<Signature>;
 #define int i64
@@ -96,19 +96,13 @@ template <typename Signature> using fun = std::function<Signature>;
 constexpr i64
     i64max = 9223372036854775807,
     llmax  = 9223372036854775807,
-    lmax   = 9223372036854771557,
-    INFIN  = 4000155715571557000,
     INF    = 1000000000000000000,
     inf    = 3000000000,
-    i32max = 2147483647,
-    imax   = 2147481557,
-    iinf   = 2000000000,
     mod1   = 1000000007,
     mod9   = 998244353;
 constexpr f128
     PI = 3.14159265358979323846;
 const fun<void(i64, i64)> ll_nullFunc_ = [](ci64, ci64){};
-const set<i64> l_nullSet_;
 #pragma endregion consts
 
 #pragma region basic
@@ -151,7 +145,6 @@ Tpl inline i64 Size(const T &_) { return static_cast<i64>(_.size()); }
 
 Tpl inline T pop(stack<T> &st) { T t_ = st.top(); st.pop(); return t_; }
 Tpl inline T pop(queue<T> &q) { T t_ = q.front(); q.pop(); return t_; }
-Tpl inline T pop(v<T> &arr) { T t_ = arr.back(); arr.pop_back(); return t_; }
 Tpl inline void reverse(T &_) { reverse(all(_)); } Tpl inline T reversed(T _) { reverse(all(_)); return _; }
 Tpl inline void sort(T &_) { sort(all(_)); } Tpl inline T sorted(T _) { sort(all(_)); return _; }
 template <typename T, typename Cmp> inline void sort(T& arr, const Cmp& cmp) { sort(all(arr), cmp); }
@@ -227,8 +220,8 @@ template <typename... T> inline void print(const T&... a_) { using expander = i3
 template <typename ...T> inline void println(const T&... a_) { print(a_...); cout << '\n'; }
 template <typename... T> inline void input(T&... a_) { using expander = i32[]; (void)expander{0, (std::cin >> a_, 0)...}; }
 #else
-template <typename ...T> inline void rprint(const T&... a_) { (cout << ... << a_); } inline void rprint() {}
-template <typename ...T> inline void rprintln(const T&... a_) { (cout << ... << a_); cout << '\n'; } inline void rprintln() { cout << '\n'; }
+template <typename ...T> inline void print(const T&... a_) { (cout << ... << a_); } inline void print() {}
+template <typename ...T> inline void println(const T&... a_) { (cout << ... << a_); cout << '\n'; } inline void println() { cout << '\n'; }
 template <typename ...T> inline void input(T&... a_) { (cin >> ... >> a_); }
 #define in64(...) i64 __VA_ARGS__; input(__VA_ARGS__)
 
@@ -246,7 +239,7 @@ struct Printf {
     i32 prec = -1;
     i64 width = -1; char fill = ' ';
     bool exit = false; bool local = false;
-    void operator()() { cout << end; }
+    void operator()() {}
     template <typename ...T> void operator()(const T&... _) {
 #ifdef LOCAL
         prf_imp_(_...);
@@ -291,8 +284,6 @@ private:
 #define lprintfln(...) printfln(__VA_ARGS__).setLocal()
 #define printfExit(...) printfln(__VA_ARGS__).setExit()
 #define printExit(...) printfln().setExit()(__VA_ARGS__)
-#define print(...) printf()(__VA_ARGS__)
-#define println(...) printfln()(__VA_ARGS__)
 
 #ifdef LOCAL
 #define lprint print
@@ -354,45 +345,136 @@ mac_conv_(i64, ll) mac_conv_(i32, i) mac_conv_(u64, ull) mac_conv_(f64, d) mac_c
 #pragma endregion // conversions
 
 #pragma region miscellaneous
-template <typename T, typename T2, typename T3> inline T replace_if(const T& origin, const T2& cond, const T3& replacement)
+template <typename T, typename T2, typename T3> T replace_if(const T& origin, const T2& cond, const T3& replacement)
     requires is_convertible_v<T2, T> && is_convertible_v<T3, T> {
     return origin == cast<T>(cond) ? cast<T>(replacement) : origin;
 }
-#define rplf replace_if
-
-template <typename T, typename Func> inline v<T> funVec(ci64 len, const Func& f) { v<T> ret; forn(i, len) { ret.pb(f(i)); } return ret; }
-template <typename T, typename T2> inline void setMin(T& tar, const T2& val) requires is_convertible_v<T2, T> {
-    if(cast<T>(val) < tar) tar = cast<T>(val);
-}
-template <typename T, typename T2> inline void setMax(T& tar, const T2& val) requires is_convertible_v<T2, T> {
-    if(cast<T>(val) > tar) tar = cast<T>(val);
-}
+#define rplif replace_if
 
 #pragma endregion // miscellaneous
 
 
 #endif // ENABLE_MACRO
-#pragma clang diagnostic pop // remove at ext
-//@formatter:on              // remove at ext
+#if IGNORE_UNUSED_MACRO_WARNING
+#pragma clang diagnostic pop
+#endif
+//@formatter:on
 #pragma endregion // macros
 
+template <i64 mod>
+struct ModInt {
+    i64 v = 0;
+    ModInt(i64 val) : v((val%mod+mod) % mod) {} // NOLINT(*-explicit-constructor)
+    explicit operator i64() { return v; }
+    ModInt operator+(const ModInt& b) const { return {(v + b.v) % mod}; }
+    ModInt operator-(const ModInt& b) const { return {(v - b.v + mod) % mod}; }
+    ModInt operator*(const ModInt& b) const { return {(v * b.v) % mod}; }
+    ModInt& operator+=(const ModInt& b) { v = (v + b.v) % mod; return *this; }
+    ModInt& operator-=(const ModInt& b) { v = (v - b.v + mod) % mod; return *this; }
+    ModInt& operator*=(const ModInt& b) { v = (v * b.v) % mod; return *this; }
+};
+template <i64 mod> istream& operator>>(istream& in, ModInt<mod>& t) { in >> t.v; return in; }
+template <i64 mod> ostream& operator<<(ostream& out, const ModInt<mod>& t) { out << t.v; return out; }
+
+struct SumLazy;
+
+/// requirements: (TreeType + TreeType), (LazyType + UpdateType), (TreeType + LazyIter&&), (LazyType + LazyIter&&)
+/// <br> usage: node merge, node update, lazy update, lazy update
+template <typename TreeType = i64, typename LazyType = SumLazy, typename UpdateType = i64>
+class Lazyprop {
+public:
+    /// tree & lazy are copied values, should not be modified
+    struct iter {
+        i32 node, start, end; TreeType tree; LazyType lazy; Lazyprop* segPtr;
+        iter left() { segPtr->push(node<<1, start, (start+end)>>1);
+            return iter(node<<1, start, (start+end)>>1, segPtr->tree[node<<1], segPtr->lazy[node<<1], segPtr); }
+        iter right() { segPtr->push(node<<1|1, ((start+end)>>1)+1, end);
+            return iter(node<<1|1, ((start+end)>>1)+1, end, segPtr->tree[node<<1|1], segPtr->lazy[node<<1|1], segPtr); }
+        bool leaf() { return start == end; }
+    };
+protected:
+    v<TreeType> tree; v<LazyType> lazy; i32 n=-1;
+    void push(i32 node, i32 start, i32 end) {
+        tree[node] = tree[node] + iter(node, start, end, tree[node], lazy[node], this);
+        if(start!=end) { lazy[node<<1] = lazy[node<<1] + iter(node, start, end, tree[node], lazy[node], this);
+            lazy[node<<1|1] = lazy[node<<1|1] + iter(node, start, end, tree[node], lazy[node], this); }
+        lazy[node] = LazyType();
+    }
+public:
+    explicit Lazyprop(i32 treeSize) { tree = v<TreeType>(4*treeSize, TreeType()); lazy = v<LazyType>(4*treeSize, LazyType()); n = treeSize; }
+    explicit Lazyprop(const v<TreeType> &a) : Lazyprop((i32) a.size()) { init(a, 1, 1, n); }
+    void update(i32 left, i32 right, UpdateType diff) { if(left > right) { return; } update(1, left, right, 1, n, diff); }
+    TreeType query(i32 left, i32 right) { if(left > right) { return TreeType(); } return query(1, left, right, 1, n); }
+    TreeType query(i32 tar) { return query(tar, tar); }
+    iter root() { push(1, 1, n); return iter(1, 1, n, tree[1], lazy[1], this); }
+    // ret[i] == query(i+1)
+    v<TreeType> getLeafs() { v<TreeType> ret(n);
+        fun<void(i64, i64, i64)> f = [&](i64 p, i64 s, i64 e) { push(p, s, e);
+            if(s == e) ret[s-1] = tree[p];
+            else f(p<<1, s, (s+e)>>1), f(p<<1|1, ((s+e)>>1)+1, e); };
+        f(1, 1, n); return ret; }
+protected:
+    TreeType& init(const v<TreeType> &a, i32 node, i32 start, i32 end) {
+        if(start==end) return tree[node] = a[start-1];
+        else return tree[node] = init(a, node<<1, start, (start+end)>>1) + init(a, node<<1|1, ((start+end)>>1)+1, end);
+    }
+    TreeType& update(i32 node, i32 left, i32 right, i32 start, i32 end, UpdateType diff) {
+        push(node, start, end); if(end < left || right < start) return tree[node];
+        if(left <= start && end <= right) { lazy[node] = lazy[node] + diff; push(node, start, end); return tree[node]; }
+        return tree[node] = update(node<<1, left, right, start, (start+end)>>1, diff) + update(node<<1|1, left, right, ((start+end)>>1)+1, end, diff);
+    }
+    TreeType query(i32 node, i32 left, i32 right, i32 start, i32 end) {
+        push(node, start, end); if(right < start || end < left) return TreeType();
+        if(left <= start && end <= right) return tree[node];
+        return query(node<<1, left, right, start, (start+end)>>1) + query(node<<1|1, left, right, ((start+end)>>1)+1, end);
+    }
+};
+
+struct SumLazy { i64 v = 0; SumLazy operator+(ci64 i) const { return SumLazy(v+i); }
+    SumLazy operator+(const Lazyprop<i64, SumLazy, i64>::iter& i) const { return SumLazy(v+i.lazy.v); } };
+i64 operator+(ci64 a, const Lazyprop<i64, SumLazy, i64>::iter& b) { return a + (b.end - b.start + 1) * b.lazy.v; }
+
+struct tr {
+    i32 mx = 0;
+    tr operator+(const tr& b) const { return {max(mx, b.mx)}; }
+};
+
+struct lz {
+    i32 v = 0;
+    lz operator+(ci64 t) const { return {cast<i32>(v+t)}; }
+};
+using Ss = Lazyprop<tr, lz, i64>;
+tr operator+(const tr& a, Ss::iter&& b) { return {a.mx + b.lazy.v}; }
+lz operator+(const lz& a, Ss::iter&& b) { return {a.v + b.lazy.v}; }
 
 i32 main() {
     fastio;
-    inputout;
-    println(1);
-    println("3 3");
-    i64 blackCnt = randInt(0, 3);
-    v2<char> arr(3, v<char>(3, '.'));
-    i64 y = -1, x = -1;
-    rep(blackCnt) {
-        while(y == -1 || arr[y][x] != '.') y = randInt(0, 2), x = randInt(0, 2);
-        arr[y][x] = 'B';
+    in64(n);
+    v<tr> arr;
+    forn(i, n+1) arr.eb(-i);
+    Ss seg(arr);
+    v<ii> cond(1, {0,0});
+    rep(n) {
+        in64(l, r); l++; r++;
+        cond.pb({l, r});
+        seg.update(l, r, 1);
     }
-    y = -1, x = -1;
-    rep(blackCnt*2) {
-        while(y == -1 || arr[y][x] != '.') y = randInt(0, 2), x = randInt(0, 2);
-        arr[y][x] = 'W';
+    auto q2 = [&]() {
+        auto iter = seg.root();
+        while(!iter.leaf()) {
+            auto t = iter.right();
+            if(t.tree.mx >= 0) iter = t;
+            else iter = iter.left();
+        }
+        print(iter.end - 1, " ");
+    };
+    q2();
+    inRep() {
+        in64(p, l, r); l++; r++;
+        seg.update(cond[p][0], cond[p][1], -1);
+        cond[p] = {l, r};
+        seg.update(l, r, 1);
+        q2();
     }
-    for(const auto &a : arr) printfln(.sep="")(a);
+    println();
 }

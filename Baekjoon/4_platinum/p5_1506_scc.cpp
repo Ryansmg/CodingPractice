@@ -787,7 +787,7 @@ struct PrefixSum2d {
 
 #pragma region graph
 
-struct SimpleEdge { i64 start, end; }; struct DistEdge { i64 start, end, dist; }; struct SimpleI32Edge { i32 start, end; };
+struct SimpleEdge { i64 start, end; }; struct DistEdge { i64 start, end, dist; };
 Tpl concept isEdge1_ = requires(const T& a) { a.s; a.e; }; Tpl concept isEdge2_ = requires(const T& a) { a.start; a.end; }; Tpl concept isEdge = isEdge1_<T> || isEdge2_<T>;
 
 /// node >= 0
@@ -889,7 +889,6 @@ public:
 template <isEdge EdgeType = SimpleEdge>
 class DGraph : public Graph<EdgeType> { defGCFs_
 public:
-    explicit DGraph() = default;
     explicit DGraph(i64 maxNodeNum) : Graph<EdgeType>(maxNodeNum) {}
     explicit DGraph(const Graph<EdgeType>& g) : Graph<EdgeType>(g) {
         if(!this->unsafe) for(const auto& arr : this->undir) if(!arr.empty()) { cerr << "Not a valid DGraph.\n"; exit(1); }
@@ -1259,42 +1258,6 @@ public:
     }
 };
 
-
-/// 1 ~ n
-class TwoSat {
-    i64 n = 0; DGraph<SimpleI32Edge> g;
-public:
-    TwoSat() = default;
-    explicit TwoSat(i64 boolCount) : n(boolCount), g(boolCount*2+1) {}
-    /// a or b, a : true, -a : false
-    /// 1 <= a,b <= n
-    void add(i64 a, i64 b) {
-        a = a < 0 ? (-a) * 2 + 1 : a * 2;
-        b = b < 0 ? (-b) * 2 + 1 : b * 2;
-        g.makeDEdge(a^1, b); g.makeDEdge(b^1, a);
-    }
-    /// a : true, -a : false
-    /// 1 <= a,b <= n
-    void add(i64 a) { add(a, a); }
-    bool possible() {
-        v2l sccs = g.getScc({0}); vl sccId(n*2+2, -1);
-        forn(i, Size(sccs)) for(ci64 j : sccs[i]) sccId[j] = i;
-        forf(i, 1, n) if(sccId[2*i] == sccId[2*i+1]) return false;
-        return true;
-    }
-    /// @returns an empty vector if not possible
-    /// <br> returns arr[i] = (i+1) if possible
-    vb getAns() {
-        v2l sccs = g.getScc({0}); vl sccId(n*2+2, -1);
-        forn(i, Size(sccs)) for(ci64 j : sccs[i]) sccId[j] = i;
-        forf(i, 1, n) if(sccId[2*i] == sccId[2*i+1]) return {};
-        vi ansi(n, -1);
-        for(const vl& scc : sccs) for(ci64 i : scc) if(ansi[i/2-1] == -1) ansi[i/2-1] = (i&1) ? 1 : 0;
-        vb ans; for(ci32 i : ansi) ans.eb(i);
-        return ans;
-    }
-};
-
 #pragma endregion // Graph
 
 #pragma region string
@@ -1435,53 +1398,16 @@ using namespace PollardRho;
 
 i32 main() {
     fastio;
-//    filein; ansout;
-    tcRep() {
-        in64(n, m); // y, x => y*m + x + 1
-        v<str> arr; rep(n) arr.eb(inStr());
-        v2<i32> bid(n, v<i32>(m, -1)); // bid*4+(uldr=1234)
-        i32 curBid = 0;
-        forn(y, n) forn(x, m) if(arr[y][x] == 'B') bid[y][x]=curBid++;
-        TwoSat ts(4*curBid);
-        i32 UP=1, LEFT=2, DOWN=3, RIGHT=4;
-        auto id = [&](i64 y, i64 x, i32 dir) {
-            return bid[y][x]*4+dir;
-        };
-        i64 black = 0, white = 0;
-        forn(y, n) forn(x, m) {
-            if(arr[y][x] == 'B') { black++;
-                bool up = y && arr[y - 1][x] == 'W', down = y < n - 1 && arr[y + 1][x] == 'W';
-                bool left = x && arr[y][x - 1] == 'W', right = x < m - 1 && arr[y][x + 1] == 'W';
-                if(up && down) ts.add(id(y, x, UP), id(y, x, DOWN)), ts.add(-id(y, x, UP), -id(y, x, DOWN));
-                elif(up) ts.add(id(y, x, UP));
-                elif(down) ts.add(id(y, x, DOWN));
-                else { println("NO"); goto end; }
-
-                if(left && right) ts.add(id(y, x, LEFT), id(y, x, RIGHT)), ts.add(-id(y, x, LEFT), -id(y, x, RIGHT));
-                elif(left) ts.add(id(y, x, LEFT));
-                elif(right) ts.add(id(y, x, RIGHT));
-                else { println("NO"); goto end; }
-            }
-            elif(arr[y][x] == 'W') { white++;
-                vl dx{-1, 0, 1, 0}, dy{0, 1, 0, -1};
-                vi ddir{RIGHT, UP, LEFT, DOWN};
-                vl ids;
-                forn(i, 4) {
-                    if(y+dy[i]<0 || y+dy[i] >= n || x+dx[i]<0 || x+dx[i] >= m) continue;
-                    i64 nx = x + dx[i], ny = y + dy[i];
-                    if(arr[ny][nx]=='B') ids.eb(id(ny, nx, ddir[i]));
-                }
-                if(Size(ids) == 1) ts.add(ids[0]);
-                elif(Size(ids) == 2) ts.add(-ids[0], -ids[1]);
-                elif(Size(ids) == 3) ts.add(-ids[0], -ids[1]), ts.add(-ids[0], -ids[2]), ts.add(-ids[1], -ids[2]);
-                elif(Size(ids) == 4) {
-                    ts.add(-ids[0], -ids[1]); ts.add(-ids[0], -ids[2]); ts.add(-ids[0], -ids[3]);
-                    ts.add(-ids[1], -ids[2]); ts.add(-ids[1], -ids[3]); ts.add(-ids[2], -ids[3]);
-                }
-                else { println("NO"); goto end; }
-            }
-        }
-        println(black*2==white && ts.possible() ? "YES" : "NO");
-        end:{}
+    in64(n);
+    vl arr = inArr(n);
+    DGraph g(n-1);
+    forn(i, n) forn(j, n) if(input<char>()=='1') g.makeDEdge(i, j);
+    v2l sccs = g.getScc();
+    i64 ans = 0;
+    for(const auto& scc : sccs) {
+        i64 cans = INF;
+        for(ci64 i : scc) setMin(cans, arr[i]);
+        ans += cans;
     }
+    println(ans);
 }
