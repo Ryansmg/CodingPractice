@@ -248,8 +248,7 @@ struct Printf {
     i64 width = -1; char fill = ' ';
     bool exit = false; bool local = false;
     void operator()() const { cout << end; }
-    template <typename ...T> requires (sizeof...(T) > 0)
-    void operator()(const T&... _) {
+    template <typename ...T> void operator()(const T&... _) {
 #ifdef LOCAL
         prf_imp_(_...);
 #else
@@ -1269,14 +1268,15 @@ public:
     TwoSat() = default;
     explicit TwoSat(i64 boolCount) : n(boolCount), g(boolCount*2+1) {}
     /// a or b, a : true, -a : false
-    /// 1 <= a, b <= n
-    void add(i64 a, i64 b) { a = a < 0 ? (-a) * 2 + 1 : a * 2; b = b < 0 ? (-b) * 2 + 1 : b * 2;
-        g.makeDEdge(a^1, b); g.makeDEdge(b^1, a); }
-    void add(i64 a) { add(a, a); } void addTrue(i64 a) { add(a, a); } void addFalse(i64 a) { add(-a, -a); } void addOr(i64 a, i64 b) { add(a, b); }
-    void addXor(i64 a, i64 b) { add(a, b); add(-a, -b); } /// a != b이도록 조건을 설정
-    void addXnor(i64 a, i64 b) { add(a, -b); add(-a, b); } /// a == b이도록 조건을 설정
+    /// 1 <= a,b <= n
+    void add(i64 a, i64 b) {
+        a = a < 0 ? (-a) * 2 + 1 : a * 2;
+        b = b < 0 ? (-b) * 2 + 1 : b * 2;
+        g.makeDEdge(a^1, b); g.makeDEdge(b^1, a);
+    }
     /// a : true, -a : false
     /// 1 <= a,b <= n
+    void add(i64 a) { add(a, a); }
     bool possible() {
         v2l sccs = g.getScc({0}); vl sccId(n*2+2, -1);
         forn(i, Size(sccs)) for(ci64 j : sccs[i]) sccId[j] = i;
@@ -1284,14 +1284,14 @@ public:
         return true;
     }
     /// @returns an empty vector if not possible
-    /// <br> returns arr[i] = (answer for i) if possible
+    /// <br> returns arr[i] = (i+1) if possible
     vb getAns() {
         v2l sccs = g.getScc({0}); vl sccId(n*2+2, -1);
         forn(i, Size(sccs)) for(ci64 j : sccs[i]) sccId[j] = i;
         forf(i, 1, n) if(sccId[2*i] == sccId[2*i+1]) return {};
         vi ansi(n, -1);
         for(const vl& scc : sccs) for(ci64 i : scc) if(ansi[i/2-1] == -1) ansi[i/2-1] = (i&1) ? 1 : 0;
-        vb ans(1, false); for(ci32 i : ansi) ans.eb(i);
+        vb ans; for(ci32 i : ansi) ans.eb(i);
         return ans;
     }
 };
@@ -1434,7 +1434,53 @@ using namespace PollardRho;
 //@formatter:on
 
 
+i64 ccw(ll x1, ll y1, ll x2, ll y2, ll x3, ll y3) {
+    ll c = (x2-x1) * (y3-y1) - (x3-x1) * (y2-y1);
+    return c == 0 ? 0 : (c>0 ? 1 : -1);
+}
+
+//x1,y1-x2,y2 와 x3,y3-x4,y4 선분이 만나는지 확인
+bool line_intersect_b(ll x1, ll y1, ll x2, ll y2, ll x3, ll y3, ll x4, ll y4) {
+    if(x1 > x2) { swap(x1, x2); swap(y1, y2); }
+    if(x3 > x4) { swap(x3, x4); swap(y3, y4); }
+    int ccw1 = ccw(x1, y1, x2, y2, x3, y3), ccw2 = ccw(x1, y1, x2, y2, x4, y4);
+    int ccw3 = ccw(x3, y3, x4, y4, x1, y1), ccw4 = ccw(x3, y3, x4, y4, x2, y2);
+
+    if(ccw1 * ccw2 < 0 && ccw3 * ccw4 < 0) { return true; }
+
+    else if(ccw1 == 0 && ccw2 == 0){
+        if(x1 == x2) {
+            if(y1 > y2) swap(y1, y2);
+            if(y3 > y4) swap(y3, y4);
+            if(y1 <= y4 && y3 <= y2) return true;
+        }
+        else if(x1 <= x4 && x3 <= x2) return true;
+    }
+
+    else if((ccw1 * ccw2 == 0 && ccw3 * ccw4 <= 0) || (ccw1 * ccw2 <= 0 && ccw3 * ccw4 == 0)) return true;
+
+    return false;
+}
+
+
 i32 main() {
     fastio;
-    
+    in64(n);
+    TwoSat ts(3*n);
+    v<iiii> lines;
+    forn(i, n) {
+        ts.add(-(i*3+1), -(i*3+2)); ts.add(-(i*3+1), -(i*3+3)); ts.add(-(i*3+2), -(i*3+3));
+        lines.pb({qin(4)}); lines.pb({qin(4)}); lines.pb({qin(4)});
+    }
+    forn(i, 3*n) forf(j, i+1, 3*n-1) {
+        if(line_intersect_b(lines[i][0], lines[i][1], lines[i][2], lines[i][3],
+                            lines[j][0], lines[j][1], lines[j][2], lines[j][3])) {
+            ts.add(i+1, j+1);
+        }
+    }
+    vb ans = ts.getAns();
+    if(ans.empty()) printExit(-1);
+    vl ans2; forn(i, Size(ans)) if(ans[i]) ans2.eb(i+1);
+    println(Size(ans2));
+    println(ans2);
 }

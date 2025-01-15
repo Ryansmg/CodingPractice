@@ -1436,5 +1436,66 @@ using namespace PollardRho;
 
 i32 main() {
     fastio;
-    
+    in64(r, s);
+    v<str> arr;
+    rep(r) arr.eb(inStr());
+    // n*4+(1:left, 2:right, 3:up, 4:down)
+    v2l towerN(r, vl(s, -1)); i64 temp = 0;
+    forn(i, r) forn(j, s) if(arr[i][j] == 'T') towerN[i][j] = temp++;
+    v2<vl> cand(r, v<vl>(s, vl()));
+    TwoSat ts(4*temp);
+    forn(y, r) forn(x, s) {
+        if(arr[y][x] != 'T') continue;
+        ts.addXor(towerN[y][x]*4+1, towerN[y][x]*4+2);
+        ts.addXor(towerN[y][x]*4+3, towerN[y][x]*4+4);
+
+        bool tl = true, tr = true, tu = true, td = true;
+        // check towers
+        i64 tx = max(0, x-1);
+        while(tx && arr[y][tx] != '#' && arr[y][tx] != 'T') tx--;
+        if(tx != x && arr[y][tx] == 'T') tl = false;
+        tx = min(s-1, x+1);
+        while(tx<s-1 && arr[y][tx] != '#' && arr[y][tx] != 'T') tx++;
+        if(tx != x && arr[y][tx] == 'T') tr = false;
+        i64 ty = max(0, y-1);
+        while(ty && arr[ty][x] != '#' && arr[ty][x] != 'T') ty--;
+        if(ty != y && arr[ty][x] == 'T') tu = false;
+        ty = min(r-1, y+1);
+        while(ty < r-1 && arr[ty][x] != '#' && arr[ty][x] != 'T') ty++;
+        if(ty != y && arr[ty][x] == 'T') td = false;
+        // set candidates
+        if(tl) { tx = max(0, x-1);
+            while(tx>=0 && arr[y][tx] != '#') if(arr[y][tx--] == 'n') cand[y][tx+1].eb(towerN[y][x]*4 + 1);
+        } else ts.addFalse(towerN[y][x]*4 + 1);
+        if(tr) { tx = min(s-1, x+1);
+            while(tx<=s-1 && arr[y][tx] != '#') if(arr[y][tx++] == 'n') cand[y][tx-1].eb(towerN[y][x]*4 + 2);
+        } else ts.addFalse(towerN[y][x]*4 + 2);
+        if(tu) { ty = max(0, y-1);
+            while(ty>=0 && arr[ty][x] != '#') if(arr[ty--][x] == 'n') cand[ty+1][x].eb(towerN[y][x]*4 + 3);
+        } else ts.addFalse(towerN[y][x]*4 + 3);
+        if(td) { ty = min(r-1, y+1);
+            while(ty <= r-1 && arr[ty][x] != '#') if(arr[ty++][x] == 'n') cand[ty-1][x].eb(towerN[y][x]*4 + 4);
+        } else ts.addFalse(towerN[y][x]*4 + 4);
+    }
+    forn(y, r) forn(x, s) {
+        if(arr[y][x] == 'n') {
+            assert(cand[y][x].size() <= 2);
+            assert(!cand[y][x].empty());
+            if(Size(cand[y][x]) == 1) ts.add(cand[y][x][0]);
+            else ts.add(cand[y][x][0], cand[y][x][1]);
+        } else assert(cand[y][x].empty());
+    }
+    vb ans = ts.getAns();
+    forn(y, r) forn(x, s) {
+        if(arr[y][x] == 'T') {
+            i64 n = towerN[y][x];
+            bool tl = ans[n*4+1], tr = ans[n*4+2], tu = ans[n*4+3], td = ans[n*4+4];
+            if(tl && td) arr[y][x] = '1';
+            elif(td && tr) arr[y][x] = '2';
+            elif(tr && tu) arr[y][x] = '3';
+            elif(tu && tl) arr[y][x] = '4';
+            else { cerr << "Something went wrong\n"; exit(1); }
+        }
+    }
+    for(const str& z : arr) println(z);
 }

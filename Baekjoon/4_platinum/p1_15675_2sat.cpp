@@ -248,8 +248,7 @@ struct Printf {
     i64 width = -1; char fill = ' ';
     bool exit = false; bool local = false;
     void operator()() const { cout << end; }
-    template <typename ...T> requires (sizeof...(T) > 0)
-    void operator()(const T&... _) {
+    template <typename ...T> void operator()(const T&... _) {
 #ifdef LOCAL
         prf_imp_(_...);
 #else
@@ -1269,14 +1268,20 @@ public:
     TwoSat() = default;
     explicit TwoSat(i64 boolCount) : n(boolCount), g(boolCount*2+1) {}
     /// a or b, a : true, -a : false
-    /// 1 <= a, b <= n
-    void add(i64 a, i64 b) { a = a < 0 ? (-a) * 2 + 1 : a * 2; b = b < 0 ? (-b) * 2 + 1 : b * 2;
-        g.makeDEdge(a^1, b); g.makeDEdge(b^1, a); }
-    void add(i64 a) { add(a, a); } void addTrue(i64 a) { add(a, a); } void addFalse(i64 a) { add(-a, -a); } void addOr(i64 a, i64 b) { add(a, b); }
-    void addXor(i64 a, i64 b) { add(a, b); add(-a, -b); } /// a != b이도록 조건을 설정
-    void addXnor(i64 a, i64 b) { add(a, -b); add(-a, b); } /// a == b이도록 조건을 설정
+    /// 1 <= a,b <= n
+    void add(i64 a, i64 b) {
+        a = a < 0 ? (-a) * 2 + 1 : a * 2;
+        b = b < 0 ? (-b) * 2 + 1 : b * 2;
+        g.makeDEdge(a^1, b); g.makeDEdge(b^1, a);
+    }
+    void addOr(i64 a, i64 b) { add(a, b); }
+    // a != b이도록 조건을 설정
+    void addXor(i64 a, i64 b) { add(a, b); add(-a, -b); }
+    // a == b이도록 조건을 설정
+    void addXnor(i64 a, i64 b) { add(a, -b); add(-a, b); }
     /// a : true, -a : false
     /// 1 <= a,b <= n
+    void add(i64 a) { add(a, a); }
     bool possible() {
         v2l sccs = g.getScc({0}); vl sccId(n*2+2, -1);
         forn(i, Size(sccs)) for(ci64 j : sccs[i]) sccId[j] = i;
@@ -1284,14 +1289,14 @@ public:
         return true;
     }
     /// @returns an empty vector if not possible
-    /// <br> returns arr[i] = (answer for i) if possible
+    /// <br> returns arr[i] = (i+1) if possible
     vb getAns() {
         v2l sccs = g.getScc({0}); vl sccId(n*2+2, -1);
         forn(i, Size(sccs)) for(ci64 j : sccs[i]) sccId[j] = i;
         forf(i, 1, n) if(sccId[2*i] == sccId[2*i+1]) return {};
         vi ansi(n, -1);
         for(const vl& scc : sccs) for(ci64 i : scc) if(ansi[i/2-1] == -1) ansi[i/2-1] = (i&1) ? 1 : 0;
-        vb ans(1, false); for(ci32 i : ansi) ans.eb(i);
+        vb ans; for(ci32 i : ansi) ans.eb(i);
         return ans;
     }
 };
@@ -1436,5 +1441,13 @@ using namespace PollardRho;
 
 i32 main() {
     fastio;
-    
+    in64(n, m);
+    // 행 : 1 ~ n, 열 : n+1 ~ n+m
+    TwoSat sat(n+m);
+    forf(y, 1, n) forf(x, 1, m) {
+        char c = input<char>();
+        if(c == '#') sat.addXnor(y, n+x);
+        elif(c == '*') sat.addXor(y, n+x);
+    }
+    println(sat.possible());
 }

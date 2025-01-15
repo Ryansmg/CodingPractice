@@ -73,6 +73,7 @@ Tpl void erase_one(ordered_multiset<T> &omset_, T val_) { int index = omset_.ord
 Tpl void erase_all(ordered_multiset<T> &omset_, T val_) { while(contains(omset_, val_)) erase_one(omset_, val_); }
 
 using i16 = short; using i32 = signed; using i64 = long long; using i128 = __int128;
+using ll = long long;
 using u16 = unsigned short; using u32 = unsigned; using u64 = unsigned long long; using u128 = unsigned __int128;
 using f32 = float; using f64 = double; using f128 = long double;
 using str = std::string;
@@ -246,7 +247,7 @@ struct Printf {
     i32 prec = -1;
     i64 width = -1; char fill = ' ';
     bool exit = false; bool local = false;
-    void operator()() { cout << end; }
+    void operator()() const { cout << end; }
     template <typename ...T> void operator()(const T&... _) {
 #ifdef LOCAL
         prf_imp_(_...);
