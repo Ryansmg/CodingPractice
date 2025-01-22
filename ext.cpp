@@ -408,8 +408,6 @@ struct iterSeg {
         for(; l<r; l>>=1, r>>=1) { if(l&1) { ans = ans + tree[l++]; } if(r&1) { ans = ans + tree[--r]; } } return ans; }
 };
 
-Tpl concept hasOperatorMinus = requires(const T& a, const T& b) { { a - b }; };
-
 /// requirements: operator+(T, T)
 template <typename T = i64>
 class Segtree {
@@ -438,7 +436,7 @@ public:
         f(1, 1, n); return ret; }
 
     /// [1..i] 범위 합이 val 이하인 최대의 i를 리턴
-    iter strcc_(bi,nSearch)(T val) requires hasOperatorMinus<T> {
+    iter strcc_(bi,nSearch)(T val) {
         iter cur = root();
         while(!cur.leaf()) { iter l = cur.left();
             if(val <= l.value) cur = l;
