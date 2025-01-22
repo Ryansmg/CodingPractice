@@ -393,82 +393,97 @@ template <typename T, typename T2> inline void setMax(T& tar, const T2& val) req
 //@formatter:on              // remove at ext
 #pragma endregion // macros
 
-/// Persistent Segment Tree
-template <typename T = i64>
-class Pst {
-    v<T> tree; vi l, r; i64 ln, rn;
+class UFR {
+    i32 n; vi parent, rank; stack<tuple<i32, i32, bool>> history;
 public:
-    Pst(i64 leftBound, i64 rightBound) : ln(leftBound), rn(rightBound) { rep(2) tree.eb(), l.eb(0), r.eb(0); }
-    // index = [1..n]
-    explicit Pst(const v<T>& arr) : ln(1), rn(Size(arr)) { tree.reserve(4*rn); rep(2) tree.eb(), l.eb(0), r.eb(0);
-        init(1, ln, rn, arr); }
-    struct Iter {
-        Pst* ptr = nullptr; i32 pos = 0; i64 s = INF, e = -INF;
-        T operator*() { return ptr->tree[pos]; } bool null() { return !pos; }
-        Iter left() { return {ptr, ptr->l[pos], s, (s+e)/2}; } Iter right() { return {ptr, ptr->r[pos], (s+e)/2+1, e}; }
-    };
-    struct Root {
-        i32 pos = 0, prvPos = 0; Pst* ptr = nullptr;
-        Root next() {
-            Root ret; ret.pos = Size(ptr->tree); ret.prvPos = pos; ret.ptr = ptr;
-            ptr->tree.eb(ptr->tree[pos]); ptr->l.eb(ptr->l[pos]); ptr->r.eb(ptr->r[pos]);
-            return ret;
-        }
-        Iter iter() { return {ptr, pos, ptr->ln, ptr->rn}; }
-        /// @returns self
-        Root& add(i64 tar, const T& diff) { ptr->update(prvPos, pos, ptr->ln, ptr->rn, tar, diff, true); return *this; }
-        /// @returns self
-        Root& set(i64 tar, const T& val) { ptr->update(prvPos, pos, ptr->ln, ptr->rn, tar, val, false); return *this; }
-        T query(i64 left, i64 right) { return ptr->query(pos, ptr->ln, ptr->rn, left, right); }
-    };
-    friend Root; friend Iter; Root root() { return { 1, 0, this }; }
-private:
-    T& init(i32 cur, i64 s, i64 e, const v<T>& arr) {
-        if(s == e) return tree[cur] = arr[s-1];
-        l[cur] = Size(tree); r[cur] = Size(tree)+1; rep(2) tree.eb(), l.eb(0), r.eb(0);
-        return tree[cur] = init(l[cur], s, (s+e)>>1, arr) + init(r[cur], ((s+e)>>1)+1, e, arr);
+    explicit UFR(i32 maxNodeNum) : n(maxNodeNum+1), parent(n), rank(n, 1) { iota(all(parent), 0); }
+    inline i32 group(i32 x) { return x == parent[x] ? x : group(parent[x]); }
+    inline i32 operator[](i32 x) { return group(x); } inline i32 find(i32 x) { return group(x); }
+    void merge(i32 a, i32 b) {
+        a = group(a); b = group(b);
+        if(a == b) { history.emplace(a, b, false); return; }
+        if(rank[a] < rank[b]) swap(a, b);
+        bool rankIncrement = rank[a] == rank[b];
+        history.emplace(a, b, rankIncrement);
+        parent[b] = a; rank[a] += rankIncrement;
     }
-    void update(i32 prv, i32 cur, i64 s, i64 e, i64 t, const T& d, bool isAdd) {
-        if(s == e) { if(isAdd) { tree[cur] = tree[cur] + d; } else { tree[cur] = d; } return; } i64 m = (s + e) >> 1;
-        if(t <= m) {
-            if(!l[cur] || l[cur] == l[prv]) l[cur] = Size(tree), tree.eb(tree[l[prv]]), l.eb(l[l[prv]]), r.eb(r[l[prv]]);
-            if(!r[cur]) r[cur] = r[prv];
-            update(l[prv], l[cur], s, m, t, d, isAdd);
-        } else {
-            if(!l[cur]) l[cur] = l[prv];
-            if(!r[cur] || r[cur] == r[prv]) r[cur] = Size(tree), tree.eb(tree[r[prv]]), l.eb(l[r[prv]]), r.eb(r[r[prv]]);
-            update(r[prv], r[cur], m + 1, e, t, d, isAdd);
+    void rollback(i32 cnt = 1) {
+        rep(cnt) {
+            auto [a, b, i] = pop(history);
+            if(a != b) parent[b] = b, rank[a] -= i;
         }
-        tree[cur] = tree[l[cur]] + tree[r[cur]];
-    }
-    T query(i32 cur, i64 s, i64 e, i64 ql, i64 qr) {
-        if(!cur || qr < s || e < ql) { return T(); } if(ql <= s && e <= qr) return tree[cur];
-        return query(l[cur], s, (s+e)>>1, ql, qr) + query(r[cur], ((s+e)>>1)+1, e, ql, qr);
     }
 };
-using PstIter = Pst<i64>::Iter; using PstRoot = Pst<i64>::Root;
 
+class ODC {
+    v<v<ii>> lines;
+    v<v<iii>> queries; // {a, b, idx}
+    UFR ufr; i32 n; i32 queryCnt = 0, curTime = 1; map<ii, i32> addedLines;
+    void addLine(i32 p, i32 s, i32 e, i32 tl, i32 tr, const ii& line) {
+        if(e < tl || tr < s) return;
+        if(tl <= s && e <= tr) { lines[p].pb(line); return; }
+        addLine(p*2, s, (s+e)>>1, tl, tr, line);
+        addLine(p*2+1, ((s+e)>>1)+1, e, tl, tr, line);
+    }
+    void solve(i32 p, i32 s, i32 e, vb& ans) {
+        for(const auto &[a, b] : lines[p]) ufr.merge(a, b);
+        if(s == e) {
+            for(const auto& [a, b, i] : queries[s])
+                ans[i] = ufr[a] == ufr[b];
+        }
+        else solve(p*2, s, (s+e)>>1, ans), solve(p*2+1, ((s+e)>>1)+1, e, ans);
+        ufr.rollback(Size(lines[p]));
+    }
+public:
+    ODC(i32 maxNode, i32 maxTime) : lines(maxTime*4, v<ii>()), queries(maxTime+3, v<iii>()), ufr(maxNode), n(maxTime) { }
+    void addLine(const ii& line, i32 tl, i32 tr) { addLine(1, 1, n, tl, tr, line); }
+    void addLine(i32 ll, i32 lr, i32 tl, i32 tr) { addLine(1, 1, n, tl, tr, {ll, lr}); }
+    void addQuery(i32 a, i32 b, i32 t) { queries[t].pb({a, b, queryCnt++}); }
+    /// 위 함수들이랑 아래 함수들이랑 섞어 쓰면 인생 망해요
+    /// O(logN)
+    void addLine(i32 a, i32 b) { addedLines.insert({{min(a, b), max(a, b)}, curTime++}); }
+    void removeLine(i32 a, i32 b, bool allowNonexistentEdge = false) {
+        auto iter = addedLines.find({min(a, b), max(a, b)});
+        if(iter == addedLines.end()) {
+            if(!allowNonexistentEdge) cerr << "Removed before add\n", exit(1);
+            return;
+        }
+        addLine(iter->first, iter->second, curTime++);
+        addedLines.erase(iter);
+    }
+    void addQuery(i32 a, i32 b) { queries[curTime++].pb({a, b, queryCnt++}); }
+    vb solve() {
+        for(const auto& [line, t] : addedLines) addLine(line, t, n);
+        addedLines.clear();
+        vb ans(queryCnt); solve(1, 1, n, ans); return ans;
+    }
+};
 
 i32 main() {
     fastio;
-    in64(n);
-    vl arr = inArr(n);
-    v<PstRoot> psts; Pst pst(1, n);
-    psts.pb(pst.root());
-    umap<i64, i64> map;
-    forn(i, n) {
-        auto t = psts.back().next();
-        i64 prevInd = map[arr[i]];
-        if(prevInd) t.add(prevInd, -1);
-        map[arr[i]] = i+1;
-        t.add(i+1, 1);
-        psts.eb(t);
-    }
-    i64 q = 0;
-    inRep() {
-        in64(x, r);
-        i64 l = x + q;
-        q = psts[r].query(l, r);
-        println(q);
+    tcRep() {
+        in64(n, m);
+        vl a(n+1), b(n+1);
+        forf(i, 1, n) a[i] = input();
+        bool notPossible = false;
+        ODC odc(n+n, n);
+        forf(i, 1, n) {
+            b[i] = input();
+            if(a[i] < b[i]) {
+                if(notPossible) continue;
+                println(0); notPossible = true;
+            }
+            odc.addQuery(i, n+b[i], b[i]);
+            odc.addLine(i, n+a[i], a[i], a[i]);
+        }
+        rep(m) {
+            in64(u, v);
+            i64 B = max(b[u], b[v]), A = min(a[u], a[v]);
+            if(B > A) continue;
+            odc.addLine(u, v, B, A);
+        }
+        if(notPossible) continue;
+//        println(odc.solve());
+        println(sum(castVec<i64>(odc.solve())) == n);
     }
 }

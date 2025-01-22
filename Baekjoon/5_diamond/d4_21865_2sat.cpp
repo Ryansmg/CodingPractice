@@ -52,12 +52,12 @@ using std::array, std::vector, std::list, std::pair, std::tuple, std::tie;
 using std::stack, std::queue, std::deque, std::set, std::multiset, std::unordered_map, std::unordered_set, std::numeric_limits, std::function;
 using std::map, std::initializer_list, std::bitset, std::string;
 using std::max, std::min, std::gcd, std::lcm, std::pow, std::swap, std::abs, std::sin, std::cos, std::tan, std::asin, std::acos, std::atan;
-using std::floor, std::ceil, std::round, std::sinh, std::cosh, std::tanh, std::atan2, std::sqrt;
+using std::floor, std::ceil, std::round, std::sinh, std::cosh, std::tanh, std::atan2;
 using std::less, std::greater, std::less_equal, std::greater_equal, std::all_of, std::any_of, std::hash;
 using std::stoi, std::stol, std::stoll, std::stoul, std::stoull, std::stof, std::stod, std::stold;
 using std::sort, std::stable_sort, std::shuffle, std::uniform_int_distribution, std::mt19937, std::random_device, std::reverse;
 using std::iota, std::prev, std::next, std::prev_permutation, std::next_permutation;
-using std::complex, std::polar, std::is_integral_v, std::is_convertible_v, std::is_arithmetic_v, std::is_floating_point_v, std::is_same_v, std::to_string;
+using std::complex, std::polar, std::is_integral_v, std::is_convertible_v, std::is_arithmetic_v, std::is_floating_point_v, std::to_string;
 #if !CPP17_MODE
 using std::popcount;
 #endif // !CPP17_MODE
@@ -76,11 +76,6 @@ using i16 = short; using i32 = signed; using i64 = long long; using i128 = __int
 using ll = long long;
 using u16 = unsigned short; using u32 = unsigned; using u64 = unsigned long long; using u128 = unsigned __int128;
 using f32 = float; using f64 = double; using f128 = long double;
-#ifdef LOCAL
-using F128 = long double;
-#else
-using F128 = __float128;
-#endif
 using str = std::string;
 template <typename T, typename T2> using umap = std::unordered_map<T, T2>;
 Tpl using uset = std::unordered_set<T>;
@@ -170,8 +165,8 @@ Tpl inline T pow(const T& a, const T& b, const T& mod) { return pow_(a, b, mod);
 inline i64 pow(ci64 a, ci64 b, ci64 mod) { return pow_(a, b, mod); }
 
 Tpl inline T gcd_(T a, T b) { if(a<b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
-Tpl inline T max(const v<T>& v_) { T ret = v_.empty() ? lim<T>::min() : v_[0]; for(const T &t_ : v_) { ret = max(ret, t_); } return ret; }
-Tpl inline T min(const v<T>& v_) { T ret = v_.empty() ? lim<T>::max() : v_[0]; for(const T &t_ : v_) { ret = min(ret, t_); } return ret; }
+Tpl inline T max(const v<T>& v_) { T ret = lim<T>::min(); for(const T &t_ : v_) { ret = max(ret, t_); } return ret; }
+Tpl inline T min(const v<T>& v_) { T ret = lim<T>::max(); for(const T &t_ : v_) { ret = min(ret, t_); } return ret; }
 inline i64 max(ci64 a, ci64 b) { return a > b ? a : b; } inline i64 min(ci64 a, ci64 b) { return a < b ? a : b; }
 Tpl inline T lcm_(const T& a, const T& b) { return a / gcd_(a, b) * b; }
 Tpl inline T sq_(const T &i) { return i * i; }
@@ -575,66 +570,6 @@ private:
     }
 };
 
-/// Persistent Li Chao Tree
-class Plct {
-public:
-    struct Line { i64 a = 0, b = llmax; i64 operator[](ci64 x) const { return a*x+b; } };
-private:
-    v<Line> tr; vi l, r; i64 ln, rn; i64 mode = 1;
-public:
-    Plct(i64 leftBound, i64 rightBound, bool useMaxQuery = false) : ln(leftBound), rn(rightBound) {
-        rep(2) tr.eb(), l.eb(0), r.eb(0);
-        if(useMaxQuery) mode = -1;
-    }
-    struct Root {
-        i32 pos = 0, prvPos = 0; Plct* ptr = nullptr;
-        Root next() const {
-            Root ret; ret.pos = Size(ptr->tr); ret.prvPos = pos; ret.ptr = ptr;
-            ptr->tr.eb(ptr->tr[pos]); ptr->l.eb(ptr->l[pos]); ptr->r.eb(ptr->r[pos]);
-            return ret;
-        }
-        /// @returns self
-        Root& add(i64 a, i64 b) { ptr->update({a*ptr->mode, b*ptr->mode}, prvPos, pos, ptr->ln, ptr->rn); return *this; }
-        /// @returns self
-        Root& add(const Line& line) { add(line.a, line.b); return *this; }
-        /// @returns self
-        Root& addAt(i64 left, i64 right, i64 a, i64 b) { ptr->updateAt(left, right, prvPos, pos, ptr->ln, ptr->rn, {a*ptr->mode, b*ptr->mode}); return *this; }
-        i64 query(i64 x) const { return ptr->mode * ptr->query(x, pos, ptr->ln, ptr->rn); }
-    };
-    friend Root; Root root() { return { 1, 0, this }; }
-private:
-    void updateAt(i64 ul, i64 ur, i64 pp, i64 p, i64 s, i64 e, const Line& line) {
-        if(ur < s || e < ul) return;
-        if(ul <= s && e <= ur) { update(line, pp, p, s, e); return; }
-        if(!l[p] || l[p] == l[pp]) l[p] = Size(tr), tr.eb(tr[l[pp]]), l.eb(l[r[pp]]), r.eb(r[r[pp]]);
-        if(!r[p] || r[p] == r[pp]) r[p] = Size(tr), tr.eb(tr[r[pp]]), l.eb(l[l[pp]]), r.eb(r[l[pp]]);
-        updateAt(ul, ur, l[pp], l[p], s, (s+e)/2, line);
-        updateAt(ul, ur, r[pp], r[p], (s+e)/2+1, e, line);
-    }
-    void update(const Line& line, i64 pp, i64 p, i64 s, i64 e) {
-        i64 m = (s + e) >> 1; Line low = tr[p], high = line;
-        if(low[s] > high[s]) swap(low, high);
-        if(low[e] <= high[e]) { tr[p] = low; return; }
-        if(low[m] < high[m]) {
-            tr[p] = low;
-            if(!l[p]) l[p] = l[pp];
-            if(!r[p] || r[p] == r[pp]) r[p] = Size(tr), tr.eb(tr[r[pp]]), l.eb(l[r[pp]]), r.eb(r[r[pp]]);
-            update(high, r[pp], r[p], m+1, e);
-        } else {
-            tr[p] = high;
-            if(!l[p] || l[p] == l[pp]) l[p] = Size(tr), tr.eb(tr[l[pp]]), l.eb(l[l[pp]]), r.eb(r[l[pp]]);
-            if(!r[p]) r[p] = r[pp];
-            update(low, l[pp], l[p], s, m);
-        }
-    }
-    i64 query(i64 x, i64 p, i64 s, i64 e) const {
-        if(!p) { return llmax; } i64 m = (s + e) >> 1;
-        if(x <= m) return min(tr[p][x], query(x, l[p], s, m));
-        return min(tr[p][x], query(x, r[p], m+1, e));
-    }
-};
-using PlctRoot = Plct::Root;
-
 /// 1-based index
 Tpl64 struct Fenwick {
     v<T> tree; i32 n;
@@ -657,7 +592,6 @@ struct Fenwick2d {
 
 template <typename T = i64>
 class DynamicSeg {
-    inline i64 m(ci64 s, ci64 e) { return (s+e)>=0 ? (s+e)>>1 : ((s+e)>>1)-1; }
     v<T> tree; i64 ln, rn; vi l, r;
     i32 next() { tree.eb(); l.eb(-1); r.eb(-1); return Size(tree)-1; }
 public:
@@ -670,24 +604,24 @@ private:
         if(s == e) return tree[p] = tree[p] + v;
         if(t <= (s + e) / 2) {
             if(l[p] == -1) l[p] = next();
-            return tree[p] = add(l[p], s, m(s, e), t, v) + (r[p] == -1 ? T() : tree[r[p]]);
+            return tree[p] = add(l[p], s, (s+e)/2, t, v) + (r[p] == -1 ? T() : tree[r[p]]);
         }
         if(r[p] == -1) r[p] = next();
-        return tree[p] = (l[p] == -1 ? T() : tree[l[p]]) + add(r[p], m(s, e)+1, e, t, v);
+        return tree[p] = (l[p] == -1 ? T() : tree[l[p]]) + add(r[p], (s+e)/2+1, e, t, v);
     }
     T& set(i32 p, i64 s, i64 e, i64 t, const T& v) {
         if(s == e) return tree[p] = v;
         if(t <= (s + e) / 2) {
             if(l[p] == -1) l[p] = next();
-            return tree[p] = set(l[p], s, m(s, e), t, v) + (r[p] == -1 ? T() : tree[r[p]]);
+            return tree[p] = set(l[p], s, (s+e)/2, t, v) + (r[p] == -1 ? T() : tree[r[p]]);
         }
         if(r[p] == -1) r[p] = next();
-        return tree[p] = (l[p] == -1 ? T() : tree[l[p]]) + set(r[p], m(s, e)+1, e, t, v);
+        return tree[p] = (l[p] == -1 ? T() : tree[l[p]]) + set(r[p], (s+e)/2+1, e, t, v);
     }
     T query(i32 p, i64 s, i64 e, i64 ql, i64 qr) {
         if(p == -1 || qr < s || e < ql) return T();
         if(ql <= s && e <= qr) return tree[p];
-        return query(l[p], s, m(s, e), ql, qr) + query(r[p], m(s, e)+1, e, ql, qr);
+        return query(l[p], s, (s+e)/2, ql, qr) + query(r[p], (s+e)/2+1, e, ql, qr);
     }
 };
 
@@ -786,35 +720,34 @@ struct SpSumLazy { i64 v = 0; SpSumLazy operator+(ci64 i) const { return SpSumLa
 i64 operator+(ci64 a, const SparseSeg<i64, SpSumLazy, i64>::iter& b) { return a + (b.end - b.start + 1) * b.lazy.v; }
 
 
-/// Persistent Segment Tree
 template <typename T = i64>
-class Pst {
+class pst {
     v<T> tree; vi l, r; i64 ln, rn;
 public:
-    Pst(i64 leftBound, i64 rightBound) : ln(leftBound), rn(rightBound) { rep(2) tree.eb(), l.eb(0), r.eb(0); }
+    pst(i64 leftBound, i64 rightBound) : ln(leftBound), rn(rightBound) { rep(2) tree.eb(), l.eb(0), r.eb(0); }
     // index = [1..n]
-    explicit Pst(const v<T>& arr) : ln(1), rn(Size(arr)) { tree.reserve(4*rn); rep(2) tree.eb(), l.eb(0), r.eb(0);
+    explicit pst(const v<T>& arr) : ln(1), rn(Size(arr)) { tree.reserve(4*rn); rep(2) tree.eb(), l.eb(0), r.eb(0);
         init(1, ln, rn, arr); }
-    struct Iter {
-        Pst* ptr = nullptr; i32 pos = 0; i64 s = INF, e = -INF;
+    struct iter {
+        pst* ptr = nullptr; i32 pos = 0; i64 s = INF, e = -INF;
         T operator*() { return ptr->tree[pos]; } bool null() { return !pos; }
-        Iter left() { return {ptr, ptr->l[pos], s, (s+e)/2}; } Iter right() { return {ptr, ptr->r[pos], (s+e)/2+1, e}; }
+        iter left() { return {ptr, ptr->l[pos], s, (s+e)/2}; } iter right() { return {ptr, ptr->r[pos], (s+e)/2+1, e}; }
     };
-    struct Root {
-        i32 pos = 0, prvPos = 0; Pst* ptr = nullptr;
-        Root next() {
-            Root ret; ret.pos = Size(ptr->tree); ret.prvPos = pos; ret.ptr = ptr;
+    struct root {
+        i32 pos = 0, prvPos = 0; pst* ptr = nullptr;
+        root next() {
+            root ret; ret.pos = Size(ptr->tree); ret.prvPos = pos; ret.ptr = ptr;
             ptr->tree.eb(ptr->tree[pos]); ptr->l.eb(ptr->l[pos]); ptr->r.eb(ptr->r[pos]);
             return ret;
         }
-        Iter iter() { return {ptr, pos, ptr->ln, ptr->rn}; }
+        iter getIter() { return {ptr, pos, ptr->ln, ptr->rn}; }
         /// @returns self
-        Root& add(i64 tar, const T& diff) { ptr->update(prvPos, pos, ptr->ln, ptr->rn, tar, diff, true); return *this; }
+        root& add(i64 tar, const T& diff) { ptr->update(prvPos, pos, ptr->ln, ptr->rn, tar, diff, true); return *this; }
         /// @returns self
-        Root& set(i64 tar, const T& val) { ptr->update(prvPos, pos, ptr->ln, ptr->rn, tar, val, false); return *this; }
+        root& set(i64 tar, const T& val) { ptr->update(prvPos, pos, ptr->ln, ptr->rn, tar, val, false); return *this; }
         T query(i64 left, i64 right) { return ptr->query(pos, ptr->ln, ptr->rn, left, right); }
     };
-    friend Root; friend Iter; Root root() { return { 1, 0, this }; }
+    friend root; friend iter; root begin() { return { 1, 0, this }; }
 private:
     T& init(i32 cur, i64 s, i64 e, const v<T>& arr) {
         if(s == e) return tree[cur] = arr[s-1];
@@ -824,12 +757,12 @@ private:
     void update(i32 prv, i32 cur, i64 s, i64 e, i64 t, const T& d, bool isAdd) {
         if(s == e) { if(isAdd) { tree[cur] = tree[cur] + d; } else { tree[cur] = d; } return; } i64 m = (s + e) >> 1;
         if(t <= m) {
-            if(!l[cur] || l[cur] == l[prv]) l[cur] = Size(tree), tree.eb(tree[l[prv]]), l.eb(l[l[prv]]), r.eb(r[l[prv]]);
+            if(!l[cur] || l[cur] == l[prv]) l[cur] = Size(tree), tree.eb(tree[l[prv]]), l.eb(0), r.eb(0);
             if(!r[cur]) r[cur] = r[prv];
             update(l[prv], l[cur], s, m, t, d, isAdd);
         } else {
             if(!l[cur]) l[cur] = l[prv];
-            if(!r[cur] || r[cur] == r[prv]) r[cur] = Size(tree), tree.eb(tree[r[prv]]), l.eb(l[r[prv]]), r.eb(r[r[prv]]);
+            if(!r[cur] || r[cur] == r[prv]) r[cur] = Size(tree), tree.eb(tree[r[prv]]), l.eb(0), r.eb(0);
             update(r[prv], r[cur], m + 1, e, t, d, isAdd);
         }
         tree[cur] = tree[l[cur]] + tree[r[cur]];
@@ -839,63 +772,7 @@ private:
         return query(l[cur], s, (s+e)>>1, ql, qr) + query(r[cur], ((s+e)>>1)+1, e, ql, qr);
     }
 };
-using PstIter = Pst<i64>::Iter; using PstRoot = Pst<i64>::Root;
-
-/// 2D Persistent Segment Tree
-class Pst2d {
-    vector<PstRoot> tree; vi l, r; i64 ln, rn;
-    Pst<i64> pst;
-public:
-    Pst2d(i64 yLeftBound, i64 yRightBound, i64 xLeftBound, i64 xRightBound)
-            : ln(yLeftBound), rn(yRightBound), pst(xLeftBound, xRightBound){
-        tree.eb(pst.root()), l.eb(0), r.eb(0);
-        tree.eb(pst.root().next()), l.eb(0), r.eb(0);
-    }
-    // index = [1..n]
-    struct Iter {
-        Pst2d* ptr = nullptr; i32 pos = 0; i64 s = INF, e = -INF;
-        PstRoot& operator*() const { return ptr->tree[pos]; } bool null() const { return !pos; }
-        Iter left() { return {ptr, ptr->l[pos], s, (s+e)/2}; } Iter right() { return {ptr, ptr->r[pos], (s+e)/2+1, e}; }
-    };
-    struct Root {
-        i32 pos = 0, prvPos = 0; Pst2d* ptr = nullptr;
-        Root next() const {
-            Root ret; ret.pos = Size(ptr->tree); ret.prvPos = pos; ret.ptr = ptr;
-            ptr->tree.eb(ptr->tree[pos].next()); ptr->l.eb(ptr->l[pos]); ptr->r.eb(ptr->r[pos]);
-            return ret;
-        }
-        Iter iter() { return {ptr, pos, ptr->ln, ptr->rn}; }
-        /// @returns self
-        Root& add(i64 y, i64 x, const i64& diff) { ptr->update(prvPos, pos, ptr->ln, ptr->rn, y, x, diff, true); return *this; }
-        /// @returns self
-        Root& set(i64 y, i64 x, const i64& val) { ptr->update(prvPos, pos, ptr->ln, ptr->rn, y, x, val, false); return *this; }
-        v<PstRoot> query(i64 yl, i64 yr) const { ptr->queryRet.clear(); ptr->query(pos, ptr->ln, ptr->rn, yl, yr); return ptr->queryRet; }
-    };
-    friend Root; friend Iter; Root root() { return { 1, 0, this }; }
-private:
-    v<PstRoot> queryRet;
-    void update(i32 prv, i32 cur, i64 s, i64 e, i64 yt, i64 xt, ci64 d, bool isAdd) {
-        if(isAdd) { tree[cur].add(xt, d); } else { tree[cur].set(xt, d); }
-        if(s == e) return;
-        i64 m = (s + e) >> 1;
-        if(yt <= m) {
-            if(!l[cur] || l[cur] == l[prv]) l[cur] = Size(tree), tree.eb(tree[l[prv]].next()), l.eb(l[l[prv]]), r.eb(r[l[prv]]);
-            if(!r[cur]) r[cur] = r[prv];
-            update(l[prv], l[cur], s, m, yt, xt, d, isAdd);
-        } else {
-            if(!l[cur]) l[cur] = l[prv];
-            if(!r[cur] || r[cur] == r[prv]) r[cur] = Size(tree), tree.eb(tree[r[prv]].next()), l.eb(l[r[prv]]), r.eb(r[r[prv]]);
-            update(r[prv], r[cur], m + 1, e, yt, xt, d, isAdd);
-        }
-    }
-    void query(i32 cur, i64 s, i64 e, i64 ql, i64 qr) {
-        if(!cur) return;
-        if(qr < s || e < ql) { return; } if(ql <= s && e <= qr) { queryRet.pb(tree[cur]); return; }
-        query(l[cur], s, (s+e)>>1, ql, qr); query(r[cur], ((s+e)>>1)+1, e, ql, qr);
-    }
-};
-using Pst2dIter = Pst2d::Iter; using Pst2dRoot = Pst2d::Root;
-
+using pstIter = pst<i64>::iter; using pstRoot = pst<i64>::root;
 
 struct PrefixSum2d {
     v2l data;
@@ -997,7 +874,7 @@ public:
             bool operator!=(const Iter& o) const { return cur != o.cur; }
             EdgeType& operator*() { return *cur; }
         };
-        Iter begin() { return g->child[n].empty() ? Iter(g, g->undir[n].begin(), n) : Iter(g, g->child[n].begin(), n); }
+        Iter begin() { return Iter(g, g->child[n].begin(), n); }
         Iter end() { return Iter(g, g->undir[n].end(), n); }
     };
     Connection getConnection(i64 node) { return Connection(this, node); }
@@ -1117,14 +994,14 @@ public:
     void resize(i64 maxNodeNum) { if(!this->unsafe && this->nodeCnt >= maxNodeNum) { cerr << "Invalid resizing"; exit(1); }
         i64 preNodeCnt = this->nodeCnt; this->nodeCnt = maxNodeNum + 1; this->undir.resize(this->nodeCnt, v<EdgeType>());
         if(useUnionFind) forf(i, preNodeCnt, maxNodeNum) { groupNum.eb(i); groupSize.eb(1); } }
-    /// union-find ( 0 <= parent < nodeCnt ), O(N) (calls uf_find for all nodes)
-    /// @return {[node] = parent}
+    /// union-find ( 0 <= group < nodeCnt ), O(N) (calls uf_find for all nodes)
+    /// @return {[node] = group}
     [[nodiscard]] vl getAllGroup() { uf_init(); forn(i, this->nodeCnt) groupNum[i] = uf_find(i);
         return groupNum; }
     vl getAllGroupSize() { uf_init(); return groupSize; }
-    /// union-find ( 0 <= parent < nodeCnt ), O(1) (O(N) at first uf call)
+    /// union-find ( 0 <= group < nodeCnt ), O(1) (O(N) at first uf call)
     i64 getGroup(i64 node) { uf_init(); return uf_find(node); }
-    /// union-find ( 0 <= parent < nodeCnt ), O(1) (O(N) at first uf call)
+    /// union-find ( 0 <= group < nodeCnt ), O(1) (O(N) at first uf call)
     i64 getGroupSize(i64 group) { uf_init(); return groupSize[group]; }
 };
 
@@ -1147,81 +1024,15 @@ public:
     void merge(ci64 a, ci64 b) { uf_init(); uf_union(a, b); }
     void clear() { useUnionFind = false; n = 0; groupNum = groupSize = vi(); }
     explicit UF(i64 maxNodeNum) : n(maxNodeNum+1) { }
-    /// union-find ( 0 <= parent <= maxNodeNum ), O(N) (calls uf_find for all nodes)
-    /// @return {[node] = parent}
+    /// union-find ( 0 <= group <= maxNodeNum ), O(N) (calls uf_find for all nodes)
+    /// @return {[node] = group}
     [[nodiscard]] vi getAllGroup() { uf_init(); forn(i, n) groupNum[i] = uf_find(i);
         return groupNum; }
     vi getAllGroupSize() { uf_init(); return groupSize; }
-    /// union-find ( 0 <= parent <= maxNodeNum ), O(1) (O(N) at first uf call)
+    /// union-find ( 0 <= group <= maxNodeNum ), O(1) (O(N) at first uf call)
     i64 group(i64 node) { uf_init(); return uf_find(node); }
-    /// union-find ( 0 <= parent <= maxNodeNum ), O(1) (O(N) at first uf call)
+    /// union-find ( 0 <= group <= maxNodeNum ), O(1) (O(N) at first uf call)
     i64 size(i64 group) { uf_init(); return groupSize[group]; }
-};
-
-class UFR {
-    i32 n; vi parent, rank; stack<tuple<i32, i32, bool>> history;
-public:
-    explicit UFR(i32 maxNodeNum) : n(maxNodeNum+1), parent(n), rank(n, 1) { iota(all(parent), 0); }
-    inline i32 group(i32 x) { return x == parent[x] ? x : group(parent[x]); }
-    inline i32 operator[](i32 x) { return group(x); } inline i32 find(i32 x) { return group(x); }
-    void merge(i32 a, i32 b) {
-        a = group(a); b = group(b);
-        if(a == b) { history.emplace(a, b, false); return; }
-        if(rank[a] < rank[b]) swap(a, b);
-        bool rankIncrement = rank[a] == rank[b];
-        history.emplace(a, b, rankIncrement);
-        parent[b] = a; rank[a] += rankIncrement;
-    }
-    void rollback(i32 cnt = 1) {
-        rep(cnt) {
-            auto [a, b, i] = pop(history);
-            if(a != b) parent[b] = b, rank[a] -= i;
-        }
-    }
-};
-
-class ODC {
-    v<v<ii>> lines;
-    v<v<iii>> queries; // {a, b, idx}
-    UFR ufr; i32 n; i32 queryCnt = 0, curTime = 1; map<ii, i32> addedLines;
-    void addLine(i32 p, i32 s, i32 e, i32 tl, i32 tr, const ii& line) {
-        if(e < tl || tr < s) return;
-        if(tl <= s && e <= tr) { lines[p].pb(line); return; }
-        addLine(p*2, s, (s+e)>>1, tl, tr, line);
-        addLine(p*2+1, ((s+e)>>1)+1, e, tl, tr, line);
-    }
-    void solve(i32 p, i32 s, i32 e, vb& ans) {
-        for(const auto &[a, b] : lines[p]) ufr.merge(a, b);
-        if(s == e) {
-            for(const auto& [a, b, i] : queries[s])
-                ans[i] = ufr[a] == ufr[b];
-        }
-        else solve(p*2, s, (s+e)>>1, ans), solve(p*2+1, ((s+e)>>1)+1, e, ans);
-        ufr.rollback(Size(lines[p]));
-    }
-public:
-    ODC(i32 maxNode, i32 maxTime) : lines(maxTime*4, v<ii>()), queries(maxTime+3, v<iii>()), ufr(maxNode), n(maxTime) { }
-    void addLine(const ii& line, i32 tl, i32 tr) { addLine(1, 1, n, tl, tr, line); }
-    void addLine(i32 ll, i32 lr, i32 tl, i32 tr) { addLine(1, 1, n, tl, tr, {ll, lr}); }
-    void addQuery(i32 a, i32 b, i32 t) { queries[t].pb({a, b, queryCnt++}); }
-    /// 위 함수들이랑 아래 함수들이랑 섞어 쓰면 인생 망해요
-    /// O(logN)
-    void addLine(i32 a, i32 b) { addedLines.insert({{min(a, b), max(a, b)}, curTime++}); }
-    void removeLine(i32 a, i32 b, bool allowNonexistentEdge = false) {
-        auto iter = addedLines.find({min(a, b), max(a, b)});
-        if(iter == addedLines.end()) {
-            if(!allowNonexistentEdge) cerr << "Removed before add\n", exit(1);
-            return;
-        }
-        addLine(iter->first, iter->second, curTime++);
-        addedLines.erase(iter);
-    }
-    void addQuery(i32 a, i32 b) { queries[curTime++].pb({a, b, queryCnt++}); }
-    vb solve() {
-        for(const auto& [line, t] : addedLines) addLine(line, t, n);
-        addedLines.clear();
-        vb ans(queryCnt); solve(1, 1, n, ans); return ans;
-    }
 };
 
 template <typename EdgeType>
@@ -1583,172 +1394,6 @@ struct StringHash {
 
 #pragma endregion
 
-#pragma region geometry
-
-f128 Gprecision = 1e-9;
-bool Geq(const f128& a, const f128& b) { return abs(a-b) <= max({f128(1), a, b}) * Gprecision; }
-
-Tpl64 class GPoint {
-public:
-    T x = T(), y = T();
-    tuple<T, T> toTuple() { return {x, y}; }
-    template <typename T2> explicit operator GPoint<T2>() const { return GPoint<T2>(cast<T2>(x), cast<T2>(y)); }
-    T distSq(const GPoint& b) const { return sq_(x-b.x)+sq_(y-b.y); }
-    f128 dist(const GPoint& b) const { return sqrt(cast<f128>(distSq(b))); }
-    bool operator<(const GPoint& b) const { return x == b.x ? y < b.y : x < b.x; }
-    bool operator==(const GPoint& b) const {
-        if constexpr(is_integral_v<T>) return x == b.x && y == b.y;
-        else return Geq(cast<f128>(x), cast<f128>(b.x)) && Geq(cast<f128>(y), cast<f128>(b.y));
-    }
-    template <typename T2> requires (!is_same_v<T, T2>) bool operator==(const GPoint<T2>& b) const {
-        return Geq(cast<f128>(x), cast<f128>(b.x)) && Geq(cast<f128>(y), cast<f128>(b.y));
-    }
-    static auto ccwCmp(const GPoint&);
-};
-Tpl i128 product(const GPoint<T>& p1, const GPoint<T>& p2, const GPoint<T>& p3) { return i128(p2.x-p1.x) * (p3.y-p1.y) - i128(p3.x-p1.x) * (p2.y-p1.y); }
-/// -1 : 시계, 0 : 직선, 1 : 반시계
-Tpl i32 ccw(const GPoint<T>& p1, const GPoint<T>& p2, const GPoint<T>& p3) { i128 pd = product(p1, p2, p3); return pd == 0 ? 0 : ( pd < 0 ? -1 : 1 ); }
-
-Tpl auto GPoint<T>::ccwCmp(const GPoint<T>& p) {
-    return [&](const GPoint& a, const GPoint& b) -> bool {
-        i32 c = ccw(p, a, b);
-        return c == 0 ? p.distSq(a) < p.distSq(b) : c > 0;
-    };
-}
-
-Tpl64 class GLine {
-public:
-    GLine()=default;
-    GLine(const GPoint<T>& point1, const GPoint<T>& point2) : p1(point1), p2(point2) {
-        if(p1.x > p2.x) swap(p1, p2);
-        elif(p1.x == p2.x && p1.y > p2.y) swap(p1, p2);
-    }
-    GLine(const T& x1, const T& y1, const T& x2, const T& y2) : GLine(GPoint(x1, y1), GPoint(x2, y2)) {}
-    GPoint<T> p1, p2;
-    bool intersects(const GLine& l) const {
-        if(p1 == p2 && l.p1 == l.p2) return p1 == l.p2;
-        elif(p1 == p2) return l.contains(p1);
-        elif(l.p1 == l.p2) return contains(l.p1);
-        i32 ccw1 = ccw(p1, p2, l.p1), ccw2 = ccw(p1, p2, l.p2),
-            ccw3 = ccw(l.p1, l.p2, p1), ccw4 = ccw(l.p1, l.p2, p2);
-        if(ccw1 * ccw2 < 0 && ccw3 * ccw4 < 0) return true;
-        elif(ccw1 == 0 && ccw2 == 0) {
-            if(p1.x == p2.x) return p1.y <= l.p2.y && l.p1.y <= p2.y;
-            else return p1.x <= l.p2.x && l.p1.x <= p2.x;
-        }
-        return (ccw1 * ccw2 == 0 && ccw3 * ccw4 <= 0) || (ccw1 * ccw2 <= 0 && ccw3 * ccw4 == 0);
-    }
-    //pair.first => 0 : 교차하지 않음, 1 : 한 점에서 교차, 2 : 무수히 많은 점에서 교차
-    //pair.second => 교점이 하나라면 교점의 좌표, 아니면 0,0
-    pair<i32, GPoint<f128>> intersection(const GLine& l) const {
-        i32 ccw1 = ccw(p1, p2, l.p1), ccw2 = ccw(p1, p2, l.p2),
-            ccw3 = ccw(l.p1, l.p2, p1), ccw4 = ccw(l.p1, l.p2, p2);
-        if(ccw1 * ccw2 < 0 && ccw3 * ccw4 < 0) return { 1, intersection_checked(l) };
-        if(!ccw1 && !ccw2) {
-            if(p1.x == p2.x) {
-                if(p1.y == l.p2.y && l.p1.y < p1.y) return { 1, cast<GPoint<f128>>(p1) };
-                if(p2.y == l.p1.y && p1.y < l.p1.y) return { 1,  cast<GPoint<f128>>(p2) };
-                if(p1.y <= l.p2.y && l.p1.y <= p2.y) return { 2, {0, 0} };
-            }
-            elif(p1.x <= l.p2.x && l.p1.x <= p2.x) {
-                if(p1.x == l.p2.x && l.p1.x < p1.x) return { 1, cast<GPoint<f128>>(p1) };
-                if(p2.x == l.p1.x && p1.x < l.p1.x) return { 1,  cast<GPoint<f128>>(p2) };
-                return { 2, {0, 0} };
-            }
-        }
-        elif(p1 == l.p1 || p1 == l.p2) return {1, cast<GPoint<f128>>(p1)};
-        elif(p2 == l.p2 || p2 == l.p1) return {1, cast<GPoint<f128>>(p2)};
-        elif((ccw1 * ccw2 == 0 && ccw3 * ccw4 <= 0) || (ccw1 * ccw2 <= 0 && ccw3 * ccw4 == 0))
-            return {1, intersection_checked(l)};
-        return { 0, {0, 0} };
-    }
-    bool contains(const GPoint<T>& p) const {
-        if(ccw(p1, p2, p)) return false;
-        if(p1.x == p2.x) return p1.y <= p.y && p.y <= p2.y;
-        return p1.x <= p.x && p.x <= p2.x;
-    }
-    bool parallel(const GLine& b) const {
-        return (p1.y-p2.y) * (b.p1.x-b.p2.x) == (p1.x-p2.x) * (b.p1.y-b.p2.y);
-    }
-private:
-    GPoint<f128> intersection_checked(const GLine& l) const {
-        if((p1.x == p2.x || p1.y == p2.y) && (l.p1.x == l.p2.x || l.p1.y == l.p2.y)) {
-            if(p1.x == p2.x) return {(f128)p1.x, (f128)l.p1.y};
-            return {(f128)l.p1.x, (f128)p1.y};
-        }
-        if(p1.x == p2.x) return {(f128)p1.x, f128(l.p2.y-l.p1.y) * (p1.x-l.p1.x) / f128(l.p2.x-l.p1.x) + l.p1.y};
-        if(l.p1.x == l.p2.x) return {(f128)l.p1.x, f128(p2.y-p1.y) * (l.p1.x-p1.x) / f128(p2.x-p1.x) + p1.y};
-        f128 a1 = (p2.y-p1.y) / f128(p2.x-p1.x) - (l.p2.y-l.p1.y) / f128(l.p2.x-l.p1.x);
-        f128 a2 = l.p1.y-p1.y+p1.x*(p2.y-p1.y)/f128(p2.x-p1.x)-l.p1.x*(l.p2.y-l.p1.y)/f128(l.p2.x-l.p1.x);
-        f128 ax = a2/a1, ay = (p2.y-p1.y) * (ax-p1.x) / f128(p2.x-p1.x) + p1.y;
-        return {ax, ay};
-    }
-};
-
-Tpl concept isGPoint = requires(const T& t) { { T::ccwCmp(t) }; };
-
-/// the order of the stored GPoints are not preserved.
-template <isGPoint T = GPoint<i64>> class GPoints {
-public:
-    v<T> points;
-    T& operator[](ci64 i) { return points[i]; }
-    i64 size() const { return Size(points); }
-    void push_back(const T& p) { points.pb(p); } auto begin() { return points.begin(); } auto end() { return points.end(); }
-    template <typename... Args> void emplace_back(const Args&... args) { points.eb(args...); }
-    [[deprecated]] v<T> grahamScan() { sort(points, T::ccwCmp(min(points)));
-        v<T> ret; for(const T& p : points) { while(Size(ret) >= 2 && ccw(ret[Size(ret)-2], ret.back(), p) <= 0) { pop(ret); } ret.pb(p); } return ret; }
-    /// O(NlogN)
-    /// @returns { upper hull, lower hull }
-    pair<v<T>, v<T>> monotoneChain(bool allowStraightPoints = false) {
-        v<T> up, down; sort(points);
-        for(const T& p : points) {
-            while(Size(up) >= 2 && ccw(up[Size(up)-2], up.back(), p) >= 0 + allowStraightPoints) pop(up);
-            while(Size(down) >= 2 && ccw(down[Size(down)-2], down.back(), p) <= 0 - allowStraightPoints) pop(down);
-            up.pb(p); down.pb(p);
-        }
-        return { up, down };
-    }
-    /// O(NlogN), uses monotone chain
-    /// counter clockwise
-    v<T> convexHull(bool allowStraightPoints = false) {
-        auto [up, down] = monotoneChain(allowStraightPoints);
-        while(allowStraightPoints && !up.empty() && up.back() != down.back()) pop(up);
-        if(Size(up) >= 2) down.insert(down.end(), up.rbegin()+1, up.rend()-1);
-        return down;
-    }
-    /// O(N)
-    bool isPoint() { forn(i, Size(points)-1) {if(points[i] == points[i+1]) {return true;}} return Size(points)==1; }
-    /// O(N)
-    bool isLine() { if(Size(points)<=1) { return false; } if(Size(points)==2) return true;
-        forn(i, Size(points)-2) {if(ccw(points[i], points[i+1], points[i+2])) {return false;} }return true;}
-};
-
-Tpl struct GPointValueType_;
-Tpl struct GPointValueType_<GPoint<T>> { using type = T; };
-
-template <isGPoint T = GPoint<i64>> class ConvexPolygon {
-public:
-    using MT = GPointValueType_<T>::type;
-    v<T> up, down; MT mnX, mxX, mnY, mxY;
-    explicit ConvexPolygon(GPoints<T>& points, bool asp_ = false) : mnX(lim<MT>::max()), mxX(lim<MT>::min()), mnY(lim<MT>::max()), mxY(lim<MT>::min()) {
-        tie(up, down) = points.monotoneChain(asp_);
-        for(const auto& p : up) setMin(mnX, p.x), setMin(mnY, p.y), setMax(mxX, p.x), setMax(mxY, p.y);
-        for(const auto& p : down) setMin(mnX, p.x), setMin(mnY, p.y), setMax(mxX, p.x), setMax(mxY, p.y);
-    }
-    /// O(N)
-    v<T> arr() { v<T> ret = down; ret.insert(ret.end(), up.rbegin()+1, up.rend()-1); return ret; }
-    /// O(logN)
-    bool contains(const T& p) const {
-        if(p.x < mnX || mxX < p.x || p.y < mnY || mxY < p.y) return false;
-        i64 idx = ub(up, p) - up.begin();
-        if(ccw(up[idx-1], up[idx], p) > 0) return false;
-        idx = ub(down, p) - down.begin();
-        return ccw(down[idx-1], down[idx], p) >= 0;
-    }
-};
-
-#pragma endregion
-
 #pragma region miscellaenous
 
 template <i64 mod = mod1>
@@ -1771,18 +1416,10 @@ template <i64 mod> ostream& operator<<(ostream& out, const ModInt<mod>& t) { out
                            ostream& operator<<(ostream& out, const name& t) { out << t.v; return out; }
 
 struct MxSs { i64 v = -INFIN; MxSs operator+(const MxSs& b) const { return { max(v, b.v) }; }
-        MxSs& operator+=(const MxSs& b) { setMax(v, b.v); return *this; }
 bool operator<(const MxSs& b) const { return v < b.v; } explicit operator i64() const { return v; }};
 struct MnSs { i64 v = INFIN; MnSs operator+(const MnSs& b) const { return { min(v, b.v) }; }
-    MnSs& operator+=(const MnSs& b) { setMin(v, b.v); return *this; }
 bool operator<(const MnSs& b) const { return v < b.v; } explicit operator i64() const { return v; }};
-struct MxSs32 { i32 v = -imax; MxSs32 operator+(const MxSs32& b) const { return { max(v, b.v) }; }
-    MxSs32& operator+=(const MxSs32& b) { setMax(v, b.v); return *this; }
-    bool operator<(const MxSs32& b) const { return v < b.v; } explicit operator i32() const { return v; }};
-struct MnSs32 { i32 v = imax; MnSs32 operator+(const MnSs32& b) const { return { min(v, b.v) }; }
-    MnSs32& operator+=(const MnSs32& b) { setMin(v, b.v); return *this; }
-    bool operator<(const MnSs32& b) const { return v < b.v; } explicit operator i32() const { return v; }};
-defStructIO_(MxSs) defStructIO_(MnSs) defStructIO_(MxSs32) defStructIO_(MnSs32)
+defStructIO_(MxSs) defStructIO_(MnSs)
 
 i64 moQuerySortVal = -1;
 struct moQuery { i64 i, j, order; bool operator<(const moQuery& b) const { lassert(moQuerySortVal != -1);
@@ -1810,6 +1447,43 @@ using namespace PollardRho;
 
 i32 main() {
     fastio;
-    
+    in64(n, m);
+    i64 LEFT = 1, RIGHT = 2, UP = 3, DOWN = 4;
+    v<str> arr; rep(n) arr.pb(inStr());
+    auto id = [&](i64 y, i64 x, i64 dir) { return (y*m+x)*4+dir; };
+    TwoSat ts(4*n*m);
+    forn(y, n) forn(x, m) {
+        if(y == 0) ts.addFalse(id(y, x, UP));
+        if(y == n-1) ts.addFalse(id(y, x, DOWN));
+        if(x == 0) ts.addFalse(id(y, x, LEFT));
+        if(x == m-1) ts.addFalse(id(y, x, RIGHT));
+        if(y < n-1) ts.addXnor(id(y, x, DOWN), id(y+1, x, UP));
+        if(x < m-1) ts.addXnor(id(y, x, RIGHT), id(y, x+1, LEFT));
+        if(arr[y][x] == 'L') ts.addXor(id(y, x, DOWN), id(y, x, UP)), ts.addXor(id(y, x, LEFT), id(y, x, RIGHT));
+        elif(arr[y][x] == 'O') {
+            ts.add(id(y, x, UP), id(y, x, RIGHT));
+            ts.add(id(y, x, RIGHT), id(y, x, DOWN));
+            ts.add(id(y, x, DOWN), id(y, x, LEFT));
+            ts.add(id(y, x, LEFT), id(y, x, UP));
+            ts.add(id(y, x, UP), id(y, x, DOWN));
+            ts.add(id(y, x, LEFT), id(y, x, RIGHT));
+        }
+        elif(arr[y][x] == 'X') ts.addFalse(id(y, x, UP)), ts.addFalse(id(y, x, DOWN)), ts.addFalse(id(y, x, LEFT)), ts.addFalse(id(y, x, RIGHT));
+        elif(arr[y][x] == '.') ts.addXnor(id(y, x, LEFT), id(y, x, RIGHT)), ts.addXnor(id(y, x, UP), id(y, x, DOWN)), ts.add(-id(y, x, LEFT), -id(y, x, UP));
+        else exit(1);
+    }
+    vb ans = ts.getAns();
+    if(ans.empty()) printExit("NO");
+    println("YES");
+    str pr = ".??|?J7<?Lr>-^v+";
+    forn(y, n) {
+        forn(x, m) {
+            if(arr[y][x] == 'X') { print('X'); continue; }
+            i64 up = ans[id(y, x, UP)], down = ans[id(y, x, DOWN)];
+            i64 left = ans[id(y, x, LEFT)], right = ans[id(y, x, RIGHT)];
+            i64 i = (up) + (down<<1) + (left<<2) + (right<<3);
+            print(pr[i]);
+        }
+        println();
+    }
 }
-

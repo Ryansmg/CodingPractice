@@ -448,27 +448,99 @@ private:
 };
 using PstIter = Pst<i64>::Iter; using PstRoot = Pst<i64>::Root;
 
+/// 2D Persistent Segment Tree
+class Pst2d {
+    vector<PstRoot> tree; vi l, r; i64 ln, rn;
+    Pst<i64> pst;
+public:
+    Pst2d(i64 yLeftBound, i64 yRightBound, i64 xLeftBound, i64 xRightBound)
+        : ln(yLeftBound), rn(yRightBound), pst(xLeftBound, xRightBound){
+        tree.eb(pst.root()), l.eb(0), r.eb(0);
+        tree.eb(pst.root().next()), l.eb(0), r.eb(0);
+    }
+    // index = [1..n]
+    struct Iter {
+        Pst2d* ptr = nullptr; i32 pos = 0; i64 s = INF, e = -INF;
+        PstRoot& operator*() const { return ptr->tree[pos]; } bool null() const { return !pos; }
+        Iter left() { return {ptr, ptr->l[pos], s, (s+e)/2}; } Iter right() { return {ptr, ptr->r[pos], (s+e)/2+1, e}; }
+    };
+    struct Root {
+        i32 pos = 0, prvPos = 0; Pst2d* ptr = nullptr;
+        Root next() const {
+            Root ret; ret.pos = Size(ptr->tree); ret.prvPos = pos; ret.ptr = ptr;
+            ptr->tree.eb(ptr->tree[pos].next()); ptr->l.eb(ptr->l[pos]); ptr->r.eb(ptr->r[pos]);
+            return ret;
+        }
+        Iter iter() { return {ptr, pos, ptr->ln, ptr->rn}; }
+        /// @returns self
+        Root& add(i64 y, i64 x, const i64& diff) { ptr->update(prvPos, pos, ptr->ln, ptr->rn, y, x, diff, true); return *this; }
+        /// @returns self
+        Root& set(i64 y, i64 x, const i64& val) { ptr->update(prvPos, pos, ptr->ln, ptr->rn, y, x, val, false); return *this; }
+        v<PstRoot> query(i64 yl, i64 yr) const { ptr->queryRet.clear(); ptr->query(pos, ptr->ln, ptr->rn, yl, yr); return ptr->queryRet; }
+    };
+    friend Root; friend Iter; Root root() { return { 1, 0, this }; }
+private:
+    v<PstRoot> queryRet;
+    void update(i32 prv, i32 cur, i64 s, i64 e, i64 yt, i64 xt, ci64 d, bool isAdd) {
+        if(isAdd) { tree[cur].add(xt, d); } else { tree[cur].set(xt, d); }
+        if(s == e) return;
+        i64 m = (s + e) >> 1;
+        if(yt <= m) {
+            if(!l[cur] || l[cur] == l[prv]) l[cur] = Size(tree), tree.eb(tree[l[prv]].next()), l.eb(l[l[prv]]), r.eb(r[l[prv]]);
+            if(!r[cur]) r[cur] = r[prv];
+            update(l[prv], l[cur], s, m, yt, xt, d, isAdd);
+        } else {
+            if(!l[cur]) l[cur] = l[prv];
+            if(!r[cur] || r[cur] == r[prv]) r[cur] = Size(tree), tree.eb(tree[r[prv]].next()), l.eb(l[r[prv]]), r.eb(r[r[prv]]);
+            update(r[prv], r[cur], m + 1, e, yt, xt, d, isAdd);
+        }
+    }
+    void query(i32 cur, i64 s, i64 e, i64 ql, i64 qr) {
+        if(!cur) return;
+        if(qr < s || e < ql) { return; } if(ql <= s && e <= qr) { queryRet.pb(tree[cur]); return; }
+        query(l[cur], s, (s+e)>>1, ql, qr); query(r[cur], ((s+e)>>1)+1, e, ql, qr);
+    }
+};
+using Pst2dIter = Pst2d::Iter; using Pst2dRoot = Pst2d::Root;
+
 
 i32 main() {
     fastio;
     in64(n);
-    vl arr = inArr(n);
-    v<PstRoot> psts; Pst pst(1, n);
-    psts.pb(pst.root());
-    umap<i64, i64> map;
+    vl a = inArr(n);
+    vl comp = compressed(a);
+    for(i64& i : a) i = idx(i, comp)+1;
+    Pst2d seg(1, n, 1, n);
+    v<Pst2dRoot> psts; psts.pb(seg.root());
+    map<i64, i64> prv;
     forn(i, n) {
-        auto t = psts.back().next();
-        i64 prevInd = map[arr[i]];
-        if(prevInd) t.add(prevInd, -1);
-        map[arr[i]] = i+1;
-        t.add(i+1, 1);
-        psts.eb(t);
+        Pst2dRoot cur = psts.back().next();
+        auto iter = prv.find(a[i]);
+        if(iter != prv.end()) cur.set(iter->second, a[i], 0), iter->second = i+1;
+        else prv.insert({a[i], i+1});
+        cur.set(i+1, a[i], 1);
+        psts.pb(cur);
     }
-    i64 q = 0;
+    i64 ans = 0;
     inRep() {
-        in64(x, r);
-        i64 l = x + q;
-        q = psts[r].query(l, r);
-        println(q);
+        in64(ai, b, c, d, k);
+        i64 l = ((ai * max(ans, 0) + b) % n) + 1, r = ((c * max(ans, 0) + d) % n) + 1;
+        if(l > r) swap(l, r);
+        auto segArr = psts[r].query(l, r);
+        v<PstIter> iters;
+        for(auto& s : segArr) iters.pb(s.iter());
+        i64 arrSum = 0; for(auto& s : iters) arrSum += *s;
+        if(arrSum < k) { println(ans = -1); continue; }
+        while(iters[0].s != iters[0].e) {
+            i64 lSum = 0;
+            for(auto& s : iters) lSum += *s.left();
+            if(lSum >= k) {
+                for(auto &s : iters) s = s.left();
+            } else {
+                k -= lSum;
+                for(auto &s : iters) s = s.right();
+            }
+        }
+        println(ans = comp[iters[0].s-1]);
     }
 }
