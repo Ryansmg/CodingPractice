@@ -58,9 +58,18 @@ protected:
     }
 };
 
-struct SumLazy { long long vector = 0; SumLazy operator+(long long i) const { return SumLazy(vector+i); }
-    SumLazy operator+(const Lazyprop<long long, SumLazy, long long>::iter& i) const { return SumLazy(vector+i.lazy.vector); } };
-long long operator+(long long a, const Lazyprop<long long, SumLazy, long long>::iter& b) { return a + (b.end - b.start + 1) * b.lazy.vector; }
+struct SumLazy {
+    long long v = 0;
+    SumLazy operator+(long long i) const {
+        return SumLazy(v + i);
+    }
+    SumLazy operator+(const Lazyprop<long long, SumLazy, long long>::iter& i) const {
+        return SumLazy(v + i.lazy.v);
+    }
+};
+long long operator+(long long a, const Lazyprop<long long, SumLazy, long long>::iter& b) {
+    return a + (b.end - b.start + 1) * b.lazy.v;
+}
 
 
 // Example : BOJ 10999. 구간 합 구하기 2
