@@ -98,19 +98,19 @@ template <typename Signature> using fun = std::function<Signature>;
 
 #pragma region consts
 constexpr i64
-    i64max = 9223372036854775807,
-    llmax  = 9223372036854775807,
-    lmax   = 9221557155715571557,
-    INFIN  = 4001557155715570000,
-    INF    = 1000000000000000000,
-    inf    = 3000000000,
-    i32max = 2147483647,
-    imax   = 2147481557,
-    iinf   = 2000000000,
-    mod1   = 1000000007,
-    mod9   = 998244353;
+        i64max = 9223372036854775807,
+        llmax  = 9223372036854775807,
+        lmax   = 9221557155715571557,
+        INFIN  = 4001557155715570000,
+        INF    = 1000000000000000000,
+        inf    = 3000000000,
+        i32max = 2147483647,
+        imax   = 2147481557,
+        iinf   = 2000000000,
+        mod1   = 1000000007,
+        mod9   = 998244353;
 constexpr f128
-    PI = 3.141592653589793238462643383279502884L;
+        PI = 3.141592653589793238462643383279502884L;
 const fun<void(i64, i64)> ll_nullFunc_ = [](ci64, ci64){};
 const set<i64> l_nullSet_;
 #pragma endregion consts
@@ -484,8 +484,77 @@ using namespace FracOpInternal;
 //@formatter:on              // remove at ext
 #pragma endregion // macros
 
+/// requirements: operator+(T, T)
+template <typename T = i64>
+class Segtree {
+    vector<T> tree; i32 n;
+public:
+    Segtree() : n(0) {}
+    explicit Segtree(ci32 treeSize) { tree = v<T>(4*treeSize, T()); n = treeSize; }
+    explicit Segtree(const v<T> &a) { n = Size(a); tree = v<T>(4*n, T()); init(a, 1, 1, n); }
+    void set(ci32 tar, const T& val) { set(1, tar, 1, n, val); }
+    void add(ci32 tar, const T& diff) { update(1, tar, 1, n, diff); }
+    void update(ci32 tar, const T& diff) { update(1, tar, 1, n, diff); }
+    T query(ci32 left, ci32 right) { if(left > right) { return T(); } return query(1, left, right, 1, n); }
+    T query(ci32 tar) { return query(tar, tar); }
+    struct iter {
+        i32 node, start, end; T value; Segtree<T>* segPtr;
+        bool leaf() const { return start == end; }
+        iter left() const { return iter(node<<1, start, (start+end)>>1, segPtr->tree[node<<1], segPtr); }
+        iter right() const { return iter(node<<1|1, ((start+end)>>1)+1, end, segPtr->tree[node<<1|1], segPtr); }
+    };
+    iter root() { return iter(1, 1, n, tree[1], this); }
+    // ret[i] == query(i+1)
+    v<T> getLeafs() { v<T> ret(n);
+        fun<void(i64, i64, i64)> f = [&](i64 p, i64 s, i64 e) {
+            if(s == e) ret[s-1] = tree[p];
+            else f(p<<1, s, (s+e)>>1), f(p<<1|1, ((s+e)>>1)+1, e); };
+        f(1, 1, n); return ret; }
+
+    /// [1..i] 범위 합이 val 이하인 최대의 i를 리턴
+    iter strcc_(bi,nSearch)(T val) {
+        iter cur = root();
+        while(!cur.leaf()) { iter l = cur.left();
+            if(val <= l.value) cur = l;
+            else val = val - l.value, cur = cur.right(); }
+        return cur;
+    }
+protected:
+    T& init(const v<T> &a, ci32 node, ci32 start, ci32 end) {
+        if(start==end) return tree[node] = a[start-1];
+        else return tree[node] = init(a, node<<1, start, (start+end)>>1) + init(a, node<<1|1, ((start+end)>>1)+1, end);
+    }
+    T& update(ci32 node, ci32 tar, ci32 start, ci32 end, const T& diff) { if(end < tar || tar < start) return tree[node];
+        if(start == end) return tree[node] = tree[node] + diff;
+        return tree[node] = update(node<<1, tar, start, (start+end)>>1, diff) + update(node<<1|1, tar, ((start+end)>>1)+1, end, diff);
+    }
+    T& set(ci32 node, ci32 tar, ci32 start, ci32 end, const T& val) { if(end < tar || tar < start) return tree[node];
+        if(start == end) return tree[node] = val;
+        return tree[node] = set(node<<1, tar, start, (start+end)>>1, val) + set(node<<1|1, tar, ((start+end)>>1)+1, end, val);
+    }
+    T query(ci32 node, ci32 left, ci32 right, ci32 start, ci32 end) { if(right < start || end < left) return T();
+        if(left <= start && end <= right) return tree[node];
+        return query(node<<1, left, right, start, (start+end)>>1) + query(node<<1|1, left, right, ((start+end)>>1)+1, end);
+    }
+};
+
+struct MxSs {
+    i64 v = -INFIN, idx = -1;
+    MxSs operator+(const MxSs& b) const {
+        return v >= b.v ? *this : b;
+    }
+    bool operator<(const MxSs& b) const { return v < b.v; }
+    explicit operator i64() const { return v; }
+};
+
+
 
 i32 main() {
     fastio;
-
+    tcRep() {
+        str s = inStr();
+        i64 ans = 0;
+        for(char c : s) ans += c == '1';
+        println(ans);
+    }
 }

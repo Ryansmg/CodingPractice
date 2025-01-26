@@ -57,9 +57,10 @@ using std::less, std::greater, std::less_equal, std::greater_equal, std::all_of,
 using std::stoi, std::stol, std::stoll, std::stoul, std::stoull, std::stof, std::stod, std::stold;
 using std::sort, std::stable_sort, std::shuffle, std::uniform_int_distribution, std::mt19937, std::random_device, std::reverse;
 using std::iota, std::prev, std::next, std::prev_permutation, std::next_permutation;
-using std::complex, std::polar, std::is_integral_v, std::is_convertible_v, std::is_arithmetic_v, std::is_floating_point_v, std::is_same_v, std::to_string;
+using std::complex, std::polar, std::to_string;
+using std::stringstream, std::istringstream, std::ostringstream;
 #if !CPP17_MODE
-using std::popcount;
+using std::popcount, std::is_integral_v, std::is_convertible_v, std::is_arithmetic_v, std::is_floating_point_v, std::is_same_v;
 #endif // !CPP17_MODE
 #endif // CPP11_MODE else
 
@@ -76,14 +77,11 @@ using i16 = short; using i32 = signed; using i64 = long long; using i128 = __int
 using ll = long long;
 using u16 = unsigned short; using u32 = unsigned; using u64 = unsigned long long; using u128 = unsigned __int128;
 using f32 = float; using f64 = double; using f128 = long double;
-#ifdef LOCAL
-using F128 = long double;
-#else
-using F128 = __float128;
-#endif
 using str = std::string;
 template <typename T, typename T2> using umap = std::unordered_map<T, T2>;
+template <typename T, typename T2> using umultimap = std::unordered_multimap<T, T2>;
 Tpl using uset = std::unordered_set<T>;
+Tpl using umultiset = std::unordered_multiset<T>;
 Tpl using v = std::vector<T>; Tpl using v2 = v<v<T>>;
 using vl = v<i64>; using v2l = v2<i64>; using vi = v<i32>; using v2i = v2<i32>; using vb = v<bool>; using vb2 = v2<bool>;
 using ii = array<i64, 2>; using iii = array<i64, 3>; using iiii = array<i64, 4>; using iiiii = array<i64, 5>;
@@ -122,7 +120,7 @@ const set<i64> l_nullSet_;
 #define forf(name, start, end) for(i64 name = start; name <= end; name++)
 #define forr(name, start, end) for(i64 name = start; name >= end; name--)
 // foreach reverse
-#define forer(something) for(something | std::views::reverse)
+#define forer(...) for(__VA_ARGS__ | std::views::reverse)
 #define rep(n) forn(rep_mac_name_1_, n)
 #define rep2(n) forn(rep_mac_name_2_, n)
 
@@ -165,6 +163,11 @@ template <typename T, typename Cmp> inline T sorted(T arr, const Cmp& cmp) { sor
 Tpl inline void compress(v<T> &arr, const bool &autosort=true) { if(autosort) sort(all(arr)); arr.erase(unique(all(arr)), arr.end()); }
 Tpl inline T compressed(T arr, const bool &autosort=true) { compress(arr, autosort); return arr; }
 Tpl inline i64 idx(const T &val, const v<T> &compressed) { return lower_bound(all(compressed), val) - compressed.begin(); }
+/// min(arr) == 1, max(arr) <= Size(arr)
+Tpl inline void autoCompress(v<T> &arr) { vl comp_ = compressed(arr); for(T& t : arr) t = idx(t, comp_) + 1; }
+Tpl inline void autoCompress0(v<T> &arr) { vl comp_ = compressed(arr); for(T& t : arr) t = idx(t, comp_); }
+Tpl inline T autoCompressed(T arr) { autoCompress(arr); return arr; }
+Tpl inline T autoCompressed0(T arr) { autoCompress0(arr); return arr; }
 Tpl inline T pow_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)ans=ans*a%mod;b>>=1;a=a*a%mod;} return ans; }
 Tpl inline T pow(const T& a, const T& b, const T& mod) { return pow_(a, b, mod); }
 inline i64 pow(ci64 a, ci64 b, ci64 mod) { return pow_(a, b, mod); }
@@ -371,6 +374,7 @@ mac_conv_(i64, ll) mac_conv_(i32, i) mac_conv_(u64, ull) mac_conv_(f64, d) mac_c
 #pragma endregion // conversions
 
 #pragma region miscellaneous
+#if !CPP11_MODE && !CPP17_MODE
 template <typename T, typename T2, typename T3> inline T replace_if(const T& origin, const T2& cond, const T3& replacement)
 requires is_convertible_v<T2, T> && is_convertible_v<T3, T> {
     return origin == cast<T>(cond) ? cast<T>(replacement) : origin;
@@ -384,9 +388,98 @@ template <typename T, typename T2> inline void setMin(T& tar, const T2& val) req
 template <typename T, typename T2> inline void setMax(T& tar, const T2& val) requires is_convertible_v<T2, T> {
     if(cast<T>(val) > tar) tar = cast<T>(val);
 }
-
+#endif
 #pragma endregion // miscellaneous
 
+#pragma region custom_types
+
+template <i64 mod = mod1>
+struct ModInt {
+    i64 v = 0;
+    ModInt() = default;
+    ModInt(i64 val) : v((val % mod + mod) % mod) {} // NOLINT(*-explicit-constructor)
+    explicit operator i64() { return v; }
+    ModInt operator+(const ModInt& b) const { return {(v + b.v) % mod}; }
+    ModInt operator-(const ModInt& b) const { return {(v - b.v + mod) % mod}; }
+    ModInt operator*(const ModInt& b) const { return {(v * b.v) % mod}; }
+    ModInt& operator+=(const ModInt& b) { v = (v + b.v) % mod; return *this; }
+    ModInt& operator-=(const ModInt& b) { v = (v - b.v + mod) % mod; return *this; }
+    ModInt& operator*=(const ModInt& b) { v = (v * b.v) % mod; return *this; }
+    ModInt operator+(i64 b) const { b = (b % mod + mod) % mod; return {(v + b) % mod}; }
+    ModInt operator-(i64 b) const { b = (b % mod + mod) % mod; return {(v - b + mod) % mod}; }
+    ModInt operator*(i64 b) const { b = (b % mod + mod) % mod; return {(v * b) % mod}; }
+    ModInt& operator+=(i64 b) { b = (b % mod + mod) % mod; v = (v + b) % mod; return *this; }
+    ModInt& operator-=(i64 b) { b = (b % mod + mod) % mod; v = (v - b + mod) % mod; return *this; }
+    ModInt& operator*=(i64 b) { b = (b % mod + mod) % mod; v = (v * b) % mod; return *this; }
+};
+namespace ModIntOpInternal {
+    template <i64 mod> istream& operator>>(istream& in, ModInt<mod>& t) { in >> t.v; return in; }
+    template <i64 mod> ostream& operator<<(ostream& out, const ModInt<mod>& t) { out << t.v; return out; }
+    template <i64 mod> ModInt<mod> operator+(i64 a, const ModInt<mod>& b) { a = (a % mod + mod) % mod; return {(b.v + a) % mod}; }
+    template <i64 mod> ModInt<mod> operator-(i64 a, const ModInt<mod>& b) { a = (a % mod + mod) % mod; return {(b.v - a + mod) % mod}; }
+    template <i64 mod> ModInt<mod> operator*(i64 a, const ModInt<mod>& b) { a = (a % mod + mod) % mod; return {(b.v * a) % mod}; }
+}
+using namespace ModIntOpInternal;
+
+class Frac {
+    void reduction() { i64 g = gcd(numerator, denominator); numerator /= g; denominator /= g; }
+public:
+    i64 numerator = 0; // 분자
+    i64 denominator = 1; // 분모
+    Frac() = default;
+    explicit Frac(i64 i) : numerator(i), denominator(1) {}
+    Frac(i64 Numerator, i64 Denominator) : numerator(Numerator), denominator(Denominator) {
+        assert(denominator); // cannot divide by 0
+        if(denominator < 0) numerator *= -1, denominator *= -1;
+        reduction();
+    }
+    Tpl explicit operator T() { return cast<T>(numerator) / cast<T>(denominator); }
+    Frac& operator+=(const Frac& b) {
+        i64 l = lcm(denominator, b.denominator);
+        numerator *= l / denominator; numerator += b.numerator * (l / b.denominator);
+        denominator = l; reduction(); return *this;
+    }
+    Frac& operator+=(const i64& i) { numerator += i * denominator; return *this; }
+    Frac operator+(const Frac& b) const { Frac ret = *this; ret += b; return ret; }
+    Frac operator+(const i64& i) const { Frac ret = *this; ret += i; return ret; }
+    Frac& operator-=(const Frac& b) {
+        i64 l = lcm(denominator, b.denominator);
+        numerator *= l / denominator; numerator -= b.numerator * (l / b.denominator);
+        denominator = l; reduction(); return *this;
+    }
+    Frac& operator-=(const i64& i) { numerator -= i * denominator; return *this; }
+    Frac operator-(const Frac& b) const { Frac ret = *this; ret -= b; return ret; }
+    Frac operator-(const i64& i) const { Frac ret = *this; ret -= i; return ret; }
+    Frac& operator*=(const Frac& b) {
+        numerator *= b.numerator; denominator *= b.denominator;
+        reduction(); return *this;
+    }
+    Frac& operator*=(const i64& i) { numerator *= i; reduction(); return *this; }
+    Frac operator*(const Frac& b) const { Frac ret = *this; ret *= b; return ret; }
+    Frac operator*(const i64& i) const { Frac ret = *this; ret *= i; return ret; }
+    Frac& operator/=(const Frac& b) {
+        assert(b.numerator); // cannot divide by 0
+        numerator *= b.denominator; denominator *= b.numerator;
+        reduction(); return *this;
+    }
+    Frac& operator/=(const i64& i) {
+        assert(i); // cannot divide by 0
+        denominator *= i; reduction(); return *this;
+    }
+    Frac operator/(const Frac& b) const { Frac ret = *this; ret /= b; return ret; }
+    Frac operator/(const i64& i) const { Frac ret = *this; ret /= i; return ret; }
+    bool operator==(const Frac& b) const { return numerator == b.numerator && denominator == b.denominator; }
+    bool operator==(const i64& i) const { return denominator == 1 && numerator == i; }
+};
+namespace FracOpInternal {
+    Frac operator+(const i64& a, const Frac& b) { Frac ret(a); ret += b; return ret; }
+    Frac operator-(const i64& a, const Frac& b) { Frac ret(a); ret -= b; return ret; }
+    Frac operator*(const i64& a, const Frac& b) { Frac ret(a); ret *= b; return ret; }
+    Frac operator/(const i64& a, const Frac& b) { Frac ret(a); ret /= b; return ret; }
+}
+using namespace FracOpInternal;
+
+#pragma endregion
 
 #endif // ENABLE_MACRO
 #pragma endregion // macros
@@ -1308,6 +1401,22 @@ public:
         return a;
     }
 
+    i64 hld(i64 a, i64 b, const fun<void(i64, i64)> &lFunc, const fun<void(i64, i64)> &rFunc) {
+        if(!usingHld) initHld();
+        while(top[a] != top[b]) {
+            if(dep[top[a]] > dep[top[b]]) {
+                lFunc(in[top[a]], in[a]);
+                a = par(top[a]);
+            } else {
+                rFunc(in[top[b]], in[b]);
+                b = par(top[b]);
+            }
+        }
+        if(dep[a] > dep[b]) lFunc(in[b], in[a]);
+        else rFunc(in[a], in[b]);
+        return dep[a] > dep[b] ? b : a;
+    }
+
 private:
     i64 logH = 0; v2l sparsePar, sparseDist; bool usingSparse = false;
     void initSparse() {
@@ -1583,8 +1692,8 @@ struct StringHash {
 
 #pragma region geometry
 
-f128 Gprecision = 1e-9;
-bool Geq(const f128& a, const f128& b) { return abs(a-b) <= max({f128(1), a, b}) * Gprecision; }
+f128 Gprecision = 1e-6;
+bool Geq(const f128& a, const f128& b) { return abs(a-b) <= Gprecision; }
 
 Tpl64 class GPoint {
 public:
@@ -1749,22 +1858,6 @@ public:
 
 #pragma region miscellaenous
 
-template <i64 mod = mod1>
-struct ModInt {
-    i64 v = 0;
-    ModInt()=default;
-    ModInt(i64 val) : v((val%mod+mod) % mod) {} // NOLINT(*-explicit-constructor)
-    explicit operator i64() { return v; }
-    ModInt operator+(const ModInt& b) const { return {(v + b.v) % mod}; }
-    ModInt operator-(const ModInt& b) const { return {(v - b.v + mod) % mod}; }
-    ModInt operator*(const ModInt& b) const { return {(v * b.v) % mod}; }
-    ModInt& operator+=(const ModInt& b) { v = (v + b.v) % mod; return *this; }
-    ModInt& operator-=(const ModInt& b) { v = (v - b.v + mod) % mod; return *this; }
-    ModInt& operator*=(const ModInt& b) { v = (v * b.v) % mod; return *this; }
-};
-template <i64 mod> istream& operator>>(istream& in, ModInt<mod>& t) { in >> t.v; return in; }
-template <i64 mod> ostream& operator<<(ostream& out, const ModInt<mod>& t) { out << t.v; return out; }
-
 #define defStructIO_(name) istream& operator>>(istream& in, name& t) { in >> t.v; return in; }\
                            ostream& operator<<(ostream& out, const name& t) { out << t.v; return out; }
 
@@ -1808,6 +1901,5 @@ using namespace PollardRho;
 
 i32 main() {
     fastio;
-    
-}
 
+}

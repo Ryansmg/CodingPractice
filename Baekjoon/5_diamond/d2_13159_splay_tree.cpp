@@ -57,10 +57,10 @@ using std::less, std::greater, std::less_equal, std::greater_equal, std::all_of,
 using std::stoi, std::stol, std::stoll, std::stoul, std::stoull, std::stof, std::stod, std::stold;
 using std::sort, std::stable_sort, std::shuffle, std::uniform_int_distribution, std::mt19937, std::random_device, std::reverse;
 using std::iota, std::prev, std::next, std::prev_permutation, std::next_permutation;
-using std::complex, std::polar, std::to_string;
+using std::complex, std::polar, std::is_integral_v, std::is_convertible_v, std::is_arithmetic_v, std::is_floating_point_v, std::is_same_v, std::to_string;
 using std::stringstream, std::istringstream, std::ostringstream;
 #if !CPP17_MODE
-using std::popcount, std::is_integral_v, std::is_convertible_v, std::is_arithmetic_v, std::is_floating_point_v, std::is_same_v;
+using std::popcount;
 #endif // !CPP17_MODE
 #endif // CPP11_MODE else
 
@@ -77,11 +77,14 @@ using i16 = short; using i32 = signed; using i64 = long long; using i128 = __int
 using ll = long long;
 using u16 = unsigned short; using u32 = unsigned; using u64 = unsigned long long; using u128 = unsigned __int128;
 using f32 = float; using f64 = double; using f128 = long double;
+#ifdef LOCAL
+using F128 = long double;
+#else
+using F128 = __float128;
+#endif
 using str = std::string;
 template <typename T, typename T2> using umap = std::unordered_map<T, T2>;
-template <typename T, typename T2> using umultimap = std::unordered_multimap<T, T2>;
 Tpl using uset = std::unordered_set<T>;
-Tpl using umultiset = std::unordered_multiset<T>;
 Tpl using v = std::vector<T>; Tpl using v2 = v<v<T>>;
 using vl = v<i64>; using v2l = v2<i64>; using vi = v<i32>; using v2i = v2<i32>; using vb = v<bool>; using vb2 = v2<bool>;
 using ii = array<i64, 2>; using iii = array<i64, 3>; using iiii = array<i64, 4>; using iiiii = array<i64, 5>;
@@ -374,7 +377,6 @@ mac_conv_(i64, ll) mac_conv_(i32, i) mac_conv_(u64, ull) mac_conv_(f64, d) mac_c
 #pragma endregion // conversions
 
 #pragma region miscellaneous
-#if !CPP11_MODE && !CPP17_MODE
 template <typename T, typename T2, typename T3> inline T replace_if(const T& origin, const T2& cond, const T3& replacement)
     requires is_convertible_v<T2, T> && is_convertible_v<T3, T> {
     return origin == cast<T>(cond) ? cast<T>(replacement) : origin;
@@ -388,38 +390,8 @@ template <typename T, typename T2> inline void setMin(T& tar, const T2& val) req
 template <typename T, typename T2> inline void setMax(T& tar, const T2& val) requires is_convertible_v<T2, T> {
     if(cast<T>(val) > tar) tar = cast<T>(val);
 }
-#endif
+
 #pragma endregion // miscellaneous
-
-#pragma region custom_types
-
-template <i64 mod = mod1>
-struct ModInt {
-    i64 v = 0;
-    ModInt() = default;
-    ModInt(i64 val) : v((val % mod + mod) % mod) {} // NOLINT(*-explicit-constructor)
-    explicit operator i64() { return v; }
-    ModInt operator+(const ModInt& b) const { return {(v + b.v) % mod}; }
-    ModInt operator-(const ModInt& b) const { return {(v - b.v + mod) % mod}; }
-    ModInt operator*(const ModInt& b) const { return {(v * b.v) % mod}; }
-    ModInt& operator+=(const ModInt& b) { v = (v + b.v) % mod; return *this; }
-    ModInt& operator-=(const ModInt& b) { v = (v - b.v + mod) % mod; return *this; }
-    ModInt& operator*=(const ModInt& b) { v = (v * b.v) % mod; return *this; }
-    ModInt operator+(i64 b) const { b = (b % mod + mod) % mod; return {(v + b) % mod}; }
-    ModInt operator-(i64 b) const { b = (b % mod + mod) % mod; return {(v - b + mod) % mod}; }
-    ModInt operator*(i64 b) const { b = (b % mod + mod) % mod; return {(v * b) % mod}; }
-    ModInt& operator+=(i64 b) { b = (b % mod + mod) % mod; v = (v + b) % mod; return *this; }
-    ModInt& operator-=(i64 b) { b = (b % mod + mod) % mod; v = (v - b + mod) % mod; return *this; }
-    ModInt& operator*=(i64 b) { b = (b % mod + mod) % mod; v = (v * b) % mod; return *this; }
-};
-namespace ModIntOpInternal {
-    template <i64 mod> istream& operator>>(istream& in, ModInt<mod>& t) { in >> t.v; return in; }
-    template <i64 mod> ostream& operator<<(ostream& out, const ModInt<mod>& t) { out << t.v; return out; }
-    template <i64 mod> ModInt<mod> operator+(i64 a, const ModInt<mod>& b) { a = (a % mod + mod) % mod; return {(b.v + a) % mod}; }
-    template <i64 mod> ModInt<mod> operator-(i64 a, const ModInt<mod>& b) { a = (a % mod + mod) % mod; return {(b.v - a + mod) % mod}; }
-    template <i64 mod> ModInt<mod> operator*(i64 a, const ModInt<mod>& b) { a = (a % mod + mod) % mod; return {(b.v * a) % mod}; }
-}
-using namespace ModIntOpInternal;
 
 class Frac {
     void reduction() { i64 g = gcd(numerator, denominator); numerator /= g; denominator /= g; }
@@ -477,15 +449,194 @@ namespace FracOpInternal {
 }
 using namespace FracOpInternal;
 
-#pragma endregion
-
 #endif // ENABLE_MACRO
 #pragma clang diagnostic pop // remove at ext
 //@formatter:on              // remove at ext
 #pragma endregion // macros
 
+/// 1-based index
+class Splay {
+public:
+    using ptr = i32;
+    static constexpr ptr null = 0;
+    struct nd {
+        ptr l = null, r = null, p = null;
+        i64 val = 0, sum = 0, mx = 0, mn = INF;
+        i64 sz = 1;
+        bool flip = false, dummy = false;
+        nd()=default;
+        explicit nd(i64 val) { sum = mx = mn = val; }
+        nd(ptr L, ptr R, ptr Parent, i64 Value) : l(L), r(R), p(Parent), val(Value), sum(Value), mx(Value), mn(Value), sz(1) {}
+    };
+private:
+    v<nd> mem; ptr root = null; ptr avail = 1;
+    static constexpr ptr trashPtr = 2015571557;
+    i32 size_ = 0;
+    ptr New(ptr p, const i64 &val) {
+        mem.eb(0, 0, p, val);
+        assert(avail + 1 < trashPtr);
+        return avail++;
+    }
+    void Delete(ptr tar) {
+        l(tar) = r(tar) = p(tar) = trashPtr;
+        val(tar) = {};
+    }
+    inline ptr& l(ptr x) { return mem[x].l; } inline ptr& r(ptr x) { return mem[x].r; } inline ptr& p(ptr x) { return mem[x].p; }
+    inline i64& sz(ptr x) { return mem[x].sz; } inline i64& val(ptr x) { return mem[x].val; } inline i64& sum(ptr x) { return mem[x].sum; }
+    inline i64& mx(ptr x) { return mem[x].mx; } inline i64& mn(ptr x) { return mem[x].mn; } inline bool& flip(ptr x) { return mem[x].flip; }
+
+    void update(ptr x) {
+        sz(x) = 1 + sz(l(x)) + sz(r(x));
+        sum(x) = val(x) + sum(l(x)) + sum(r(x));
+        mn(x) = min({val(x), mn(l(x)), mn(r(x))});
+        mx(x) = max({val(x), mx(l(x)), mx(r(x))});
+    }
+    void push(ptr x) {
+        if(!flip(x)) return;
+        swap(l(x), r(x));
+        if(l(x)) flip(l(x)) ^= 1;
+        if(r(x)) flip(r(x)) ^= 1;
+        flip(x) = false;
+    }
+    void rotate(ptr x) {
+        if(x == root) return;
+        ptr P = p(x); ptr y = null;
+        push(P); push(x);
+        if(l(P) == x) {
+            l(P) = y = r(x);
+            r(x) = P;
+        } else {
+            r(P) = y = l(x);
+            l(x) = P;
+        }
+        p(x) = p(P); p(P) = x;
+        if(y) p(y) = P;
+        if(p(x)) {
+            if(P == l(p(x))) l(p(x)) = x;
+            else r(p(x)) = x;
+        }
+        else root = x;
+        update(P); update(x);
+    }
+public:
+    void splay(ptr x, ptr g = null) {
+        while( p(x) != g ) {
+            if(p(p(x)) == g) { rotate(x); break; }
+            if( (x == l(p(x)) ) == ( p(x) == l(p(p(x))) ) ) rotate(p(x));
+            else rotate(x);
+            rotate(x);
+        }
+    }
+    Splay() {
+        mem = v<nd>(1, nd());
+        mem[0].sz = 0;
+        root = null;
+    }
+    explicit Splay(const vl &arr) : Splay() {
+        i64 n_ = arr.size();
+        root = New(null, 0); // prevents oob errors
+        ptr cur = root; mem[root].dummy = true;
+        v<ptr> t_(1, root);
+        forf(i, 0, n_ - 1) {
+            ptr nxt = New(cur, arr[i]);
+            r(cur) = nxt; cur = nxt;
+            t_.eb(cur);
+        }
+        ptr nxt = New(cur, 0);
+        r(cur) = nxt; t_.eb(nxt); // prevents oob errors
+        mem[nxt].dummy = true;
+        assert(Size(t_) == n_ + 2); size_ = n_ + 2;
+        forr(i, n_-1, 0) update(t_[i]);
+    }
+    nd get(ptr i) { return mem[i]; }
+    ptr rootPtr() const { return root; }
+    void reserve(u64 sz) { mem.reserve(sz); }
+
+    i32 size() const { return size_ - 2; } // two dummy nodes
+
+    // [s, e], s >= 1
+    ptr gather(i32 s, i32 e) {
+        kth(e+1);
+        ptr t = root;
+        kth(s-1);
+        splay(t, root);
+        return l(r(root));
+    }
+
+    void flip(i32 s, i32 e) {
+        ptr x = gather(s, e);
+        flip(x) ^= 1;
+    }
+
+    void shift(i32 s, i32 e, i32 k) {
+        if(k >= 0) {
+            k %= e - s + 1; if(!k) return;
+            flip(s, e); flip(s, s+k-1); flip(s+k, e);
+        } else {
+            k *= -1; k %= e - s + 1; if(!k) return;
+            flip(s, e); flip(s, e-k); flip(e-k+1, e);
+        }
+    }
+
+    /// k >= 1
+    void kth(i32 k) {
+        ptr x = root;
+        push(x);
+        while(true) {
+            while(l(x) && sz(l(x)) > k) x = l(x), push(x);
+            k -= sz(l(x));
+            if(!k--) break;
+            x = r(x); push(x);
+        }
+        splay(x);
+    }
+
+    template <typename Callable>
+    void forEach(const Callable &f, ptr tar = -1) {
+        fun<void(ptr)> recF_ = [&](const ptr &i) {
+            if(!i) return;
+            push(i);
+            if(l(i)) recF_(l(i));
+            if(!mem[i].dummy) f(mem[i]);
+            if(r(i)) recF_(r(i));
+        };
+        if(tar == -1) tar = root;
+        recF_(tar);
+    }
+};
+
+// 13159. 배열
+// #splay_tree
 
 i32 main() {
     fastio;
-
+    in64(n, q);
+    vl init; forf(i, 1, n) init.eb(i);
+    Splay splay(init);
+    rep(q) {
+        in64(op);
+        if(op == 1) {
+            in64(s, e);
+            Splay::nd x = splay.get(splay.gather(s, e));
+            println(x.mn, x.mx, x.sum);
+            splay.flip(s, e);
+        }
+        else if(op == 2) {
+            in64(s, e, k);
+            Splay::nd x = splay.get(splay.gather(s, e));
+            println(x.mn, x.mx, x.sum);
+            splay.shift(s, e, k);
+        }
+        else if(op == 3) {
+            splay.kth(input());
+            println(splay.get(splay.rootPtr()).val);
+        }
+        else {
+            in64(x); splay.splay(x+1);
+            println(splay.get(splay.get(splay.rootPtr()).l).sz);
+        }
+    }
+    splay.forEach([&](Splay::nd n) {
+        print(n.val, "");
+    });
 }

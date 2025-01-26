@@ -60,7 +60,7 @@ using std::iota, std::prev, std::next, std::prev_permutation, std::next_permutat
 using std::complex, std::polar, std::to_string;
 using std::stringstream, std::istringstream, std::ostringstream;
 #if !CPP17_MODE
-using std::popcount, std::is_integral_v, std::is_convertible_v, std::is_arithmetic_v, std::is_floating_point_v, std::is_same_v;
+using std::popcount; using std::is_integral_v, std::is_convertible_v, std::is_arithmetic_v, std::is_floating_point_v, std::is_same_v;
 #endif // !CPP17_MODE
 #endif // CPP11_MODE else
 
@@ -487,5 +487,17 @@ using namespace FracOpInternal;
 
 i32 main() {
     fastio;
-
+    tcRep() {
+        in64(n);
+        vl cur = inArr(n);
+        i64 ans = sum(cur);
+        while(Size(cur) > 1) {
+            i64 cans = 0;
+            vl nxt;
+            forn(i, Size(cur) - 1) cans += cur[i+1] - cur[i], nxt.pb(cur[i+1] - cur[i]);
+            setMax(ans, abs(cans));
+            cur = nxt;
+        }
+        println(ans);
+    }
 }
