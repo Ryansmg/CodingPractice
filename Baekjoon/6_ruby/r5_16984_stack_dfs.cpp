@@ -83,7 +83,7 @@ template <typename T, typename T2> using umultimap = std::unordered_multimap<T, 
 Tpl using uset = std::unordered_set<T>;
 Tpl using umultiset = std::unordered_multiset<T>;
 Tpl using v = std::vector<T>; Tpl using v2 = v<v<T>>;
-using vl = v<i64>; using v2l = v2<i64>; using vi = v<i32>; using v2i = v2<i32>; using vb = v<bool>; using v2b = v2<bool>;
+using vl = v<i64>; using v2l = v2<i64>; using vi = v<i32>; using v2i = v2<i32>; using vb = v<bool>; using vb2 = v2<bool>;
 using ii = array<i64, 2>; using iii = array<i64, 3>; using iiii = array<i64, 4>; using iiiii = array<i64, 5>;
 Tpl using lim = std::numeric_limits<T>;
 template <typename Signature> using fun = std::function<Signature>;
@@ -484,8 +484,95 @@ using namespace FracOpInternal;
 //@formatter:on              // remove at ext
 #pragma endregion // macros
 
+v2i adj;
+vi color, cnt; // color of ith node & color count
+vi dist, depth; // dist from root & subtree depth
+vi ans; i32 curAns = 0;
+
+vi st; // unique cities
+
+void initDist(i32 cur, i32 par = -1, i32 d = 0) {
+    dist[cur] = d;
+    for(ci32 i : adj[cur]) {
+        if(i == par) continue;
+        initDist(i, cur, d+1);
+    }
+}
+
+void initDepth(i32 cur, i32 par = -1) {
+    i32 subMax = 0;
+    for(ci32 i : adj[cur]) {
+        if(i == par) continue;
+        initDepth(i, cur);
+        setMax(subMax, depth[i]);
+    }
+    depth[cur] = subMax + 1;
+}
+
+void solve(i32 cur, i32 par = -1) {
+    if(Size(adj[cur]) == 1 && adj[cur][0] == par) {
+        setMax(ans[cur], curAns);
+        return;
+    }
+
+    forf(i, 1, Size(adj[cur]) - 1) {
+        if(adj[cur][i] == par) continue;
+        if(adj[cur][0] == par || depth[adj[cur][0]] < depth[adj[cur][i]])
+            swap(adj[cur][0], adj[cur][i]);
+    }
+
+    i32 subtreeLen = 0;
+    forf(i, 1, Size(adj[cur]) - 1)
+        if(adj[cur][i] != par) setMax(subtreeLen, depth[adj[cur][i]]);
+
+    for(ci32 i : adj[cur]) {
+        if(i == par) continue;
+
+        while(!st.empty() && dist[st.back()] >= dist[cur] - subtreeLen) {
+            if(--cnt[color[st.back()]] == 0) curAns--;
+            st.pop_back();
+        }
+
+        if(cnt[color[cur]]++ == 0) curAns++;
+        st.pb(cur);
+
+        solve(i, cur);
+        setMax(subtreeLen, depth[i]);
+
+        if(!st.empty() && st.back() == cur) {
+            if(--cnt[color[st.back()]] == 0) curAns--;
+            st.pop_back();
+        }
+    }
+
+    while(!st.empty() && dist[st.back()] >= dist[cur] - subtreeLen) {
+        if(--cnt[color[st.back()]] == 0) curAns--;
+        st.pop_back();
+    }
+
+    setMax(ans[cur], curAns);
+}
 
 i32 main() {
     fastio;
+    in64(n, m);
+    adj = v2i(n, vi());
+    color = dist = depth = ans = vi(n, 0);
+    cnt = vi(m + 1, 0);
+    rep(n-1) {
+        in64(a, b); a--; b--;
+        adj[a].pb(b); adj[b].pb(a);
+    }
+    forn(i, n) input(color[i]);
 
+    initDist(0);
+    i32 mxDist = -1; i32 root = -1;
+    forn(i, n) if(mxDist < dist[i]) mxDist = dist[i], root = i;
+    initDist(root); initDepth(root); solve(root);
+
+    mxDist = root = -1;
+    forn(i, n) if(mxDist < dist[i]) mxDist = dist[i], root = i;
+    initDist(root); initDepth(root); solve(root);
+
+    printfln(.sep="\n")(ans);
 }

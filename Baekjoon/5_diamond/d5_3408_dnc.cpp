@@ -83,7 +83,7 @@ template <typename T, typename T2> using umultimap = std::unordered_multimap<T, 
 Tpl using uset = std::unordered_set<T>;
 Tpl using umultiset = std::unordered_multiset<T>;
 Tpl using v = std::vector<T>; Tpl using v2 = v<v<T>>;
-using vl = v<i64>; using v2l = v2<i64>; using vi = v<i32>; using v2i = v2<i32>; using vb = v<bool>; using v2b = v2<bool>;
+using vl = v<i64>; using v2l = v2<i64>; using vi = v<i32>; using v2i = v2<i32>; using vb = v<bool>; using vb2 = v2<bool>;
 using ii = array<i64, 2>; using iii = array<i64, 3>; using iiii = array<i64, 4>; using iiiii = array<i64, 5>;
 Tpl using lim = std::numeric_limits<T>;
 template <typename Signature> using fun = std::function<Signature>;
@@ -487,5 +487,40 @@ using namespace FracOpInternal;
 
 i32 main() {
     fastio;
-
+    tcRep() {
+        in64(n); vl arr = inArr(n);
+        vi l(n, -1), r(n, iinf);
+        {
+            map<i32, i32> prv;
+            forn(i, n) {
+                if(auto iter = prv.find(arr[i]); iter != prv.end()) {
+                    r[iter->second] = i;
+                    l[i] = iter->second;
+                    iter->second = i;
+                } else {
+                    prv.insert({arr[i], i});
+                }
+            }
+        }
+        fun<bool(ci64, ci64, ci64)> isUnique = [&](ci64 idx, ci64 s, ci64 e) {
+            return l[idx] < s && e < r[idx];
+        };
+        bool ans = true;
+        fun<void(ci64, ci64)> solve = [&](ci64 s, ci64 e) {
+            if(!ans || e < s) return;
+            for(i64 l = s, r = e; l <= r; l++, r--) {
+                if(isUnique(l, s, e)) {
+                    solve(s, l-1); solve(l+1, e);
+                    return;
+                }
+                if(isUnique(r, s, e)) {
+                    solve(s, r-1); solve(r+1, e);
+                    return;
+                }
+            }
+            ans = false;
+        };
+        solve(0, n-1);
+        println(ans ? "non-boring" : "boring");
+    }
 }

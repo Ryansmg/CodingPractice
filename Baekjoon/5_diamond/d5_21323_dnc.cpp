@@ -83,7 +83,7 @@ template <typename T, typename T2> using umultimap = std::unordered_multimap<T, 
 Tpl using uset = std::unordered_set<T>;
 Tpl using umultiset = std::unordered_multiset<T>;
 Tpl using v = std::vector<T>; Tpl using v2 = v<v<T>>;
-using vl = v<i64>; using v2l = v2<i64>; using vi = v<i32>; using v2i = v2<i32>; using vb = v<bool>; using v2b = v2<bool>;
+using vl = v<i64>; using v2l = v2<i64>; using vi = v<i32>; using v2i = v2<i32>; using vb = v<bool>; using vb2 = v2<bool>;
 using ii = array<i64, 2>; using iii = array<i64, 3>; using iiii = array<i64, 4>; using iiiii = array<i64, 5>;
 Tpl using lim = std::numeric_limits<T>;
 template <typename Signature> using fun = std::function<Signature>;
@@ -484,8 +484,90 @@ using namespace FracOpInternal;
 //@formatter:on              // remove at ext
 #pragma endregion // macros
 
+/// requirements: operator+(T, T)
+template <typename T = i64>
+class Segtree {
+    vector<T> tree; i32 n;
+public:
+    Segtree() : n(0) {}
+    explicit Segtree(ci32 treeSize) { tree = v<T>(4*treeSize, T()); n = treeSize; }
+    explicit Segtree(const v<T> &a) { n = Size(a); tree = v<T>(4*n, T()); init(a, 1, 1, n); }
+    void set(ci32 tar, const T& val) { set(1, tar, 1, n, val); }
+    void add(ci32 tar, const T& diff) { update(1, tar, 1, n, diff); }
+    void update(ci32 tar, const T& diff) { update(1, tar, 1, n, diff); }
+    T query(ci32 left, ci32 right) { if(left > right) { return T(); } return query(1, left, right, 1, n); }
+    T query(ci32 tar) { return query(tar, tar); }
+    struct iter {
+        i32 node, start, end; T value; Segtree<T>* segPtr;
+        bool leaf() const { return start == end; }
+        iter left() const { return iter(node<<1, start, (start+end)>>1, segPtr->tree[node<<1], segPtr); }
+        iter right() const { return iter(node<<1|1, ((start+end)>>1)+1, end, segPtr->tree[node<<1|1], segPtr); }
+    };
+    iter root() { return iter(1, 1, n, tree[1], this); }
+    // ret[i] == query(i+1)
+    v<T> getLeafs() { v<T> ret(n);
+        fun<void(i64, i64, i64)> f = [&](i64 p, i64 s, i64 e) {
+            if(s == e) ret[s-1] = tree[p];
+            else f(p<<1, s, (s+e)>>1), f(p<<1|1, ((s+e)>>1)+1, e); };
+        f(1, 1, n); return ret; }
+
+    /// [1..i] 범위 합이 val 이하인 최대의 i를 리턴
+    iter strcc_(bi,nSearch)(T val) {
+        iter cur = root();
+        while(!cur.leaf()) { iter l = cur.left();
+            if(val <= l.value) cur = l;
+            else val = val - l.value, cur = cur.right(); }
+        return cur;
+    }
+protected:
+    T& init(const v<T> &a, ci32 node, ci32 start, ci32 end) {
+        if(start==end) return tree[node] = a[start-1];
+        else return tree[node] = init(a, node<<1, start, (start+end)>>1) + init(a, node<<1|1, ((start+end)>>1)+1, end);
+    }
+    T& update(ci32 node, ci32 tar, ci32 start, ci32 end, const T& diff) { if(end < tar || tar < start) return tree[node];
+        if(start == end) return tree[node] = tree[node] + diff;
+        return tree[node] = update(node<<1, tar, start, (start+end)>>1, diff) + update(node<<1|1, tar, ((start+end)>>1)+1, end, diff);
+    }
+    T& set(ci32 node, ci32 tar, ci32 start, ci32 end, const T& val) { if(end < tar || tar < start) return tree[node];
+        if(start == end) return tree[node] = val;
+        return tree[node] = set(node<<1, tar, start, (start+end)>>1, val) + set(node<<1|1, tar, ((start+end)>>1)+1, end, val);
+    }
+    T query(ci32 node, ci32 left, ci32 right, ci32 start, ci32 end) { if(right < start || end < left) return T();
+        if(left <= start && end <= right) return tree[node];
+        return query(node<<1, left, right, start, (start+end)>>1) + query(node<<1|1, left, right, ((start+end)>>1)+1, end);
+    }
+};
+
+struct tr {
+    i64 idx = -1, val = -INF;
+    tr operator+(const tr& b) const {
+        if(val < b.val) return b;
+        return *this;
+    }
+};
 
 i32 main() {
     fastio;
-
+    in64(n);
+    if(n == 1) printExit(1);
+    vl a(1, -1); rep(n) a.pb(input());
+    v<tr> arr; forf(i, 1, n) arr.eb(i, a[i]);
+    Segtree<tr> seg(arr);
+    tr st = arr[0]; for(const auto& aa : arr) st = st + aa;
+    vl ans;
+    fun<void(i64, i64, i64, i64)> solve = [&](i64 s, i64 e, i64 pre, i64 mn) {
+        i64 l = seg.query(s, e).idx, r = l;
+        while(r < e && a[r+1] == a[l]) r++;
+        if(l != s) {
+            if(a[l] + e - s > pre && a[l] + e - s >= mn) ans.pb(l);
+            solve(s, l-1, a[l], max(mn - (e - l + 1), a[l]+1));
+        }
+        if(r != e) {
+            if(a[r] + e - s > pre && a[r] + e - s >= mn) ans.pb(r);
+            solve(r+1, e, a[r], max(mn - (r - s + 1), a[r]+1));
+        }
+    };
+    solve(1, n, st.val, st.val);
+    if(ans.empty()) ans.pb(-1);
+    println(compressed(ans));
 }

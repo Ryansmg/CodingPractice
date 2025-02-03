@@ -8,7 +8,7 @@ struct Fenwick2d {
     vector<vector<long long>> tree; signed xn, yn;
     explicit Fenwick2d(signed xlen, signed ylen) : xn(xlen), yn(ylen) { tree.resize(xlen+10, vector<long long>(ylen+10, 0)); }
     void update(signed x, signed y, long long v){ for(; x<=xn; x+=x&-x) for(signed yy=y; yy<=yn; yy+=yy&-yy) tree[x][yy] += v; }
-    long long query(signed x, signed y){ long long ret = 0; for(; x; x-=x&-x) for(signed yy=y; yy; yy-=yy&-yy) ret += tree[x][yy];
+    long long query(signed x, signed y) { long long ret = 0; for(; x; x-=x&-x) for(signed yy=y; yy; yy-=yy&-yy) ret += tree[x][yy];
         return ret; }
     long long query(signed x1, signed y1, signed x2, signed y2) { return query(x2, y2) - query(x2, y1-1) - query(x1-1, y2) + query(x1-1, y1-1); }
 };

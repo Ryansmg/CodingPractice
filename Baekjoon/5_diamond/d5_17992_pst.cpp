@@ -83,7 +83,7 @@ template <typename T, typename T2> using umultimap = std::unordered_multimap<T, 
 Tpl using uset = std::unordered_set<T>;
 Tpl using umultiset = std::unordered_multiset<T>;
 Tpl using v = std::vector<T>; Tpl using v2 = v<v<T>>;
-using vl = v<i64>; using v2l = v2<i64>; using vi = v<i32>; using v2i = v2<i32>; using vb = v<bool>; using v2b = v2<bool>;
+using vl = v<i64>; using v2l = v2<i64>; using vi = v<i32>; using v2i = v2<i32>; using vb = v<bool>; using vb2 = v2<bool>;
 using ii = array<i64, 2>; using iii = array<i64, 3>; using iiii = array<i64, 4>; using iiiii = array<i64, 5>;
 Tpl using lim = std::numeric_limits<T>;
 template <typename Signature> using fun = std::function<Signature>;
@@ -484,8 +484,160 @@ using namespace FracOpInternal;
 //@formatter:on              // remove at ext
 #pragma endregion // macros
 
+/// Persistent Segment Tree
+template <typename T = unsigned char>
+class Pst {
+    v<T> tree; vi l, r; i64 ln, rn;
+public:
+    Pst(i64 leftBound, i64 rightBound) : ln(leftBound), rn(rightBound) { rep(2) tree.eb(), l.eb(0), r.eb(0); }
+    // index = [1..n]
+    explicit Pst(const v<T>& arr) : ln(1), rn(Size(arr)) { tree.reserve(4*rn); rep(2) tree.eb(), l.eb(0), r.eb(0);
+        init(1, ln, rn, arr); }
+    struct Iter {
+        Pst* ptr = nullptr; i32 pos = 0; i64 s = INF, e = -INF;
+        T operator*() { return ptr->tree[pos]; } bool null() { return !pos; }
+        Iter left() { return {ptr, ptr->l[pos], s, (s+e)/2}; } Iter right() { return {ptr, ptr->r[pos], (s+e)/2+1, e}; }
+    };
+    struct Root {
+        i32 pos = 0, prvPos = 0; Pst* ptr = nullptr;
+        Root next() {
+            Root ret; ret.pos = Size(ptr->tree); ret.prvPos = pos; ret.ptr = ptr;
+            ptr->tree.eb(ptr->tree[pos]); ptr->l.eb(ptr->l[pos]); ptr->r.eb(ptr->r[pos]);
+            return ret;
+        }
+        Iter iter() { return {ptr, pos, ptr->ln, ptr->rn}; }
+        /// @returns self
+        Root& add(i64 tar, const T& diff) { ptr->update(prvPos, pos, ptr->ln, ptr->rn, tar, diff, true); return *this; }
+        /// @returns self
+        Root& set(i64 tar, const T& val) { ptr->update(prvPos, pos, ptr->ln, ptr->rn, tar, val, false); return *this; }
+        T query(i64 left, i64 right) { return ptr->query(pos, ptr->ln, ptr->rn, left, right); }
+    };
+    friend Root; friend Iter; Root root() { return { 1, 0, this }; }
+private:
+    T& init(i32 cur, i64 s, i64 e, const v<T>& arr) {
+        if(s == e) return tree[cur] = arr[s-1];
+        l[cur] = Size(tree); r[cur] = Size(tree)+1; rep(2) tree.eb(), l.eb(0), r.eb(0);
+        return tree[cur] = init(l[cur], s, (s+e)>>1, arr) + init(r[cur], ((s+e)>>1)+1, e, arr);
+    }
+    void update(i32 prv, i32 cur, i64 s, i64 e, i64 t, const T& d, bool isAdd) {
+        if(s == e) { if(isAdd) { tree[cur] = tree[cur] + d; } else { tree[cur] = d; } return; } i64 m = (s + e) >> 1;
+        if(t <= m) {
+            if(!l[cur] || l[cur] == l[prv]) l[cur] = Size(tree), tree.eb(tree[l[prv]]), l.eb(l[l[prv]]), r.eb(r[l[prv]]);
+            if(!r[cur]) r[cur] = r[prv];
+            update(l[prv], l[cur], s, m, t, d, isAdd);
+        } else {
+            if(!l[cur]) l[cur] = l[prv];
+            if(!r[cur] || r[cur] == r[prv]) r[cur] = Size(tree), tree.eb(tree[r[prv]]), l.eb(l[r[prv]]), r.eb(r[r[prv]]);
+            update(r[prv], r[cur], m + 1, e, t, d, isAdd);
+        }
+        tree[cur] = tree[l[cur]] + tree[r[cur]];
+    }
+    T query(i32 cur, i64 s, i64 e, i64 ql, i64 qr) {
+        if(!cur || qr < s || e < ql) { return T(); } if(ql <= s && e <= qr) return tree[cur];
+        return query(l[cur], s, (s+e)>>1, ql, qr) + query(r[cur], ((s+e)>>1)+1, e, ql, qr);
+    }
+};
+using PstIter = Pst<unsigned char>::Iter; using PstRoot = Pst<unsigned char>::Root;
+
+
+/// requirements: (TreeType + TreeType), (LazyType + UpdateType), (TreeType + LazyIter&&), (LazyType + LazyIter&&)
+/// <br> usage: node merge, node update, lazy update, lazy update
+template <typename TreeType, typename LazyType, typename UpdateType>
+class Lazyprop {
+public:
+    /// tree & lazy are copied values, should not be modified
+    struct iter {
+        i32 node, start, end; TreeType tree; LazyType lazy; Lazyprop* segPtr;
+        iter left() { segPtr->push(node<<1, start, (start+end)>>1);
+            return iter(node<<1, start, (start+end)>>1, segPtr->tree[node<<1], segPtr->lazy[node<<1], segPtr); }
+        iter right() { segPtr->push(node<<1|1, ((start+end)>>1)+1, end);
+            return iter(node<<1|1, ((start+end)>>1)+1, end, segPtr->tree[node<<1|1], segPtr->lazy[node<<1|1], segPtr); }
+        bool leaf() { return start == end; }
+    };
+protected:
+    v<TreeType> tree; v<LazyType> lazy; i32 n=-1;
+    void push(i32 node, i32 start, i32 end) {
+        tree[node] = tree[node] + iter(node, start, end, tree[node], lazy[node], this);
+        if(start!=end) { lazy[node<<1] = lazy[node<<1] + iter(node, start, end, tree[node], lazy[node], this);
+            lazy[node<<1|1] = lazy[node<<1|1] + iter(node, start, end, tree[node], lazy[node], this); }
+        lazy[node] = LazyType();
+    }
+public:
+    explicit Lazyprop(i32 treeSize) { tree = v<TreeType>(4*treeSize, TreeType()); lazy = v<LazyType>(4*treeSize, LazyType()); n = treeSize; }
+    explicit Lazyprop(const v<TreeType> &a) : Lazyprop((i32) a.size()) { init(a, 1, 1, n); }
+    void update(i32 left, i32 right, UpdateType diff) { if(left > right) { return; } update(1, left, right, 1, n, diff); }
+    TreeType query(i32 left, i32 right) { if(left > right) { return TreeType(); } return query(1, left, right, 1, n); }
+    TreeType query(i32 tar) { return query(tar, tar); }
+    iter root() { push(1, 1, n); return iter(1, 1, n, tree[1], lazy[1], this); }
+    // ret[i] == query(i+1)
+    v<TreeType> getLeafs() { v<TreeType> ret(n);
+        fun<void(i64, i64, i64)> f = [&](i64 p, i64 s, i64 e) { push(p, s, e);
+            if(s == e) ret[s-1] = tree[p];
+            else f(p<<1, s, (s+e)>>1), f(p<<1|1, ((s+e)>>1)+1, e); };
+        f(1, 1, n); return ret; }
+protected:
+    TreeType& init(const v<TreeType> &a, i32 node, i32 start, i32 end) {
+        if(start==end) return tree[node] = a[start-1];
+        else return tree[node] = init(a, node<<1, start, (start+end)>>1) + init(a, node<<1|1, ((start+end)>>1)+1, end);
+    }
+    TreeType& update(i32 node, i32 left, i32 right, i32 start, i32 end, UpdateType diff) {
+        push(node, start, end); if(end < left || right < start) return tree[node];
+        if(left <= start && end <= right) { lazy[node] = lazy[node] + diff; push(node, start, end); return tree[node]; }
+        return tree[node] = update(node<<1, left, right, start, (start+end)>>1, diff) + update(node<<1|1, left, right, ((start+end)>>1)+1, end, diff);
+    }
+    TreeType query(i32 node, i32 left, i32 right, i32 start, i32 end) {
+        push(node, start, end); if(right < start || end < left) return TreeType();
+        if(left <= start && end <= right) return tree[node];
+        return query(node<<1, left, right, start, (start+end)>>1) + query(node<<1|1, left, right, ((start+end)>>1)+1, end);
+    }
+};
+
+struct tr2 {
+    i32 data = -1, off = -1;
+    tr2 operator+(const tr2& b) const { return data == -1 ? b : *this; }
+};
+
+struct lz2 {
+    i32 data = -1, start = -1;
+    lz2 operator+(const ii& b) const { return {cast<i32>(b[0]), cast<i32>(b[1])}; }
+    lz2 operator+(Lazyprop<tr2, lz2, ii>::iter&& it) const { if(it.lazy.data == -1) { return *this; } return it.lazy; }
+};
+
+tr2 operator+(const tr2& a, Lazyprop<tr2, lz2, ii>::iter&& it) {
+    if(it.start != it.end || it.lazy.data == -1) return a;
+    return {it.lazy.data, it.start - it.lazy.start};
+}
+
 
 i32 main() {
     fastio;
-
+    in64(n, m, q); // cache size, data cnt, op cnt
+    v<Pst<unsigned char>> psts;
+    v<v<unsigned char>> arrs;
+    v<PstRoot> last; v<PstRoot> mem; vi mem2;
+    Lazyprop<tr2, lz2, ii> cache(n);
+    vl ks;
+    rep(m) {
+        in64(k); v<unsigned char> arr;
+        rep2(k) arr.pb(cast<unsigned char>(input()));
+        psts.eb(1, k); ks.pb(k); arrs.pb(arr);
+    }
+    forn(i, m) last.eb(psts[i].root());
+    rep(q) {
+        in64(op);
+        if(op == 1) {
+            in64(i, p); i--;
+            i64 rootPos = Size(mem); mem.pb(last[i]); mem2.pb(i);
+            cache.update(p, p + ks[i] - 1, {rootPos, p});
+        } elif(op == 2) {
+            in64(p);
+            tr2 a = cache.query(p);
+            if(a.data == -1) println(0);
+            else println((cast<i32>(mem[a.data].query(1, 1 + a.off)) + cast<i32>(arrs[mem2[a.data]][a.off])) % 256);
+        } else {
+            in64(i, l, r); i--;
+            if(r == ks[i]) last[i] = last[i].next().add(l, 1);
+            else last[i] = last[i].next().add(l, 1).add(r+1, -1);
+        }
+    }
 }

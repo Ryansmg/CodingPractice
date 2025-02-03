@@ -1,9 +1,9 @@
-/* Update : 2025-01-24 */
+/* Update : 2025-02-04 */
 
 #include <bits/stdc++.h>
 using namespace std;
 
-template <typename T> class DynamicSeg; // from DynamicSeg.cpp
+#include "DynamicSeg.cpp" // replace with DynamicSeg class
 
 template <typename T = long long>
 class Dynamic2dSeg {
@@ -37,3 +37,4 @@ private:
         return query(l[p], sx, (sx+ex)/2, qlx, qrx, qly, qry) + query(r[p], (sx+ex)/2+1, ex, qlx, qrx, qly, qry);
     }
 };
+

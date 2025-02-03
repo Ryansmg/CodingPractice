@@ -987,6 +987,83 @@ private:
 };
 using Pst2dIter = Pst2d::Iter; using Pst2dRoot = Pst2d::Root;
 
+/// Persistent Segment Tree with Lazy Propagation  // <br>
+/// requirements : TreeType + TreeType             // node merge <br>
+///                TreeType.update(LazyType, s, e) // range update <br>
+///                LazyType.set(UpdateType)        // range update <br>
+///                LazyType.update(LazyType, s, e) // propagation
+template <typename TreeType, typename LazyType, typename UpdateType>
+class LazyPst {
+    v<TreeType> tree; v<LazyType> lazy; vb flag; vi l, r; i64 ln, rn;
+    static inline i64 m(ci64 s, ci64 e) { return (s + e) < 0 ? ((s + e) >> 1) - 1 : ((s + e) >> 1); }
+public:
+    LazyPst(i64 leftBound, i64 rightBound) : ln(leftBound), rn(rightBound) { rep(2) tree.eb(), lazy.eb(), flag.eb(0), l.eb(0), r.eb(0); }
+    // index = [1..n]
+    explicit LazyPst(const v<TreeType>& arr) : ln(1), rn(Size(arr)) { tree.reserve(4*rn); rep(2) tree.eb(), lazy.eb(), flag.eb(0), l.eb(0), r.eb(0);
+        init(1, ln, rn, arr); }
+    struct Iter {
+        LazyPst* ptr = nullptr; i32 pos = 0; i64 s = INF, e = -INF;
+        TreeType operator*() { return ptr->tree[pos]; } bool null() { return !pos; }
+        Iter left() {
+            ptr->push(ptr->l[pos], s, m(s, e));
+            return {ptr, ptr->l[pos], s, m(s, e)};
+        }
+        Iter right() {
+            ptr->push(ptr->r[pos], m(s, e)+1, e);
+            return {ptr, ptr->r[pos], m(s, e)+1, e};
+        }
+    };
+    struct Root {
+        i32 pos = 0, prvPos = 0; LazyPst* ptr = nullptr;
+        Root next() {
+            Root ret; ret.pos = Size(ptr->tree); ret.prvPos = pos; ret.ptr = ptr;
+            ptr->tree.eb(ptr->tree[pos]); ptr->l.eb(ptr->l[pos]); ptr->r.eb(ptr->r[pos]);
+            ptr->lazy.eb(ptr->lazy[pos]); ptr->flag.eb(ptr->flag[pos]);
+            return ret;
+        }
+        Iter iter() { ptr->push(pos, ptr->ln, ptr->rn); return {ptr, pos, ptr->ln, ptr->rn}; }
+        /// @returns self
+        Root& update(i64 left, i64 right, const UpdateType& val) { ptr->update(prvPos, pos, ptr->ln, ptr->rn, left, right, val); return *this; }
+        TreeType query(i64 left, i64 right) { return ptr->query(prvPos, pos, ptr->ln, ptr->rn, left, right); }
+    };
+    friend Root; friend Iter; Root root() { return { 1, 0, this }; }
+private:
+    void push(i32 cur, i64 s, i64 e) {
+        if(!flag[cur]) return;
+        tree[cur].update(lazy[cur], s, e);
+        if(s != e) {
+            tree.eb(tree[l[cur]]), lazy.eb(lazy[l[cur]]), flag.eb(1), l.eb(l[l[cur]]), r.eb(r[l[cur]]), l[cur] = Size(tree) - 1;
+            lazy[l[cur]].update(lazy[cur], s, e);
+            tree.eb(tree[r[cur]]), lazy.eb(lazy[r[cur]]), flag.eb(1), l.eb(l[r[cur]]), r.eb(r[r[cur]]), r[cur] = Size(tree) - 1;
+            lazy[r[cur]].update(lazy[cur], s, e);
+        }
+        flag[cur] = false; lazy[cur] = LazyType();
+    }
+    TreeType& init(i32 cur, i64 s, i64 e, const v<TreeType>& arr) {
+        if(s == e) return tree[cur] = arr[s-1];
+        l[cur] = Size(tree); r[cur] = Size(tree)+1; rep(2) tree.eb(), lazy.eb(), flag.eb(0), l.eb(0), r.eb(0);
+        return tree[cur] = init(l[cur], s, m(s, e), arr) + init(r[cur], m(s, e)+1, e, arr);
+    }
+    void update(i32 prv, i32 cur, i64 s, i64 e, i64 left, i64 right, const UpdateType& val) {
+        push(cur, s, e);
+        if(right < s || e < left) return;
+        if(left <= s && e <= right) {
+            lazy[cur].set(val); flag[cur] = true; push(cur, s, e); return;
+        }
+        if(!l[cur] || l[cur] == l[prv]) tree.eb(tree[l[cur]]), lazy.eb(lazy[l[cur]]), flag.eb(flag[l[cur]]), l.eb(l[l[cur]]), r.eb(r[l[cur]]), l[cur] = Size(tree) - 1;
+        if(!r[cur] || r[cur] == r[prv]) tree.eb(tree[r[cur]]), lazy.eb(lazy[r[cur]]), flag.eb(flag[r[cur]]), l.eb(l[r[cur]]), r.eb(r[r[cur]]), r[cur] = Size(tree) - 1;
+
+        update(l[prv], l[cur], s, m(s, e), left, right, val);
+        update(r[prv], r[cur], m(s, e) + 1, e, left, right, val);
+        tree[cur] = tree[l[cur]] + tree[r[cur]];
+    }
+    TreeType query(i32 prv, i32 cur, i64 s, i64 e, i64 ql, i64 qr) {
+        push(cur, s, e);
+        if(!cur || qr < s || e < ql) { return TreeType(); } if(ql <= s && e <= qr) return tree[cur];
+        return query(l[prv], l[cur], s, m(s, e), ql, qr) + query(r[prv], r[cur], m(s, e) + 1, e, ql, qr);
+    }
+};
+
 
 struct PrefixSum2d {
     v2l data;
@@ -1898,8 +1975,3 @@ using namespace PollardRho;
 #pragma clang diagnostic pop
 //@formatter:on
 
-
-i32 main() {
-    fastio;
-
-}

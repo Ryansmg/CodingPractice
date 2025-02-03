@@ -83,7 +83,7 @@ template <typename T, typename T2> using umultimap = std::unordered_multimap<T, 
 Tpl using uset = std::unordered_set<T>;
 Tpl using umultiset = std::unordered_multiset<T>;
 Tpl using v = std::vector<T>; Tpl using v2 = v<v<T>>;
-using vl = v<i64>; using v2l = v2<i64>; using vi = v<i32>; using v2i = v2<i32>; using vb = v<bool>; using v2b = v2<bool>;
+using vl = v<i64>; using v2l = v2<i64>; using vi = v<i32>; using v2i = v2<i32>; using vb = v<bool>; using vb2 = v2<bool>;
 using ii = array<i64, 2>; using iii = array<i64, 3>; using iiii = array<i64, 4>; using iiiii = array<i64, 5>;
 Tpl using lim = std::numeric_limits<T>;
 template <typename Signature> using fun = std::function<Signature>;
@@ -98,19 +98,19 @@ template <typename Signature> using fun = std::function<Signature>;
 
 #pragma region consts
 constexpr i64
-    i64max = 9223372036854775807,
-    llmax  = 9223372036854775807,
-    lmax   = 9221557155715571557,
-    INFIN  = 4001557155715570000,
-    INF    = 1000000000000000000,
-    inf    = 3000000000,
-    i32max = 2147483647,
-    imax   = 2147481557,
-    iinf   = 2000000000,
-    mod1   = 1000000007,
-    mod9   = 998244353;
+        i64max = 9223372036854775807,
+        llmax  = 9223372036854775807,
+        lmax   = 9221557155715571557,
+        INFIN  = 4001557155715570000,
+        INF    = 1000000000000000000,
+        inf    = 3000000000,
+        i32max = 2147483647,
+        imax   = 2147481557,
+        iinf   = 2000000000,
+        mod1   = 1000000007,
+        mod9   = 998244353;
 constexpr f128
-    PI = 3.141592653589793238462643383279502884L;
+        PI = 3.141592653589793238462643383279502884L;
 const fun<void(i64, i64)> ll_nullFunc_ = [](ci64, ci64){};
 const set<i64> l_nullSet_;
 #pragma endregion consts
@@ -376,7 +376,7 @@ mac_conv_(i64, ll) mac_conv_(i32, i) mac_conv_(u64, ull) mac_conv_(f64, d) mac_c
 #pragma region miscellaneous
 #if !CPP11_MODE && !CPP17_MODE
 template <typename T, typename T2, typename T3> inline T replace_if(const T& origin, const T2& cond, const T3& replacement)
-    requires is_convertible_v<T2, T> && is_convertible_v<T3, T> {
+requires is_convertible_v<T2, T> && is_convertible_v<T3, T> {
     return origin == cast<T>(cond) ? cast<T>(replacement) : origin;
 }
 #define rplf replace_if
@@ -485,7 +485,121 @@ using namespace FracOpInternal;
 #pragma endregion // macros
 
 
+/// Persistent Segment Tree with Lazy Propagation  // <br>
+/// requirements : TreeType + TreeType             // node merge <br>
+///                TreeType.update(LazyType, s, e) // range update <br>
+///                LazyType.set(UpdateType)        // range update <br>
+///                LazyType.update(LazyType, s, e) // propagation
+template <typename TreeType, typename LazyType, typename UpdateType>
+class LazyPst {
+    v<TreeType> tree; v<LazyType> lazy; vb flag; vi l, r; i64 ln, rn;
+    static inline i64 m(ci64 s, ci64 e) { return (s + e) < 0 ? ((s + e) >> 1) - 1 : ((s + e) >> 1); }
+public:
+    LazyPst(i64 leftBound, i64 rightBound) : ln(leftBound), rn(rightBound) { rep(2) tree.eb(), lazy.eb(), flag.eb(0), l.eb(0), r.eb(0); }
+    // index = [1..n]
+    explicit LazyPst(const v<TreeType>& arr) : ln(1), rn(Size(arr)) { tree.reserve(4*rn); rep(2) tree.eb(), lazy.eb(), flag.eb(0), l.eb(0), r.eb(0);
+        init(1, ln, rn, arr); }
+    struct Iter {
+        LazyPst* ptr = nullptr; i32 pos = 0; i64 s = INF, e = -INF;
+        TreeType operator*() { return ptr->tree[pos]; } bool null() { return !pos; }
+        Iter left() {
+            ptr->push(ptr->l[pos], s, m(s, e));
+            return {ptr, ptr->l[pos], s, m(s, e)};
+        }
+        Iter right() {
+            ptr->push(ptr->r[pos], m(s, e)+1, e);
+            return {ptr, ptr->r[pos], m(s, e)+1, e};
+        }
+    };
+    struct Root {
+        i32 pos = 0, prvPos = 0; LazyPst* ptr = nullptr;
+        Root next() {
+            Root ret; ret.pos = Size(ptr->tree); ret.prvPos = pos; ret.ptr = ptr;
+            ptr->tree.eb(ptr->tree[pos]); ptr->l.eb(ptr->l[pos]); ptr->r.eb(ptr->r[pos]);
+            ptr->lazy.eb(ptr->lazy[pos]); ptr->flag.eb(ptr->flag[pos]);
+            return ret;
+        }
+        Iter iter() { ptr->push(pos, ptr->ln, ptr->rn); return {ptr, pos, ptr->ln, ptr->rn}; }
+        /// @returns self
+        Root& update(i64 left, i64 right, const UpdateType& val) { ptr->update(prvPos, pos, ptr->ln, ptr->rn, left, right, val); return *this; }
+        TreeType query(i64 left, i64 right) { return ptr->query(prvPos, pos, ptr->ln, ptr->rn, left, right); }
+    };
+    friend Root; friend Iter; Root root() { return { 1, 0, this }; }
+private:
+    void push(i32 cur, i64 s, i64 e) {
+        if(!flag[cur]) return;
+        tree[cur].update(lazy[cur], s, e);
+        if(s != e) {
+            tree.eb(tree[l[cur]]), lazy.eb(lazy[l[cur]]), flag.eb(1), l.eb(l[l[cur]]), r.eb(r[l[cur]]), l[cur] = Size(tree) - 1;
+            lazy[l[cur]].update(lazy[cur], s, e);
+            tree.eb(tree[r[cur]]), lazy.eb(lazy[r[cur]]), flag.eb(1), l.eb(l[r[cur]]), r.eb(r[r[cur]]), r[cur] = Size(tree) - 1;
+            lazy[r[cur]].update(lazy[cur], s, e);
+        }
+        flag[cur] = false; lazy[cur] = LazyType();
+    }
+    TreeType& init(i32 cur, i64 s, i64 e, const v<TreeType>& arr) {
+        if(s == e) return tree[cur] = arr[s-1];
+        l[cur] = Size(tree); r[cur] = Size(tree)+1; rep(2) tree.eb(), lazy.eb(), flag.eb(0), l.eb(0), r.eb(0);
+        return tree[cur] = init(l[cur], s, m(s, e), arr) + init(r[cur], m(s, e)+1, e, arr);
+    }
+    void update(i32 prv, i32 cur, i64 s, i64 e, i64 left, i64 right, const UpdateType& val) {
+        push(cur, s, e);
+        if(right < s || e < left) return;
+        if(left <= s && e <= right) {
+            lazy[cur].set(val); flag[cur] = true; push(cur, s, e); return;
+        }
+        if(!l[cur] || l[cur] == l[prv]) tree.eb(tree[l[cur]]), lazy.eb(lazy[l[cur]]), flag.eb(flag[l[cur]]), l.eb(l[l[cur]]), r.eb(r[l[cur]]), l[cur] = Size(tree) - 1;
+        if(!r[cur] || r[cur] == r[prv]) tree.eb(tree[r[cur]]), lazy.eb(lazy[r[cur]]), flag.eb(flag[r[cur]]), l.eb(l[r[cur]]), r.eb(r[r[cur]]), r[cur] = Size(tree) - 1;
+
+        update(l[prv], l[cur], s, m(s, e), left, right, val);
+        update(r[prv], r[cur], m(s, e) + 1, e, left, right, val);
+        tree[cur] = tree[l[cur]] + tree[r[cur]];
+    }
+    TreeType query(i32 prv, i32 cur, i64 s, i64 e, i64 ql, i64 qr) {
+        push(cur, s, e);
+        if(!cur || qr < s || e < ql) { return TreeType(); } if(ql <= s && e <= qr) return tree[cur];
+        return query(l[prv], l[cur], s, m(s, e), ql, qr) + query(r[prv], r[cur], m(s, e) + 1, e, ql, qr);
+    }
+};
+
+struct lz {
+    i32 a = 1, b = 0;
+    inline void set(const ii& c) { a = c[0]; b = c[1]; }
+    inline void update(const lz& l, ci64, ci64) {
+        a = cast<i32>(cast<i64>(a) * l.a % mod9); b = cast<i32>((cast<i64>(b) * l.a + l.b) % mod9);
+    }
+};
+
+struct tr {
+    i32 v = 0;
+    inline tr operator+(const tr& b) const { return { cast<i32>((cast<i64>(v) + b.v) % mod9) }; }
+    inline void update(const lz& a, ci64 s, ci64 e) { v = cast<i32>((cast<i64>(v) * a.a + a.b * (e - s + 1)) % mod9); }
+};
+
 i32 main() {
     fastio;
-
+    in64(n, m);
+    vl arr = inArr(n);
+    LazyPst<tr, lz, ii> seg(castVec<tr>(arr));
+    v<LazyPst<tr, lz, ii>::Root> prv, nxt(4);
+    rep(4) prv.pb(seg.root().next());
+    rep(m) {
+        in64(t, l, r, v);
+        forn(i, 4) {
+            if((t + i) % 4 == 0) {
+                nxt[i] = prv[i].next().update(l, r, {1, v});
+            }
+            elif((t + i) % 4 == 1) {
+                nxt[i] = prv[i].next().update(l, r, {v, 0});
+            }
+            elif((t + i) % 4 == 2) {
+                if(i == 0) println(prv[i].query(l, r).v);
+                nxt[i] = prv[i];
+            }
+            else {
+                nxt[i] = prv[(i+v)%4];
+            }
+        }
+        prv = nxt;
+    }
 }

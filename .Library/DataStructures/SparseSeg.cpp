@@ -3,7 +3,6 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-
 struct SpSumLazy;
 
 /// requirements: (TreeType + TreeType), (LazyType + UpdateType), (TreeType + LazyIter&&), (LazyType + LazyIter&&)
@@ -11,7 +10,7 @@ struct SpSumLazy;
 template <typename TreeType = long long, typename LazyType = SpSumLazy, typename UpdateType = long long>
 class SparseSeg {
     vector<TreeType> tree; vector<LazyType> lazy; vector<signed> l, r; long long ln, rn;
-    signed next() { tree.emplace_back(); lazy.emplace_back(); l.emplace_back(-1); r.emplace_back(-1); return Size(tree)-1; }
+    signed next() { tree.emplace_back(); lazy.emplace_back(); l.emplace_back(-1); r.emplace_back(-1); return ((long long) tree.size())-1; }
 public:
     SparseSeg(long long li, long long ri) : ln(li), rn(ri) { next(); }
     /// tree & lazy are copied values, should not be modified
