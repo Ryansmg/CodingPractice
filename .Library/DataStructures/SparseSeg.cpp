@@ -71,3 +71,25 @@ struct SpSumLazy {
 long long operator+(long long a, const SparseSeg<long long, SpSumLazy, long long>::iter& b) {
     return a + (b.end - b.start + 1) * b.lazy.v;
 }
+
+
+// Example : BOJ 20212. 나무는 쿼리를 싫어해~
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+    long long q; cin >> q;
+    vector<array<long long, 5>> queries; // 시간, 타입, i, j, k
+    SparseSeg ss(1, 1000000000);
+    long long oneCnt = 0, twoCnt = 0;
+    for(long long qi = 0; qi < q; qi++) {
+        long long a, i, j, k; cin >> a >> i >> j >> k;
+        if(a == 1) queries.push_back({++oneCnt, 1, i, j, k});
+        else queries.push_back({k, 2, i, j, twoCnt++});
+    }
+    vector<long long> answers(twoCnt);
+    ranges::sort(queries);
+    for(const auto& query : queries) {
+        if(query[1] == 1) ss.update(query[2], query[3], query[4]);
+        else answers[query[4]] = ss.query(query[2], query[3]);
+    }
+    for(auto i : answers) cout << i << '\n';
+}

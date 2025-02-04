@@ -76,9 +76,8 @@
 class MmapInput_ {
     struct stat st{}; char* data = nullptr; bool initCalled = false;
     inline void skipBlank() {
-        assert(data && initCalled);
+        assert(initCalled);
         while(data && (*data == ' ' || *data == '\n')) data++;
-        assert(data);
     }
 public:
     inline void init() {
@@ -86,7 +85,7 @@ public:
         data = (char*) mmap(nullptr, st.st_size, PROT_READ, MAP_SHARED, 0, 0);
         assert(data != MAP_FAILED);
     }
-    inline char get() { assert(data); return *(data++); }
+    inline char get() { return *(data++); }
     MmapInput_& operator>>(char& v) { skipBlank(); v = *(data++); return *this; }
     MmapInput_& operator>>(long long& v) {
         long long sign = 1; v = 0;
@@ -124,6 +123,7 @@ using std::cout, std::cerr, std::clog, std::endl, std::istream, std::ostream, st
 using std::stringstream, std::istringstream, std::ostringstream;
 /// data structures
 using std::array, std::list, std::tuple, std::tie, std::initializer_list, std::bitset;
+using std::ssize;
 /// math
 using std::complex, std::polar, std::popcount;
 using std::max, std::min, std::gcd, std::lcm, std::pow, std::swap, std::abs, std::sin, std::cos, std::tan, std::asin;
