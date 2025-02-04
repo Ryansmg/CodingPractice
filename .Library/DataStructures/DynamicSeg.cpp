@@ -1,12 +1,11 @@
-/* Update : 2025-01-24 */
+/* Update : 2025-02-04 */
 
-#include <bits/stdc++.h>
-using namespace std;
+#include <bits/stdc++.h>\
 
 template <typename T = long long>
 class DynamicSeg {
     inline long long m(long long s, long long e) { return (s+e)>=0 ? (s+e)>>1 : ((s+e)>>1)-1; }
-    vector<T> tree; long long ln, rn; vector<signed> l, r;
+    std::vector<T> tree; long long ln, rn; std::vector<signed> l, r;
     signed next() { tree.emplace_back(); l.emplace_back(-1); r.emplace_back(-1); return ((long long)tree.size())-1; }
 public:
     explicit DynamicSeg(long long li, long long ri) : ln(li), rn(ri) { next(); }

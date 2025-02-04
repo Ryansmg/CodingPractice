@@ -1,15 +1,14 @@
 /* Update : 2025-02-04 */
 
 #include <bits/stdc++.h>
-using namespace std;
 
 template <typename T = long long>
 struct PrefixSum2d {
-    vector<vector<T>> data;
+    std::vector<std::vector<T>> data;
     PrefixSum2d()=default;
-    explicit PrefixSum2d(const vector<vector<T>>& arr) {
-        long long yn = ssize(arr), xn = ssize(arr[0]);
-        data.resize(yn, vector<T>());
+    explicit PrefixSum2d(const std::vector<std::vector<T>>& arr) {
+        long long yn = std::ssize(arr), xn = std::ssize(arr[0]);
+        data.resize(yn, std::vector<T>());
         for(long long i = 0; i < yn; i++) for(long long j = 0; j < xn; j++) {
             if(!j) data[i].emplace_back(arr[i][j]);
             else data[i].emplace_back(data[i][j-1] + arr[i][j]);
@@ -28,6 +27,7 @@ struct PrefixSum2d {
 
 // Example : BOJ 2167. 2차원 배열의 합
 int main() {
+    using namespace std;
     ios_base::sync_with_stdio(false); cin.tie(nullptr);
     long long n, m; cin >> n >> m;
     vector arr = vector(n, vector<long long>(m));

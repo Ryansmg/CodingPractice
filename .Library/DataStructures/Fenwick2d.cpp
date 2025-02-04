@@ -1,12 +1,10 @@
-/* Update : 2025-01-23 */
+/* Update : 2025-02-04 */
 
 #include <bits/stdc++.h>
-using namespace std;
-
 
 struct Fenwick2d {
-    vector<vector<long long>> tree; signed xn, yn;
-    explicit Fenwick2d(signed xlen, signed ylen) : xn(xlen), yn(ylen) { tree.resize(xlen+10, vector<long long>(ylen+10, 0)); }
+    std::vector<std::vector<long long>> tree; signed xn, yn;
+    explicit Fenwick2d(signed xlen, signed ylen) : xn(xlen), yn(ylen) { tree.resize(xlen+10, std::vector<long long>(ylen+10, 0)); }
     void update(signed x, signed y, long long v){ for(; x<=xn; x+=x&-x) for(signed yy=y; yy<=yn; yy+=yy&-yy) tree[x][yy] += v; }
     long long query(signed x, signed y) { long long ret = 0; for(; x; x-=x&-x) for(signed yy=y; yy; yy-=yy&-yy) ret += tree[x][yy];
         return ret; }
@@ -15,6 +13,7 @@ struct Fenwick2d {
 
 // Example : BOJ 11658. 구간 합 구하기 3
 int main() {
+    using namespace std;
     ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr);
     int n, m, t; cin >> n >> m;
     Fenwick2d seg(n, n);

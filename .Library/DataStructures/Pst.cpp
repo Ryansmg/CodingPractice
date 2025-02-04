@@ -1,19 +1,18 @@
 /* Update : 2025-02-04 */
 
 #include <bits/stdc++.h>
-using namespace std;
 
 
 /// Persistent Segment Tree
 template <typename T = long long>
 class Pst {
-    vector<T> tree; vector<signed> l, r; long long ln, rn;
+    std::vector<T> tree; std::vector<signed> l, r; long long ln, rn;
     static inline long long m(long long s, long long e) { return (s + e) < 0 ? ((s + e) >> 1) - 1 : ((s + e) >> 1); }
     template <typename V> static inline long long Size(const V& v) { return static_cast<long long>(v.size()); }
 public:
     Pst(long long leftBound, long long rightBound) : ln(leftBound), rn(rightBound) { for(signed i=0; i<2; i++) tree.emplace_back(), l.emplace_back(0), r.emplace_back(0); }
     // index = [1..n]
-    explicit Pst(const vector<T>& arr) : ln(1), rn(Size(arr)) { tree.reserve(4*rn); for(signed i=0; i<2; i++) tree.emplace_back(), l.emplace_back(0), r.emplace_back(0);
+    explicit Pst(const std::vector<T>& arr) : ln(1), rn(Size(arr)) { tree.reserve(4*rn); for(signed i=0; i<2; i++) tree.emplace_back(), l.emplace_back(0), r.emplace_back(0);
         init(1, ln, rn, arr); }
     struct Iter {
         Pst* ptr = nullptr; signed pos = 0; long long s = 1000000000000000000, e = -1000000000000000000;
@@ -36,7 +35,7 @@ public:
     };
     friend Root; friend Iter; Root root() { return { 1, 0, this }; }
 private:
-    T& init(signed cur, long long s, long long e, const vector<T>& arr) {
+    T& init(signed cur, long long s, long long e, const std::vector<T>& arr) {
         if(s == e) return tree[cur] = arr[s-1];
         l[cur] = Size(tree); r[cur] = Size(tree)+1; for(signed i=0; i<2; i++) tree.emplace_back(), l.emplace_back(0), r.emplace_back(0);
         return tree[cur] = init(l[cur], s, m(s, e), arr) + init(r[cur], m(s, e)+1, e, arr);
@@ -64,6 +63,7 @@ using PstIter = Pst<long long>::Iter; using PstRoot = Pst<long long>::Root;
 
 // Example : BOJ 11012. Egg
 signed main() {
+    using namespace std;
     ios_base::sync_with_stdio(false); cin.tie(nullptr);
     long long tc; cin >> tc;
     for(long long tcn = 0; tcn < tc; tcn++) {

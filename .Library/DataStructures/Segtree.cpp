@@ -1,16 +1,15 @@
 /* Update : 2025-01-23 */
 
 #include <bits/stdc++.h>
-using namespace std;
 
 /// requirements: operator+(T, T)
 template <typename T = long long>
 class Segtree {
-    vector<T> tree; signed n;
+    std::vector<T> tree; signed n;
 public:
     Segtree() : n(0) {}
-    explicit Segtree(signed treeSize) { tree = vector<T>(4*treeSize, T()); n = treeSize; }
-    explicit Segtree(const vector<T> &a) { n = Size(a); tree = vector<T>(4*n, T()); init(a, 1, 1, n); }
+    explicit Segtree(signed treeSize) { tree = std::vector<T>(4*treeSize, T()); n = treeSize; }
+    explicit Segtree(const std::vector<T> &a) { n = Size(a); tree = vector<T>(4*n, T()); init(a, 1, 1, n); }
     void set(signed tar, const T& val) { set(1, tar, 1, n, val); }
     void add(signed tar, const T& diff) { update(1, tar, 1, n, diff); }
     void update(signed tar, const T& diff) { update(1, tar, 1, n, diff); }
@@ -24,8 +23,8 @@ public:
     };
     iter root() { return iter(1, 1, n, tree[1], this); }
     // ret[i] == query(i+1)
-    vector<T> getLeafs() { vector<T> ret(n);
-        function<void(long long, long long, long long)> f = [&](long long p, long long s, long long e) {
+    std::vector<T> getLeafs() { std::vector<T> ret(n);
+        std::function<void(long long, long long, long long)> f = [&](long long p, long long s, long long e) {
             if(s == e) ret[s-1] = tree[p];
             else f(p<<1, s, (s+e)>>1), f(p<<1|1, ((s+e)>>1)+1, e); };
         f(1, 1, n); return ret; }
@@ -39,7 +38,7 @@ public:
         return cur;
     }
 protected:
-    T& init(const vector<T> &a, signed node, signed start, signed end) {
+    T& init(const std::vector<T> &a, signed node, signed start, signed end) {
         if(start==end) return tree[node] = a[start-1];
         else return tree[node] = init(a, node<<1, start, (start+end)>>1) + init(a, node<<1|1, ((start+end)>>1)+1, end);
     }
@@ -59,6 +58,7 @@ protected:
 
 // Example : BOJ 2243. 사탕상자
 int main() {
+    using namespace std;
     ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr);
     int n; cin >> n;
     Segtree seg(1000000);

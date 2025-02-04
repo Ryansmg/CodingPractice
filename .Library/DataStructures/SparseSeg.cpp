@@ -1,7 +1,6 @@
 /* Update : 2025-01-24 */
 
 #include <bits/stdc++.h>
-using namespace std;
 
 struct SpSumLazy;
 
@@ -9,7 +8,7 @@ struct SpSumLazy;
 /// <br> usage: node merge, node update, lazy update, lazy update
 template <typename TreeType = long long, typename LazyType = SpSumLazy, typename UpdateType = long long>
 class SparseSeg {
-    vector<TreeType> tree; vector<LazyType> lazy; vector<signed> l, r; long long ln, rn;
+    std::vector<TreeType> tree; std::vector<LazyType> lazy; std::vector<signed> l, r; long long ln, rn;
     signed next() { tree.emplace_back(); lazy.emplace_back(); l.emplace_back(-1); r.emplace_back(-1); return ((long long) tree.size())-1; }
 public:
     SparseSeg(long long li, long long ri) : ln(li), rn(ri) { next(); }
@@ -75,6 +74,7 @@ long long operator+(long long a, const SparseSeg<long long, SpSumLazy, long long
 
 // Example : BOJ 20212. 나무는 쿼리를 싫어해~
 int main() {
+    using namespace std;
     ios_base::sync_with_stdio(false); cin.tie(nullptr);
     long long q; cin >> q;
     vector<array<long long, 5>> queries; // 시간, 타입, i, j, k

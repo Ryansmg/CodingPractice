@@ -1,7 +1,6 @@
-/* Update : 2025-01-23 */
+/* Update : 2025-02-04 */
 
 #include <bits/stdc++.h>
-using namespace std;
 
 class LiChaoTree {
 public:
@@ -15,7 +14,7 @@ public:
     long long operator[](long long x) const { return mode*query(x, 0, left, right); }
 private:
     struct Node { signed l = -1, r = -1; Line line = Line(); };
-    vector<Node> tr; long long left, right; long long mode = 1;
+    std::vector<Node> tr; long long left, right; long long mode = 1;
     void updateAt(long long l, long long r, long long p, long long s, long long e, const Line& line) {
         if(r < s || e < l) return;
         if(l <= s && e <= r) { update(line, p, s, e); return; }
@@ -26,7 +25,7 @@ private:
     }
     void update(const Line& line, long long p, long long s, long long e) {
         long long m = (s + e) >> 1; Line low = tr[p].line, high = line;
-        if(low[s] > high[s]) swap(low, high);
+        if(low[s] > high[s]) std::swap(low, high);
         if(low[e] <= high[e]) { tr[p].line = low; return; }
         if(low[m] < high[m]) {
             tr[p].line = low;
@@ -40,13 +39,14 @@ private:
     }
     long long query(long long x, long long p, long long s, long long e) const {
         if(p == -1) { return 9223372036854775807; } long long m = (s + e) >> 1;
-        if(x <= m) return min(tr[p].line[x], query(x, tr[p].l, s, m));
-        return min(tr[p].line[x], query(x, tr[p].r, m+1, e));
+        if(x <= m) return std::min(tr[p].line[x], query(x, tr[p].l, s, m));
+        return std::min(tr[p].line[x], query(x, tr[p].r, m+1, e));
     }
 };
 
 // Example : BOJ 12795. 반평면 땅따먹기
 int main() {
+    using namespace std;
     ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr);
     LiChaoTree lct(-2000000000000, 2000000000000, true);
     int Q; cin >> Q;
