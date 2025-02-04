@@ -1091,7 +1091,9 @@ struct PrefixSum2d {
 #pragma region graph
 
 struct SimpleEdge { i64 start, end; }; struct DistEdge { i64 start, end, dist; }; struct SimpleI32Edge { i32 start, end; };
-Tpl concept isEdge1_ = requires(const T& a) { a.s; a.e; }; Tpl concept isEdge2_ = requires(const T& a) { a.start; a.end; }; Tpl concept isEdge = isEdge1_<T> || isEdge2_<T>;
+Tpl concept isEdge1_ = requires(const T& a) { a.s; a.e; };
+Tpl concept isEdge2_ = requires(const T& a) { a.start; a.end; };
+Tpl concept isEdge = isEdge1_<T> || isEdge2_<T>;
 
 /// node >= 0
 /// requirements : (EdgeType.s && EdgeType.e) || (EdgeType.start && EdgeType.end)

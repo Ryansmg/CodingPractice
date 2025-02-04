@@ -130,8 +130,7 @@ using std::max, std::min, std::gcd, std::lcm, std::pow, std::swap, std::abs, std
 using std::acos, std::atan, std::floor, std::ceil, std::round, std::sinh, std::cosh, std::tanh, std::atan2, std::sqrt;
 using std::less, std::greater, std::less_equal, std::greater_equal;
 /// algorithms
-using std::iota, std::prev_permutation, std::next_permutation, std::ranges::unique, std::ranges::sort, std::ranges::stable_sort, std::ranges::reverse;
-using std::ranges::lower_bound, std::ranges::upper_bound;
+using std::iota, std::prev_permutation, std::next_permutation, std::ranges::reverse;
 /// concepts
 using std::is_integral_v, std::is_convertible_v, std::is_arithmetic_v, std::is_floating_point_v, std::is_same_v;
 
@@ -213,10 +212,10 @@ long long iR_v_, iR_v2_, iR_v5_;
 #pragma region algorithms
 template <typename T> inline long long Size(const T& v_) { return static_cast<long long>(v_.size()); }
 
-template <typename Arr, typename T> inline auto lb(const Arr& arr_, const T& v_) { return std::ranges::lower_bound(arr_, v_); }
-template <typename Arr, typename T, typename Cmp> inline auto lb(const Arr& arr_, const T& v_, const Cmp& cmp_) { return std::ranges::lower_bound(arr_, v_, cmp_); }
-template <typename Arr, typename T> inline auto ub(const Arr &arr_, const T& v_) { return std::ranges::upper_bound(arr_, v_); }
-template <typename Arr, typename T, typename Cmp> inline auto ub(const Arr &arr_, const T& v_, const Cmp& cmp_) { return std::ranges::upper_bound(arr_, v_, cmp_); }
+template <typename Arr, typename T> inline auto lb(const Arr& arr_, const T& v_) { return std::lower_bound(arr_.begin(), arr_.end(), v_); }
+template <typename Arr, typename T, typename Cmp> inline auto lb(const Arr& arr_, const T& v_, const Cmp& cmp_) { return std::lower_bound(arr_.begin(), arr_.end(), v_, cmp_); }
+template <typename Arr, typename T> inline auto ub(const Arr &arr_, const T& v_) { return std::upper_bound(arr_.begin(), arr_.end(), v_); }
+template <typename Arr, typename T, typename Cmp> inline auto ub(const Arr &arr_, const T& v_, const Cmp& cmp_) { return std::upper_bound(arr_.begin(), arr_.end(), v_, cmp_); }
 
 template <typename T, typename Compare> inline T pop(std::priority_queue<T, std::vector<T>, Compare> &pq_) { T t_ = pq_.top(); pq_.pop(); return t_; }
 template <typename T> inline T pop(std::stack<T> &st_) { T t_ = st_.top(); st_.pop(); return t_; }
@@ -224,12 +223,14 @@ template <typename T> inline T pop(std::queue<T> &q_) { T t_ = q_.front(); q_.po
 template <typename T> inline T pop(std::vector<T> &arr_) { T t_ = arr_.back(); arr_.pop_back(); return t_; }
 
 template <typename T> inline T reversed(T v_) { std::ranges::reverse(v_); return v_; }
-template <typename T> inline T sorted(T v_) { std::ranges::sort(v_); return v_; }
-template <typename T, typename Cmp> inline T sorted(T v_, const Cmp& cmp) { std::ranges::sort(v_, cmp); return v_; }
+template <typename T> inline void sort(T& v_) { std::sort(v_.begin(), v_.end()); }
+template <typename T, typename Cmp> inline void sort(T& v_, const Cmp& cmp) { std::sort(v_.begin(), v_.end(), cmp); }
+template <typename T> inline T sorted(T v_) { std::sort(v_.begin(), v_.end()); return v_; }
+template <typename T, typename Cmp> inline T sorted(T v_, const Cmp& cmp) { std::sort(v_.begin(), v_.end(), cmp); return v_; }
 
-template <typename T> inline void compress(T &v_, const bool& autosort = true) { if(autosort) std::ranges::sort(v_); v_.erase(std::ranges::unique(v_).begin(), v_.end()); }
+template <typename T> inline void compress(T &v_, const bool& autosort = true) { if(autosort) std::sort(v_.begin(), v_.end()); v_.erase(std::unique(v_.begin(), v_.end()), v_.end()); }
 template <typename T> inline T compressed(T v_, const bool &autosort = true) { compress(v_, autosort); return v_; }
-template <typename T> inline long long idx(const T &val, const std::vector<T> &compressed) { return std::ranges::lower_bound(compressed, val) - compressed.begin(); }
+template <typename T> inline long long idx(const T &val, const std::vector<T> &compressed) { return std::lower_bound(compressed.begin(), compressed.end(), val) - compressed.begin(); }
 /// min(arr) == 1, max(arr) <= Size(arr)
 template <typename T> inline void autoCompress(T &v_) { auto comp_ = compressed(v_); for(auto& t : v_) t = idx(t, comp_) + 1; }
 /// min(arr) == 0, max(arr) <= Size(arr)
@@ -470,6 +471,7 @@ template <typename T, typename T2> inline void setMax(T& tar, const T2& val) req
 }
 #pragma endregion
 #pragma region custom_types
+
 template <long long mod = 1000000007>
 struct ModInt {
     long long v = 0;
@@ -551,11 +553,36 @@ namespace FracOpInternal {
     Frac operator*(const long long& a, const Frac& b) { Frac ret(a); ret *= b; return ret; }
     Frac operator/(const long long& a, const Frac& b) { Frac ret(a); ret /= b; return ret; }
 } using namespace FracOpInternal;
+
+#define defStructIO_(name) std::istream& operator>>(std::istream& in, name& t) { in >> t.v; return in; }\
+                           std::ostream& operator<<(std::ostream& out, const name& t) { out << t.v; return out; }
+
+struct Mx64 { long long v = -4001557155715570000; Mx64 operator+(const Mx64& b) const { return { std::max(v, b.v) }; }
+    Mx64& operator+=(const Mx64& b) { if(v < b.v) { v = b.v; } return *this; }
+    bool operator<(const Mx64& b) const { return v < b.v; } explicit operator long long() const { return v; }};
+struct Mn64 { long long v = 4001557155715570000; Mn64 operator+(const Mn64& b) const { return { std::min(v, b.v) }; }
+    Mn64& operator+=(const Mn64& b) { if(v > b.v) { v = b.v; } return *this; }
+    bool operator<(const Mn64& b) const { return v < b.v; } explicit operator long long() const { return v; }};
+struct Mx32 { signed v = -2147481557; Mx32 operator+(const Mx32& b) const { return { std::max(v, b.v) }; }
+    Mx32& operator+=(const Mx32& b) { if(v < b.v) { v = b.v; } return *this; }
+    bool operator<(const Mx32& b) const { return v < b.v; } explicit operator signed() const { return v; }};
+struct Mn32 { signed v = 2147481557; Mn32 operator+(const Mn32& b) const { return { std::min(v, b.v) }; }
+    Mn32& operator+=(const Mn32& b) { if(v > b.v) { v = b.v; } return *this; }
+    bool operator<(const Mn32& b) const { return v < b.v; } explicit operator signed() const { return v; }};
+defStructIO_(Mx64) defStructIO_(Mn64) defStructIO_(Mx32) defStructIO_(Mn32)
+
+struct GoldMine {
+    long long mx = -1000000000000000000, lmx = - 1000000000000000000, rmx = -1000000000000000000, sum = 0; GoldMine() = default;
+    GoldMine(long long a, long long la, long long ra, long long s) : mx(a), lmx(la), rmx(ra), sum(s) {}
+    GoldMine(long long v) : mx(v), lmx(v), rmx(v), sum(v) {} // NOLINT(*-explicit-constructor)
+    GoldMine operator+(const GoldMine&b) const { return {std::max({mx,b.mx,rmx+b.lmx}),std::max(lmx,sum+b.lmx),std::max(rmx+b.sum,b.rmx),sum+b.sum};}
+};
+
 #pragma endregion
 #pragma clang diagnostic pop
 #pragma endregion
 
 i32 main() {
     fastio;
-
+    
 }
