@@ -170,6 +170,7 @@ using ll = std::array<long long, 2>; using lll = std::array<long long, 3>; using
 /// miscellaneous
 #define ci64 const i64 &
 #define ci32 const i32 &
+#define int
 #define cast static_cast
 #define all(v_) (v_).begin(), (v_).end()
 #define pb push_back
@@ -185,14 +186,14 @@ using ll = std::array<long long, 2>; using lll = std::array<long long, 3>; using
 #pragma region constants
 constexpr long long
         i64max = 9223372036854775807, /// lim<i64>::max()
-lmax   = 9221557155715571557, /// lmax + inf < i64max
-INFIN  = 4001557155715570000, /// INFIN * 2 < i64max
-INF    = 1000000000000000000, /// INF * 9 < i64max
-inf    = 3000000000,          /// inf * inf < i64max
-i32max = 2147483647,          /// lim<i32>::max()
-imax   = 2147481557,          /// imax + 1000 < i32max
-iinf   = 2000000000,          /// iinf + 1e8 < i32max
-mod1   = 1000000007,
+        lmax   = 9221557155715571557, /// lmax + inf < i64max
+        INFIN  = 4001557155715570000, /// INFIN * 2 < i64max
+        INF    = 1000000000000000000, /// INF * 9 < i64max
+        inf    = 3000000000,          /// inf * inf < i64max
+        i32max = 2147483647,          /// lim<i32>::max()
+        imax   = 2147481557,          /// imax + 1000 < i32max
+        iinf   = 2000000000,          /// iinf + 1e8 < i32max
+        mod1   = 1000000007,
         mod9   = 998244353;
 constexpr long double
         PI = 3.141592653589793238462643383279502884L;
@@ -618,47 +619,59 @@ struct GoldMine {
 //@formatter:on
 #pragma endregion
 
-class Int {
-    struct Int_Compare_ {
-        bool valid = true;
-        long long left, right;
-        Int_Compare_(Int a) : left(a.v), right(a.v) {} //NOLINT (*-explicit-constructor)
-        Int_Compare_(bool a, long long b, long long c) : valid(a), left(b), right(c) {}
-        operator bool() { return valid; } //NOLINT (*-explicit-constructor)
-        Int_Compare_ operator==(const Int_Compare_& b) const { if(!valid || !b.valid || right != b.left) { return {false,0,0}; } return {true, left, b.right}; }
-        Int_Compare_ operator!=(const Int_Compare_& b) const { if(!valid || !b.valid || right == b.left) { return {false,0,0}; } return {true, left, b.right}; }
-        Int_Compare_ operator<(const Int_Compare_& b) const { if(!valid || !b.valid) { return {false, 0, 0}; } if(right < b.left) { return {true, left, b.right}; } return {false, 0, 0}; }
-        Int_Compare_ operator<=(const Int_Compare_& b) const { if(!valid || !b.valid) { return {false, 0, 0}; } if(right <= b.left) { return {true, left, b.right}; } return {false, 0, 0}; }
-        Int_Compare_ operator>(const Int_Compare_& b) const { if(!valid || !b.valid) { return {false, 0, 0}; } if(right > b.left) { return {true, left, b.right}; } return {false, 0, 0}; }
-        Int_Compare_ operator>=(const Int_Compare_& b) const { if(!valid || !b.valid) { return {false, 0, 0}; } if(right >= b.left) { return {true, left, b.right}; } return {false, 0, 0}; }
-        Int_Compare_ operator||(const Int_Compare_& b) const { if(valid || b.valid) { return {true, left, b.right}; } return {false, 0, 0}; }
-        Int_Compare_ operator&&(const Int_Compare_& b) const { if(!valid || !b.valid) { return {false, 0, 0}; } return {true, left, b.right}; }
-    };
+
+long double Gprecision = 1e-6;
+bool Geq(const long double& a, const long double& b) { return abs(a-b) <= Gprecision; }
+
+template <typename T = long long> class GPoint {
 public:
-    long long v = 0;
-    Int() = default;
-    Int(long long value) : v(value) {} //NOLINT (*-explicit-constructor)
-    explicit operator long long() const { return v; }
-    Int& operator++() { ++v; return *this; } Int operator++(signed) { Int ret = *this; v++; return ret; }
-    Int& operator--() { --v; return *this; } Int operator--(signed) { Int ret = *this; v--; return ret; }
-    Int& operator+=(const Int& b) { v += b.v; return *this; } Int& operator-=(const Int& b) { v -= b.v; return *this; }
-    Int& operator*=(const Int& b) { v *= b.v; return *this; } Int& operator/=(const Int& b) { v /= b.v; return *this; }
-    Int operator+(const Int& b) const { Int ret = *this; ret += b; return ret; } Int operator-(const Int& b) const { Int ret = *this; ret -= b; return ret; }
-    Int operator*(const Int& b) const { Int ret = *this; ret *= b; return ret; } Int operator/(const Int& b) const { Int ret = *this; ret /= b; return ret; }
-    Int_Compare_ operator<(const Int& b) const { return Int_Compare_(*this) < Int_Compare_(b); }
-    Int_Compare_ operator<=(const Int& b) const { return Int_Compare_(*this) <= Int_Compare_(b); }
-    Int_Compare_ operator>(const Int& b) const { return Int_Compare_(*this) > Int_Compare_(b); }
-    Int_Compare_ operator>=(const Int& b) const { return Int_Compare_(*this) >= Int_Compare_(b); }
-    Int_Compare_ operator==(const Int& b) const { return Int_Compare_(*this) == Int_Compare_(b); }
-    Int_Compare_ operator!=(const Int& b) const { return Int_Compare_(*this) != Int_Compare_(b); }
+    T x = T(), y = T();
+    std::tuple<T, T> toTuple() { return {x, y}; }
+    template <typename T2> explicit operator GPoint<T2>() const { return GPoint<T2>(static_cast<T2>(x), static_cast<T2>(y)); }
+    T distSq(const GPoint& b) const { return sq_(x-b.x)+sq_(y-b.y); }
+    long double dist(const GPoint& b) const { return sqrt(static_cast<long double>(distSq(b))); }
+    bool operator<(const GPoint& b) const { return x == b.x ? y < b.y : x < b.x; }
+    bool operator==(const GPoint& b) const {
+        if constexpr(std::is_integral_v<T>) return x == b.x && y == b.y;
+        else return Geq(static_cast<long double>(x), static_cast<long double>(b.x)) && Geq(static_cast<long double>(y), static_cast<long double>(b.y));
+    }
+    template <typename T2> requires (!std::is_same_v<T, T2>) bool operator==(const GPoint<T2>& b) const {
+        return Geq(static_cast<long double>(x), static_cast<long double>(b.x)) && Geq(static_cast<long double>(y), static_cast<long double>(b.y));
+    }
+    static auto ccwCmp(const GPoint&);
 };
-Int operator""_I(unsigned long long i) { return Int(i); } // NOLINT(*-return-braced-init-list)
-defStructIO_(Int)
-#define In64(...) Int __VA_ARGS__; input(__VA_ARGS__)
+template <typename T> __int128 product(const GPoint<T>& p1, const GPoint<T>& p2, const GPoint<T>& p3) { return __int128(p2.x-p1.x) * (p3.y-p1.y) - __int128(p3.x-p1.x) * (p2.y-p1.y); }
+
 
 i32 main() {
     fastio;
-    f128 a1, p1, r1, p2;
-    input(a1, p1, r1, p2);
-    println(p1 * (r1 * r1 * PI) > p2 * a1  ? "Whole pizza" : "Slice of pizza");
+    while(true) {
+        in64(n); if(!n) break;
+        vec<GPoint<i32>> points;
+        rep(n) points.eb(qin(2));
+        sort(points);
+        vec<tuple<Frac, i64, i64>> lines;
+        forn(i, n) forf(j, i+1, n-1) lines.eb(Frac(points[j].y-points[i].y, points[j].x - points[i].x), i, j);
+        sort(lines);
+        vec pos(n); forn(i, n) pos[i] = i;
+        i64 mx = -lmax, mn = lmax;
+        for(i64 i = 0, j = 0; i < Size(lines); i = j) {
+            while(j < Size(lines) && get<0>(lines[i]) == get<0>(lines[j])) j++;
+            forf(k, i, j-1) {
+                i64 a = get<1>(lines[k]), b = get<2>(lines[k]);
+                swap(pos[a], pos[b]); swap(points[pos[a]], points[pos[b]]);
+                if(pos[a] > pos[b]) swap(a, b);
+                if(pos[a] > 0) {
+                    setMin(mn, abs(product(points[pos[a]], points[pos[b]], points[pos[a]-1])));
+                    setMax(mx, abs(product(points[pos[a]], points[pos[b]], points[0])));
+                }
+                if(pos[b] < n - 1) {
+                    setMin(mn, abs(product(points[pos[a]], points[pos[b]], points[pos[b]+1])));
+                    setMax(mx, abs(product(points[pos[a]], points[pos[b]], points[n - 1])));
+                }
+            }
+        }
+        rprint(mn/2, mn&1 ? ".5 " : ".0 ");
+        rprintln(mx/2, mx&1 ? ".5" : ".0");
+    }
 }

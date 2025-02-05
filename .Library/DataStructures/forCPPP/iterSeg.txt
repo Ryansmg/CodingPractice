@@ -1,0 +1,13 @@
+/* Update : 2025-02-04 */
+/// ~720B
+
+/// requirements: (T + T), add -> (T += long long)
+template <typename T = i64>
+struct iterSeg { //@formatter:off
+    vec<T>t;i32 n=-1;
+    explicit iterSeg(const vec<T>&arr){n=i32(arr.size());t=vec<T>(2*n+10,T());for(i32 i=n,j=0;i<2*n;i++,j++){t[i]=arr[j];}for(i32 i=n-1;i>0;i--)t[i]=t[i<<1]+t[i<<1|1];}
+    explicit iterSeg(i32 i){t=vec<T>(i*2+10,T());n=i;}
+    void add(i32 tar,i64 val){tar--;t[n+tar]+=val;for(i32 i=n+tar;i>1;i>>=1)t[i>>1]=t[i]+t[i^1];}
+    void set(i32 tar,i64 val){tar--;t[n+tar]=val;for(i32 i=n+tar;i>1;i>>=1)t[i>>1]=t[i]+t[i^1];}
+    T query(i32 left,i32 right){left--;i64 l=n+left,r=n+right;T v=T();for(;l<r;l>>=1,r>>=1){if(l&1){v=v+t[l++];}if(r&1){v=v+t[--r];}}return v;}
+}; //@formatter:on

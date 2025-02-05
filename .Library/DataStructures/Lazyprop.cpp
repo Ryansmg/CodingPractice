@@ -3,11 +3,9 @@
 #include <bits/stdc++.h>
 
 
-struct SumLazy;
-
 /// requirements: (TreeType + TreeType), (LazyType + UpdateType), (TreeType + LazyIter&&), (LazyType + LazyIter&&)
 /// <br> usage: node merge, node update, lazy update, lazy update
-template <typename TreeType = long long, typename LazyType = SumLazy, typename UpdateType = long long>
+template <typename TreeType, typename LazyType, typename UpdateType>
 class Lazyprop {
 public:
     /// tree & lazy are copied values, should not be modified
@@ -70,7 +68,6 @@ long long operator+(long long a, const Lazyprop<long long, SumLazy, long long>::
     return a + (b.end - b.start + 1) * b.lazy.v;
 }
 
-
 // Example : BOJ 10999. 구간 합 구하기 2
 int main() {
     using namespace std;
@@ -78,7 +75,7 @@ int main() {
     int n, m, k; cin >> n >> m >> k;
     vector<long long> arr(n);
     for(int i = 0; i < n; i++) cin >> arr[i];
-    Lazyprop seg(arr); // 기본 구간 합 세그먼트 트리
+    Lazyprop<long long, SumLazy, long long> seg(arr); // 기본 구간 합 세그먼트 트리
     for(int i = 0; i < m + k; i++) {
         int a, b, c; cin >> a >> b >> c;
         if(a == 1) {

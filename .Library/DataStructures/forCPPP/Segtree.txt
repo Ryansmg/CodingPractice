@@ -1,0 +1,24 @@
+/* Update : 2025-02-04 */
+/// ~2000B
+
+/// requirements: operator+(T, T)
+template <typename T = i64>
+class Segtree { //@formatter:off
+    vec<T>t;i32 n;public:Segtree():n(0){}
+    explicit Segtree(i32 treeSize){t=vec<T>(4*treeSize,T());n=treeSize;}explicit Segtree(const vec<T>&a) {n=Size(a);t=vec<T>(4*n,T());i_(a,1,1,n);}
+    void set(i32 i,const T&v){s_(1,i,1,n,v);}void add(i32 i,const T&d){u_(1,i,1,n,d);}
+    T query(i32 l,i32 r){if(l>r){return T();}return q_(1,l,r,1,n);}T query(i32 i){return q_(i,i);}
+    struct iter {i32 node,start,end;T value;Segtree<T>*segPtr;bool leaf()const{return start==end;}
+        iter left()const{return iter(node<<1,start,(start+end)>>1,segPtr->t[node<<1],segPtr);}
+        iter right() const { return iter(node<<1|1, ((start+end)>>1)+1, end, segPtr->t[node<<1|1], segPtr);}};
+    iter root() {return iter(1, 1, n, t[1], this);}
+    /// ret[i] == query(i+1)
+    vec<T> getLeafs() {vec<T>r(n);fun<void(i64,i64,i64)>f=[&](i64 p,i64 s,i64 e){if(s==e){r[s-1]=t[p];}else f(p<<1,s,(s+e)>>1),f(p<<1|1,((s+e)>>1)+1,e);};f(1,1,n);return r;}
+    /// [1..i] 범위 합이 val 이하인 최대의 i를 리턴
+    iter binSearch(T val) {iter c=root();while(!c.leaf()){iter l=c.left();if(val<=l.value){c = l;}else val=val-l.value,c=c.right();}return c;}
+protected:
+    T&i_(const vec<T>&a,i32 p,i32 s,i32 e) {if(s==e){return t[p]=a[s-1];}return t[p]=i_(a,p<<1,s,(s+e)>>1)+i_(a,p<<1|1,((s+e)>>1)+1,e);}
+    T&u_(i32 p,i32 i,i32 s,i32 e,const T&d){if(e<i||i<s){return t[p];}if(s==e){return t[p]=t[p]+d;}return t[p]=u_(p<<1,i,s,(s+e)>>1,d)+u_(p<<1|1,i,((s+e)>>1)+1,e,d);}
+    T&s_(i32 p,i32 i,i32 s,i32 e,const T& v) {if(e<i||i<s){return t[p];}if(s==e){return t[p]=v;}return t[p]=s_(p<<1,i,s,(s+e)>>1,v)+s_(p<<1|1,i,((s+e)>>1)+1,e,v);}
+    T q_(i32 p,i32 l,i32 r,i32 s,i32 e){if(r<s||e<l){return T();}if(l<=s&&e<=r){return t[p];}return q_(p<<1,l,r,s,(s+e)>>1)+q_(p<<1|1,l,r,((s+e)>>1)+1,e);}
+}; //@formatter:on

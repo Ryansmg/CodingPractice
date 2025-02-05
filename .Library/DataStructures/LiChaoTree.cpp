@@ -1,8 +1,9 @@
-/* Update : 2025-02-04 */
+/* Update : 2025-02-05 */
 
 #include <bits/stdc++.h>
 
 class LiChaoTree {
+    static inline long long m(const long long &s, const long long &e) { return s + e < 0 ? ((s + e) >> 1) - 1 : (s + e) >> 1; }
 public:
     struct Line { long long a = 0, b = 9223372036854775807; long long operator[](long long x) const { return a*x+b; } };
     LiChaoTree() : left(0), right(0) {}
@@ -18,29 +19,29 @@ private:
     void updateAt(long long l, long long r, long long p, long long s, long long e, const Line& line) {
         if(r < s || e < l) return;
         if(l <= s && e <= r) { update(line, p, s, e); return; }
-        if(tr[p].l == -1) tr[p].l = int(tr.size()), tr.emplace_back();
-        if(tr[p].r == -1) tr[p].r = int(tr.size()), tr.emplace_back();
-        updateAt(l, r, tr[p].l, s, (s+e)/2, line);
-        updateAt(l, r, tr[p].r, (s+e)/2+1, e, line);
+        if(tr[p].l == -1) tr[p].l = signed(tr.size()), tr.emplace_back();
+        if(tr[p].r == -1) tr[p].r = signed(tr.size()), tr.emplace_back();
+        updateAt(l, r, tr[p].l, s, m(s, e), line);
+        updateAt(l, r, tr[p].r, m(s, e)+1, e, line);
     }
     void update(const Line& line, long long p, long long s, long long e) {
-        long long m = (s + e) >> 1; Line low = tr[p].line, high = line;
+        Line low = tr[p].line, high = line;
         if(low[s] > high[s]) std::swap(low, high);
         if(low[e] <= high[e]) { tr[p].line = low; return; }
-        if(low[m] < high[m]) {
+        if(low[m(s, e)] < high[m(s, e)]) {
             tr[p].line = low;
-            if(tr[p].r == -1) tr[p].r = int(tr.size()), tr.emplace_back();
-            update(high, tr[p].r, m+1, e);
+            if(tr[p].r == -1) tr[p].r = signed(tr.size()), tr.emplace_back();
+            update(high, tr[p].r, m(s, e)+1, e);
         } else {
             tr[p].line = high;
-            if(tr[p].l == -1) tr[p].l = int(tr.size()), tr.emplace_back();
-            update(low, tr[p].l, s, m);
+            if(tr[p].l == -1) tr[p].l = signed(tr.size()), tr.emplace_back();
+            update(low, tr[p].l, s, m(s, e));
         }
     }
     long long query(long long x, long long p, long long s, long long e) const {
-        if(p == -1) { return 9223372036854775807; } long long m = (s + e) >> 1;
-        if(x <= m) return std::min(tr[p].line[x], query(x, tr[p].l, s, m));
-        return std::min(tr[p].line[x], query(x, tr[p].r, m+1, e));
+        if(p == -1) { return 9223372036854775807; }
+        if(x <= m(s, e)) return std::min(tr[p].line[x], query(x, tr[p].l, s, m(s, e)));
+        return std::min(tr[p].line[x], query(x, tr[p].r, m(s, e)+1, e));
     }
 };
 
@@ -53,10 +54,10 @@ int main() {
     for(int i = 0; i < Q; i++) {
         int op; cin >> op;
         if(op == 1) {
-            int a, b; cin >> a >> b;
+            long long a, b; cin >> a >> b;
             lct.update({a, b});
         } else {
-            int x; cin >> x;
+            long long x; cin >> x;
             cout << lct.query(x) << '\n';
         }
     }
