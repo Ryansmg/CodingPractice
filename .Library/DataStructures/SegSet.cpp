@@ -1,6 +1,7 @@
 #include <bits/stdc++.h>
 
-/// [-4*10^18, 4*10^18]
+/// [minValue, maxValue] 범위의 수를 저장. 범위가 좁을 수록 성능이 향상됨.
+/// 범위를 벗어나는 수에 대한 동작은 정의되어 있지 않음. (무슨 일이 일어날 지는 아무도 모름)
 /// 2^30개 이상의 수는 저장 불가
 class SegSet {
     struct DynamicSeg_ {
@@ -68,8 +69,8 @@ class SegSet {
     };
     DynamicSeg_ mem; bool isMultiSet;
 public:
-    explicit SegSet(bool multiSet = false) : mem(-4000000000000000000, 4000000000000000000), isMultiSet(multiSet) {}
-    explicit SegSet(const std::vector<long long>& arr, bool multiSet = false) : SegSet(multiSet) { for(long long i : arr) insert(i); }
+    explicit SegSet(bool multiSet = false, long long minValue = -4000000000000000000, long long maxValue = 4000000000000000000)
+        : mem(minValue, maxValue), isMultiSet(multiSet) {}
     /// insert나 erase 시행 후에도 계속 유효함이 보장되지 않음.
     /// 단, (이전에 erase되지 않은 iter라면) erase(iter)는 안전하게 동작함.
     class iter { friend SegSet;
@@ -116,6 +117,7 @@ public:
         if(isMultiSet) mem.add(v, 1);
         else mem.set(v, 1);
     }
+    /// 모든 v를 제거함.
     inline void erase(long long v) { mem.set(v, 0); }
     inline void erase_one(long long v) { if(contains(v)) mem.add(v, -1); }
     inline void erase(const iter& iter) { mem.add(iter.v, -1); }
@@ -163,15 +165,20 @@ public:
     void forEach(const std::function<void(long long)>& func) const { mem.forEach(0, mem.ln, mem.rn, func); }
 };
 
-// Example : BOJ 2750. 수 정렬하기
+// Example : BOJ 1572. 중앙값
 int main() {
     using namespace std;
     ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr);
-    SegSet s(true);
-    int n; cin >> n;
-    for(int i = 0; i < n; i++) {
-        int j; cin >> j; s.insert(j);
+    // 멀티셋 설정 (중복되는 수 허용), 수 범위는 [0, 65536]
+    SegSet s(true, 0, 65536);
+    int n, k; cin >> n >> k; long long ans = 0;
+    vector<long long> arr(n);
+    for(int i = 0; i < n; i++) cin >> arr[i];
+    for(int i = 0; i < k; i++) s.insert(arr[i]);
+    ans += *s[(k+1)/2-1];
+    for(int i = k; i < n; i++) {
+        s.erase_one(arr[i-k]); s.insert(arr[i]);
+        ans += *s[(k+1)/2-1];
     }
-//    for(auto i : s) cout << i << '\n'; // O(NlogN)
-    s.forEach([](long long i){ cout << i << '\n'; });
+    cout << ans;
 }
