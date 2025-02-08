@@ -69,7 +69,7 @@
 #include <ext/pb_ds/tree_policy.hpp>
 #include <ext/rope>
 #pragma endregion
-#define CPPP 250204
+#define CPPP 250209
 #pragma region MMAP
 #ifndef LOCAL
 #if ENABLE_MMAP
@@ -186,15 +186,17 @@ using ll = std::array<long long, 2>; using lll = std::array<long long, 3>; using
 #pragma endregion
 #pragma region constants
 constexpr long long
-        i64max = 9223372036854775807, /// lim<i64>::max()
-lmax   = 9221557155715571557, /// lmax + inf < i64max
-INFIN  = 4001557155715570000, /// INFIN * 2 < i64max
-INF    = 1000000000000000000, /// INF * 9 < i64max
-inf    = 3000000000,          /// inf * inf < i64max
-i32max = 2147483647,          /// lim<i32>::max()
-imax   = 2147481557,          /// imax + 1000 < i32max
-iinf   = 2000000000,          /// iinf + 1e8 < i32max
-mod1   = 1000000007,
+        i64max = 9223372036854775807,    /// lim<i64>::max()
+        i64min = -9223372036854775807-1, /// lim<i64>::min()
+        lmax   = 9221557155715571557,    /// lmax + inf < i64max
+        INFIN  = 4001557155715570000,    /// INFIN * 2 < i64max
+        INF    = 1000000000000000000,    /// INF * 9 < i64max
+        inf    = 3000000000,             /// inf * inf < i64max
+        i32max = 2147483647,             /// lim<i32>::max()
+        i32min = -2147483648,           /// lim<i32>::min()
+        imax   = 2147481557,             /// imax + 1000 < i32max
+        iinf   = 2000000000,             /// iinf + 1e8 < i32max
+        mod1   = 1000000007,
         mod9   = 998244353;
 constexpr long double
         PI = 3.141592653589793238462643383279502884L;
@@ -630,5 +632,7 @@ struct GoldMine {
 
 i32 main() {
     fastio;
-
+    vl c(10001, 0);
+    inRep() c[input()]++;
+    forf(i, 1, 10000) rep(c[i]) println(i);
 }

@@ -1,7 +1,10 @@
+/* Update : 2025-02-09 */
+
 #include <bits/stdc++.h>
 
-/// [minValue, maxValue] 범위의 수를 저장. 범위가 좁을 수록 성능이 향상됨.
-/// 범위를 벗어나는 수에 대한 동작은 정의되어 있지 않음. (무슨 일이 일어날 지는 아무도 모름)
+/// [minValue, maxValue] 범위의 수를 저장.
+/// 모든 연산은 수의 범위를 L이라 할 때 O(logL) => 수의 범위가 좁을수록 성능이 향상됨.
+/// 범위를 벗어나는 수에 대한 동작은 정의되어 있지 않음. (따로 처리하지 않음)
 /// 2^30개 이상의 수는 저장 불가
 class SegSet {
     struct DynamicSeg_ {
@@ -80,7 +83,7 @@ public:
         signed p = -1, c = 0, i = 0; // pointer, currentIdx, idx
         iter()=default;
         iter(long long v, const SegSet* ptr, signed p, signed c, signed i) : v(v), ptr(ptr), p(p), c(c), i(i) {}
-        inline signed i_() const { if(p == -2) { return -1; }  if(p == -1) { return ptr->size(); } return i; }
+        inline signed i_() const { if(p == -2) { return -1; } if(p == -1) { return ptr->size(); } return i; }
     public:
         inline operator bool() const { return p != -1; } //NOLINT(*-explicit-constructor)
         inline auto operator<=>(const iter& b) const { return i_() <=> b.i_(); }
@@ -121,24 +124,21 @@ public:
     inline void erase(long long v) { mem.set(v, 0); }
     inline void erase_one(long long v) { if(contains(v)) mem.add(v, -1); }
     inline void erase(const iter& iter) { mem.add(iter.v, -1); }
-    iter find(long long v) const {
+    inline iter find(long long v) const {
         iter ret{}; ret.v = v; ret.c = 0; ret.ptr = this;
         std::tie(ret.p, ret.i) = mem.getIter(0, mem.ln, mem.rn, v, 0);
-        if(ret.p != -1 && mem.tree[ret.p] == 0) exit(1);
         return ret;
     }
     inline bool contains(long long v) const { return mem.query(v, v); }
     inline iter lower_bound(long long v) const {
         iter ret{}; ret.v = v; ret.c = 0; ret.ptr = this;
         std::tie(ret.p, ret.i) = mem.lb_(0, mem.ln, mem.rn, v, 0);
-        if(ret.p != -1 && mem.tree[ret.p] == 0) exit(1);
         return ret;
     }
     inline iter upper_bound(long long v) const {
         iter ret{}; ret.c = 0; ret.ptr = this;
         auto t = mem.ub_(0, mem.ln, mem.rn, v, 0);
         ret.p = t[0]; ret.i = t[1]; ret.v = t[2];
-        if(ret.p != -1 && mem.tree[ret.p] == 0) exit(1);
         return ret;
     }
     inline iter find_first(long long v) const { return find(v); }
@@ -153,16 +153,16 @@ public:
         iter ret; ret.ptr = this;
         auto [p, ls, v] = mem.kth(0, mem.ln, mem.rn, k, 0);
         if(p == -1) return ret;
-        assert(ls <= k - 1 && ls + mem.tree[p] + ls >= k);
         ret.v = v; ret.p = p; ret.i = k - 1; ret.c = k - 1 - ls;
         return ret;
     }
     inline signed size() const { return mem.tree[0]; }
+    inline bool empty() const { return mem.tree[0] == 0; }
     inline iter begin() const { return operator[](0); }
     inline iter end() const { iter ret; ret.ptr = this; return ret; }
-    /// for(auto i : SegSet)은 iter++이 O(logN)이므로 O(NlogN) 시간복잡도를 가지고,
-    /// 이 함수는 O(N)에 동작함.
-    void forEach(const std::function<void(long long)>& func) const { mem.forEach(0, mem.ln, mem.rn, func); }
+    /// for(auto i : SegSet)은 iter++이 O(logL)이므로 O(NlogL) 시간복잡도를 가지고,
+    /// 이 함수는 O(N+L)에 동작함. (이때 L은 수의 범위)
+    inline void forEach(const std::function<void(long long)>& func) const { mem.forEach(0, mem.ln, mem.rn, func); }
 };
 
 // Example : BOJ 1572. 중앙값
