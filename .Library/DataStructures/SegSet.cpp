@@ -7,11 +7,11 @@ class SegSet {
     struct DynamicSeg_ {
         static inline long long m(long long s, long long e) { return s + (e - s) / 2; }
         std::vector<signed> tree; long long ln, rn; std::vector<signed> l, r;
-        signed next() { tree.emplace_back(); l.emplace_back(-1); r.emplace_back(-1); return ((signed)tree.size())-1; }
+        inline signed next() { tree.emplace_back(); l.emplace_back(-1); r.emplace_back(-1); return ((signed)tree.size())-1; }
         explicit DynamicSeg_(long long li, long long ri) : ln(li), rn(ri) { next(); }
-        void add(long long tar, const signed& val) { add(0, ln, rn, tar, val); }
-        void set(long long tar, const signed& val) { set(0, ln, rn, tar, val); }
-        signed query(long long left, long long right) const { return query(0, ln, rn, left, right); }
+        inline void add(long long tar, const signed& val) { add(0, ln, rn, tar, val); }
+        inline void set(long long tar, const signed& val) { set(0, ln, rn, tar, val); }
+        inline signed query(long long left, long long right) const { return query(0, ln, rn, left, right); }
         signed& add(signed p, long long s, long long e, long long t, const signed& v) {
             if(s == e) return tree[p] = tree[p] + v;
             if(t <= m(s, e)) {
