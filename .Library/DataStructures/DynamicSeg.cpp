@@ -1,10 +1,10 @@
-/* Update : 2025-02-04 */
+/* Update : 2025-02-09 */
 
-#include <bits/stdc++.h>\
+#include <bits/stdc++.h>
 
 template <typename T = long long>
 class DynamicSeg {
-    inline long long m(long long s, long long e) { return (s+e)>=0 ? (s+e)>>1 : ((s+e)>>1)-1; }
+    static inline long long m(long long s, long long e) { return s + (e - s) / 2; }
     std::vector<T> tree; long long ln, rn; std::vector<signed> l, r;
     signed next() { tree.emplace_back(); l.emplace_back(-1); r.emplace_back(-1); return ((long long)tree.size())-1; }
 public:
@@ -15,7 +15,7 @@ public:
 private:
     T& add(signed p, long long s, long long e, long long t, const T& v) {
         if(s == e) return tree[p] = tree[p] + v;
-        if(t <= (s + e) / 2) {
+        if(t <= m(s, e)) {
             if(l[p] == -1) l[p] = next();
             return tree[p] = add(l[p], s, m(s, e), t, v) + (r[p] == -1 ? T() : tree[r[p]]);
         }
@@ -24,7 +24,7 @@ private:
     }
     T& set(signed p, long long s, long long e, long long t, const T& v) {
         if(s == e) return tree[p] = v;
-        if(t <= (s + e) / 2) {
+        if(t <= m(s, e)) {
             if(l[p] == -1) l[p] = next();
             return tree[p] = set(l[p], s, m(s, e), t, v) + (r[p] == -1 ? T() : tree[r[p]]);
         }

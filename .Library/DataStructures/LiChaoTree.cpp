@@ -1,9 +1,9 @@
-/* Update : 2025-02-05 */
+/* Update : 2025-02-09 */
 
 #include <bits/stdc++.h>
 
 class LiChaoTree {
-    static inline long long m(const long long &s, const long long &e) { return s + e < 0 ? ((s + e) >> 1) - 1 : (s + e) >> 1; }
+    static inline long long m(long long s, long long e) { return s + (e - s) / 2; }
 public:
     struct Line { long long a = 0, b = 9223372036854775807; long long operator[](long long x) const { return a*x+b; } };
     LiChaoTree() : left(0), right(0) {}

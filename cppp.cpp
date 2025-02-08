@@ -67,6 +67,7 @@
 #include <unordered_set>
 #include <ext/pb_ds/assoc_container.hpp>
 #include <ext/pb_ds/tree_policy.hpp>
+#include <ext/rope>
 #pragma endregion
 #define CPPP 250204
 #pragma region MMAP
@@ -154,6 +155,7 @@ template <typename T = long long> using stack = std::stack<T>;
 template <typename T = long long> using queue = std::queue<T>;
 template <typename T = long long> using deque = std::deque<T>;
 template <typename T1 = long long, typename T2 = long long> using pair = std::pair<T1, T2>;
+template <typename T = long long> using rope = __gnu_cxx::rope<T>;
 
 template <typename T = long long, typename Compare = std::less<>> using pq = std::priority_queue<T, std::vector<T>, Compare>;
 template <typename T = long long, typename T2 = long long> using umap = std::unordered_map<T, T2>;
@@ -205,6 +207,7 @@ constexpr long double
 #define forer(...) for(__VA_ARGS__ | std::views::reverse)
 #define rep(n_) forn(rep_mac_name_1_, n_)
 #define rep2(n_) forn(rep_mac_name_2_, n_)
+#define loop while(true)
 
 long long iR_v_, iR_v2_, iR_v5_;
 #define inRep() input(iR_v_); forn(iR_v3_, iR_v_)
@@ -244,7 +247,14 @@ template <typename T2, typename T1> inline std::vector<T2> castVec(const T1& arr
 #pragma endregion
 #pragma region math
 template <typename T> inline T pow_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)ans=ans*a%mod;b>>=1;a=a*a%mod;} return ans; }
-inline long long pow(const long long& a, const long long& b, const long long& mod) { return pow_(a, b, mod); }
+template <typename T> T modInv(T a, const T& m, bool chkGcd = true) { // by @kuhyaku
+    T b = m, u = 1, v = 0; if(chkGcd) assert(std::gcd(a, m) == 1);
+    while (b) { T t = a / b; a -= t * b; std::swap(a, b); u -= t * v; std::swap(u, v); }
+    u %= m; if (u < 0) {u += m;} return u;
+}
+inline long long pow(const long long& a, const long long& b, const long long& mod) {
+    return pow_(b < 0 ? modInv(a, mod) : a, std::abs(b), mod);
+}
 
 template <typename T> inline T gcd_(T a, T b) { if(a < b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 template <typename T> inline T max(const std::vector<T>& v_) { T ret = v_.empty() ? std::numeric_limits<T>::min() : v_[0]; for(const T &t_ : v_) { ret = max(ret, t_); } return ret; }
@@ -618,347 +628,165 @@ struct GoldMine {
 //@formatter:on
 #pragma endregion
 
-struct SimpleEdge { signed start, end; };
-struct DistEdge { signed start, end; long long dist; };
-template <typename T> concept isEdge1_ = requires(const T& a) { a.s; a.e; };
-template <typename T> concept isEdge2_ = requires(const T& a) { a.start; a.end; };
-template <typename T> concept isEdge = isEdge1_<T> || isEdge2_<T>;
-
-/// node >= 0
-/// requirements : (EdgeType.s && EdgeType.e) || (EdgeType.start && EdgeType.end)
-/// detects : start/s, end/e, distance/dist/d
-template <isEdge EdgeType = SimpleEdge>
-class Graph {
-#define defGCFs_ static long long es_(const EdgeType& edge) { if constexpr(isEdge1_<EdgeType>) { return edge.s; } return edge.start; }\
-                 static long long ee_(const EdgeType& edge) { if constexpr(isEdge1_<EdgeType>) { return edge.e; } return edge.end; }\
-                 static long long ed_(const EdgeType& edge) {\
-                     if constexpr(requires{edge.d;}) return edge.d;\
-                     if constexpr(requires{edge.dist;}) return edge.dist;\
-                     if constexpr(requires{edge.distance;}) return edge.distance;\
-                     return 1;\
-                 }
-    defGCFs_
-    static EdgeType revEdge_(EdgeType e) {
-        if constexpr(isEdge1_<EdgeType>) std::swap(e.s, e.e);
-        else if constexpr(isEdge2_<EdgeType>) std::swap(e.start, e.end);
-        return e;
-    }
-public:
-    long long nodeCnt = 0; // (maxNodeNumber) + 1
-    std::vector<std::vector<EdgeType>> child, parent, undir;
-    /// disables all error check if true
-    /// increases performance
-    bool unsafe = false;
-
-    Graph() = default;
-    explicit Graph(long long maxNodeNum) {
-        if(!unsafe && nodeCnt > maxNodeNum) { std::cerr << "Invalid resizing"; exit(1); }
-        nodeCnt = maxNodeNum + 1;
-        child.resize(nodeCnt, std::vector<EdgeType>()); parent.resize(nodeCnt, std::vector<EdgeType>()); undir.resize(nodeCnt, std::vector<EdgeType>());
-    }
-    /// reset
-    virtual void clear() { child = parent = undir = std::vector<std::vector<EdgeType>>(); nodeCnt = 0; unsafe = false; }
-
-    virtual void resize(long long maxNodeNum) {
-        if(!unsafe && nodeCnt > maxNodeNum) { std::cerr << "Invalid resizing"; exit(1); }
-        nodeCnt = maxNodeNum + 1;
-        child.resize(nodeCnt, std::vector<EdgeType>()); parent.resize(nodeCnt, std::vector<EdgeType>()); undir.resize(nodeCnt, std::vector<EdgeType>());
-    }
-    virtual void addUEdge(const EdgeType& edge) { undir[es_(edge)].emplace_back(edge); undir[ee_(edge)].emplace_back(revEdge_(edge)); }
-    template <typename... Args> void makeUEdge(Args&&... args) { EdgeType edge(std::forward<Args>(args)...);
-        undir[es_(edge)].emplace_back(edge); undir[ee_(edge)].emplace_back(revEdge_(edge)); }
-    virtual void addDEdge(const EdgeType& edge) { child[es_(edge)].emplace_back(edge); parent[ee_(edge)].emplace_back(edge); }
-    template <typename... Args> void makeDEdge(Args&&... args) { EdgeType edge(std::forward<Args>(args)...);
-        child[es_(edge)].emplace_back(edge); parent[ee_(edge)].emplace_back(edge); }
-    void removeDuplicateEdge() {
-        std::function<void(std::vector<std::vector<EdgeType>>&)> f = [&](std::vector<std::vector<EdgeType>>& k) {
-            for(auto &arr : k) {
-                sort(arr, [&](const EdgeType& a, const EdgeType& b) {
-                    if(es_(a) == es_(b)) {
-                        if(ee_(a) == ee_(b)) return ed_(a) < ed_(b);
-                        return ee_(a) < ee_(b);
-                    }
-                    return es_(a) < es_(b);
-                });
-                arr.erase(std::unique(arr.begin(), arr.end(), [&](const EdgeType& a, const EdgeType& b) {
-                    return es_(a) == es_(b) && ee_(a) == ee_(b) && ed_(a) == ed_(b);
-                }), arr.end());
+/// [-4*10^18, 4*10^18]
+/// 2^30개 이상의 수는 저장 불가
+class SegSet {
+    struct DynamicSeg_ {
+        static inline long long m(long long s, long long e) { return s + (e - s) / 2; }
+        std::vector<signed> tree; long long ln, rn; std::vector<signed> l, r;
+        signed next() { tree.emplace_back(); l.emplace_back(-1); r.emplace_back(-1); return ((signed)tree.size())-1; }
+        explicit DynamicSeg_(long long li, long long ri) : ln(li), rn(ri) { next(); }
+        void add(long long tar, const signed& val) { add(0, ln, rn, tar, val); }
+        void set(long long tar, const signed& val) { set(0, ln, rn, tar, val); }
+        signed query(long long left, long long right) const { return query(0, ln, rn, left, right); }
+        signed& add(signed p, long long s, long long e, long long t, const signed& v) {
+            if(s == e) return tree[p] = tree[p] + v;
+            if(t <= m(s, e)) {
+                if(l[p] == -1) l[p] = next();
+                return tree[p] = add(l[p], s, m(s, e), t, v) + (r[p] == -1 ? 0 : tree[r[p]]);
             }
-        };
-        f(child); f(parent); f(undir);
-    }
-    /// child와 undir에 대한 forEach문을 지원
-    class Connection {
-        Graph<EdgeType>* g; long long n;
+            if(r[p] == -1) r[p] = next();
+            return tree[p] = (l[p] == -1 ? 0 : tree[l[p]]) + add(r[p], m(s, e)+1, e, t, v);
+        }
+        signed& set(signed p, long long s, long long e, long long t, const signed& v) {
+            if(s == e) return tree[p] = v;
+            if(t <= m(s, e)) {
+                if(l[p] == -1) l[p] = next();
+                return tree[p] = set(l[p], s, m(s, e), t, v) + (r[p] == -1 ? 0 : tree[r[p]]);
+            }
+            if(r[p] == -1) r[p] = next();
+            return tree[p] = (l[p] == -1 ? 0 : tree[l[p]]) + set(r[p], m(s, e)+1, e, t, v);
+        }
+        signed query(signed p, long long s, long long e, long long ql, long long qr) const {
+            if(p == -1 || qr < s || e < ql) return 0;
+            if(ql <= s && e <= qr) return tree[p];
+            return query(l[p], s, m(s, e), ql, qr) + query(r[p], m(s, e)+1, e, ql, qr);
+        }
+        std::pair<signed, signed> getIter(signed p, long long s, long long e, long long t, signed lSum) const { // returns {ptr, idx}
+            if(p == -1 || tree[p] == 0) {return {-1, 0};} if(s == e) return {p, lSum};
+            if(m(s, e) <= t) return getIter(l[p], s, m(s, e), t, lSum);
+            else return getIter(r[p], m(s, e)+1, e, t, lSum + (l[p] == -1 ? 0 : tree[l[p]]));
+        }
+        std::pair<signed, signed> lb_(signed p, long long s, long long e, long long t, signed lSum) const { // returns {ptr, idx}
+            if(p == -1 || e < t || tree[p] == 0) return {-1, 0};
+            if(s == e) return {p, lSum};
+            auto tmp = lb_(l[p], s, m(s, e), t, lSum);
+            if(tmp.first != -1) return tmp;
+            return lb_(r[p], m(s, e) + 1, e, t, lSum + (l[p] == -1 ? 0 : tree[l[p]]));
+        }
+        std::array<long long, 3> ub_(signed p, long long s, long long e, long long t, signed lSum) const { // returns {ptr, idx, s}
+            if(p == -1 || e <= t || tree[p] == 0) return {-1, 0, 0};
+            if(s == e) return {p, lSum, s};
+            auto tmp = ub_(l[p], s, m(s, e), t, lSum);
+            if(tmp[0] != -1) return tmp;
+            return ub_(r[p], m(s, e) + 1, e, t, lSum + (l[p] == -1 ? 0 : tree[l[p]]));
+        }
+        std::array<long long, 3> kth(signed p, long long s, long long e, signed t, signed lSum) const {
+            if(p == -1 || tree[p] == 0) return {-1, 0, 0};
+            if(s == e) return {p, lSum, s};
+            if(l[p] == -1) return kth(r[p], m(s, e) + 1, e, t, lSum);
+            if(tree[l[p]] >= t) return kth(l[p], s, m(s, e), t, lSum);
+            return kth(r[p], m(s, e) + 1, e, t - tree[l[p]], lSum + tree[l[p]]);
+        }
+    };
+    DynamicSeg_ mem; bool isMultiSet;
+public:
+    explicit SegSet(bool multiSet = false) : mem(-4000000000000000000, 4000000000000000000), isMultiSet(multiSet) {}
+    explicit SegSet(const std::vector<long long>& arr, bool multiSet = false) : SegSet(multiSet) { for(long long i : arr) insert(i); }
+    /// insert나 erase 시행 후에도 계속 유효함이 보장되지 않음.
+    /// 단, (이전에 erase되지 않은 iter라면) erase(iter)는 안전하게 동작함.
+    class iter { friend SegSet;
+        /// end : {0, ptr, -1, 0, 0}
+        /// rend : {0, ptr, -2, 0, 0}
+        long long v = 0; // value
+        const SegSet* ptr = nullptr;
+        signed p = -1, c = 0, i = 0; // pointer, currentIdx, idx
+        iter()=default;
+        iter(long long v, const SegSet* ptr, signed p, signed c, signed i) : v(v), ptr(ptr), p(p), c(c), i(i) {}
+        inline signed i_() const { if(p == -2) { return -1; }  if(p == -1) { return ptr->size(); } return i; }
     public:
-        explicit Connection(Graph<EdgeType>* gp, long long node) : g(gp), n(node) { }
-        class Iter {
-            friend class Connection;
-            Graph<EdgeType>* g; std::vector<EdgeType>::iterator cur; long long n;
-            Iter(Graph<EdgeType>* gp, std::vector<EdgeType>::iterator i, long long N) : g(gp), cur(i), n(N) {}
-        public:
-            Iter& operator++() { ++cur; if(cur == g->child[n].end()) { cur = g->undir[n].begin(); } return *this; }
-            bool operator!=(const Iter& o) const { return cur != o.cur; }
-            EdgeType& operator*() { return *cur; }
-        };
-        Iter begin() { return g->child[n].empty() ? Iter(g, g->undir[n].begin(), n) : Iter(g, g->child[n].begin(), n); }
-        Iter end() { return Iter(g, g->undir[n].end(), n); }
+        inline operator bool() const { return p != -1; } //NOLINT(*-explicit-constructor)
+        inline auto operator<=>(const iter& b) const { return i_() <=> b.i_(); }
+        inline bool operator==(const iter& b) const { return i_() == b.i_(); }
+        inline signed operator-(const iter& b) const { return i_() - b.i_(); }
+        iter& operator++() {
+            if(p == -2) return *this = ptr->begin();
+            ++i;
+            if(++c == ptr->mem.tree[p]) {
+                iter nxt = ptr->upper_bound(v);
+                v = nxt.v; p = nxt.p; c = nxt.c; i = nxt.i;
+            }
+            return *this;
+        }
+        iter& operator--() {
+            if(p == -1) {
+                iter nxt = ptr->operator[](ptr->size()-1);
+                v = nxt.v; p = nxt.p; c = nxt.c; i = nxt.i;
+            } else { --i;
+                if(i == -1) return *this = {0, ptr, -2, 0, 0};
+                if(c) c--;
+                else { iter nxt = ptr->operator[](i); v = nxt.v; p = nxt.p; c = nxt.c; }
+            }
+            return *this;
+        }
+        inline iter operator++(signed) { iter ret = *this; operator++(); return ret; }
+        inline iter operator--(signed) { iter ret = *this; operator--(); return ret; }
+        inline long long operator*() const { return v; }
+
+        friend iter prev(const iter& b) { iter ret = b; return --ret; }
+        friend iter next(const iter& b) { iter ret = b; return ++ret; }
     };
-    Connection getConnection(long long node) { return Connection(this, node); }
-
-    /// Complexity : O(ElogV)
-    /// @returns {minDist, parent}
-    std::pair<std::vector<long long>, std::vector<long long>> dijkstra(long long startNode) {
-        std::vector<long long> dist(nodeCnt, 1000000000000000000), par(nodeCnt, -1);
-        std::priority_queue<std::pair<long long, long long>, std::vector<std::pair<long long, long long>>, std::greater<>> q;
-        q.emplace(0, startNode); dist[startNode] = 0;
-        while(!q.empty()) {
-            auto [d, cur] = q.top(); q.pop(); if(d > dist[cur]) continue;
-            for(const auto& i : getConnection(cur)) {
-                if(!unsafe && ed_(i) < 0) { std::cerr << "Negative distance is not allowed."; exit(1); }
-                long long nxt = ee_(i), nxtCost = d + ed_(i);
-                if(nxtCost < dist[nxt]) { dist[nxt] = nxtCost; q.emplace(nxtCost, nxt); par[nxt] = cur; }
-            }
-        }
-        return {dist, par};
+    inline void insert(long long v) {
+        if(isMultiSet) mem.add(v, 1);
+        else mem.set(v, 1);
     }
-    /// Complexity : O(N)
-    std::vector<EdgeType> getConnectionArr(long long node) {
-        std::vector<EdgeType> ret; for(const auto& e : child[node]) ret.emplace_back(e); for(const auto& e : undir[node]) ret.emplace_back(e); return ret;
+    inline void erase(long long v) { mem.set(v, 0); }
+    inline void erase_one(long long v) { if(contains(v)) mem.add(v, -1); }
+    inline void erase(const iter& iter) { mem.add(iter.v, -1); }
+    iter find(long long v) const {
+        iter ret{}; ret.v = v; ret.c = 0; ret.ptr = this;
+        std::tie(ret.p, ret.i) = mem.getIter(0, mem.ln, mem.rn, v, 0);
+        if(ret.p != -1 && mem.tree[ret.p] == 0) exit(1);
+        return ret;
     }
-    Graph& setUnsafe(bool _ = true) { unsafe = _; return *this; }
+    inline bool contains(long long v) const { return mem.query(v, v); }
+    inline iter lower_bound(long long v) const {
+        iter ret{}; ret.v = v; ret.c = 0; ret.ptr = this;
+        std::tie(ret.p, ret.i) = mem.lb_(0, mem.ln, mem.rn, v, 0);
+        if(ret.p != -1 && mem.tree[ret.p] == 0) exit(1);
+        return ret;
+    }
+    inline iter upper_bound(long long v) const {
+        iter ret{}; ret.c = 0; ret.ptr = this;
+        auto t = mem.ub_(0, mem.ln, mem.rn, v, 0);
+        ret.p = t[0]; ret.i = t[1]; ret.v = t[2];
+        if(ret.p != -1 && mem.tree[ret.p] == 0) exit(1);
+        return ret;
+    }
+    inline iter find_first(long long v) const { return find(v); }
+    inline iter find_last(long long v) const {
+        iter ret = find(v); if(ret.p == -1) return ret;
+        ret.i += mem.tree[ret.p] - 1 - ret.c;
+        ret.c = mem.tree[ret.p] - 1;
+        return ret;
+    }
+    /// k >= 0
+    inline iter operator[](signed k) const { k++;
+        iter ret; ret.ptr = this;
+        auto [p, ls, v] = mem.kth(0, mem.ln, mem.rn, k, 0);
+        if(p == -1) return ret;
+        assert(ls <= k - 1 && ls + mem.tree[p] + ls >= k);
+        ret.v = v; ret.p = p; ret.i = k - 1; ret.c = k - 1 - ls;
+        return ret;
+    }
+    inline signed size() const { return mem.tree[0]; }
+    inline iter begin() const { return operator[](0); }
+    inline iter end() const { iter ret; ret.ptr = this; return ret; }
 };
-
-template <typename EdgeType>
-class Tree : public Graph<EdgeType> { defGCFs_
-    bool usingHld = false;
-public:
-    long long root = -1; std::vector<long long> sz, dep, top, in, out, inRev;
-    void clear() override {
-        Graph<EdgeType>::clear(); sz = dep = top = in = out = inRev = std::vector<long long>(); usingHld = false; root = 0;
-        logH = 0; usingSparse = false; sparsePar = sparseDist = std::vector<std::vector<long long>>();
-    }
-    Tree() = default; // creates empty tree
-    Tree(long long rootNode, const Graph<EdgeType>& graph) : Graph<EdgeType>(graph), root(rootNode) {
-        if(!this->unsafe) { // check cycle
-            std::vector<bool> vis(this->nodeCnt, false);
-            bool hasCycle = false;
-            std::function<void(long long, long long)> dfs_ = [&](long long cur, long long par) {
-                if(hasCycle) return;
-                if(vis[cur]) { hasCycle = true; return; }
-                vis[cur] = true;
-                for(const auto& e : this->child[cur]) if(ee_(e) != par) dfs_(ee_(e), cur);
-                for(const auto& e : this->undir[cur]) if(ee_(e) != par) dfs_(ee_(e), cur);
-            };
-            dfs_(rootNode, -1);
-            if(hasCycle) { std::cerr << "Cycle detected while constructing Tree"; exit(1); }
-        }
-        std::function<void(long long, long long)> dfs2_ = [&](long long cur, long long par) { // move undir -> child & parent
-            for(const auto& e : this->child[cur]) if(ee_(e) != par) dfs2_(ee_(e), cur);
-            for(const auto& e : this->undir[cur]) if(ee_(e) != par) {
-                    this->child[cur].emplace_back(e); this->parent[ee_(e)].emplace_back(e);
-                    dfs2_(ee_(e), cur);
-                }
-        };
-        dfs2_(rootNode, -1);
-        this->undir.clear();
-    }
-
-    long long par(long long node) { if(!this->unsafe) assert(this->parent[node].size() == 1);
-        return es_(this->parent[node][0]); }
-
-    /// euler tour technique (range: [1, n])
-    /// saves results at in & out. new edges does not update the results.
-    /// Complexity : O(N)
-    std::pair<std::vector<long long>, std::vector<long long>> getInOut() {
-        in = std::vector<long long>(this->nodeCnt, -1), out = in; long long cur = 0;
-        std::function<void(long long)> f = [&](long long p) { in[p] = ++cur;
-            for(const auto& e : this->child[p]) f(ee_(e));
-            out[p] = cur; };
-        f(root); return {in, out};
-    }
-
-    /// heavy_light decomposition
-    void initHld() {
-        sz = dep = top = in = out = inRev = vl(this->nodeCnt, 0); usingHld = true;
-        long long pv = 0; top[this->root] = this->root;
-        // sz & dep & par, reconstruct
-        std::function<void(long long)> dfs1 = [&](long long v) {
-            sz[v] = 1;
-            for(auto &i : this->child[v]) {
-                long long j = ee_(i); dep[j] = dep[v] + 1; dfs1(j); sz[v] += sz[j];
-                if(sz[j] > sz[ee_(this->child[v][0])]) std::swap(i, this->child[v][0]);
-            }
-        }; dfs1(this->root);
-        // in & out & top
-        std::function<void(long long)> dfs2 = [&](long long v) {
-            in[v] = ++pv;
-            for(const auto& i : this->child[v]) {
-                long long j = ee_(i); top[j] = (j == ee_(this->child[v][0])) ? top[v] : j; dfs2(j); }
-            out[v] = pv;
-        }; dfs2(this->root);
-        for(long long i = 0; i < this->nodeCnt; i++) inRev[in[i]] = i;
-    }
-
-    /// calls func(ettNum1, ettNum2) (ettNum1 <= ettNum2)
-    /// for decomposed chains for a ~ b
-    /// calls initHld() automatically if you didn't
-    /// @returns lca(a, b)
-    long long hld(long long a, long long b, const std::function<void(long long, long long)> &func) {
-        if(!usingHld) initHld();
-        while(top[a] != top[b]) {
-            if(dep[top[a]] < dep[top[b]]) std::swap(a, b);
-            long long st = top[a]; func(in[st], in[a]); a = par(st);
-        }
-        if(dep[a] > dep[b]) std::swap(a, b);
-        func(in[a], in[b]);
-        return a;
-    }
-
-    long long hld(long long a, long long b, const std::function<void(long long, long long)> &lFunc, const std::function<void(long long, long long)> &rFunc) {
-        if(!usingHld) initHld();
-        while(top[a] != top[b]) {
-            if(dep[top[a]] > dep[top[b]]) {
-                lFunc(in[top[a]], in[a]);
-                a = par(top[a]);
-            } else {
-                rFunc(in[top[b]], in[b]);
-                b = par(top[b]);
-            }
-        }
-        if(dep[a] > dep[b]) lFunc(in[b], in[a]);
-        else rFunc(in[a], in[b]);
-        return dep[a] > dep[b] ? b : a;
-    }
-
-private:
-    long long logH = 0; std::vector<std::vector<long long>> sparsePar, sparseDist; bool usingSparse = false;
-    void initSparse() {
-        if(usingSparse) return;
-        usingSparse = true; sparsePar.resize(this->nodeCnt, std::vector<long long>()); sparseDist.resize(this->nodeCnt, std::vector<long long>());
-        dep = std::vector<long long>(this->nodeCnt, 0);
-        std::function<void(long long)> dfs = [&](long long v) {
-            logH = std::max(logH, static_cast<long long>(log2(dep[v]+1)));
-            for(auto &i : this->child[v]) { long long j = ee_(i); dep[j] = dep[v] + 1; dfs(j); }
-        }; dfs(this->root);
-        for(long long v = 0; v <= this->nodeCnt-1; v++) {
-            if(this->parent[v].empty()) sparsePar[v].emplace_back(v), sparseDist[v].push_back(0);
-            else sparsePar[v].emplace_back(par(v)), sparseDist[v].emplace_back(ed_(this->parent[v][0]));
-        }
-        for(long long i = 0; i < logH+1; i++) for(long long v = 0; v <= this->nodeCnt-1; v++) {
-                sparsePar[v].emplace_back(sparsePar[sparsePar[v][i]][i]);
-                sparseDist[v].emplace_back(sparseDist[v][i] + sparseDist[sparsePar[v][i]][i]);
-            }
-    }
-public:
-    std::pair<long long, long long> sparseLca(long long a, long long b) { initSparse();
-        if(dep[a] > dep[b]) std::swap(a, b);
-        long long depDiff = dep[b] - dep[a], dist = 0;
-        for(long long i = logH; depDiff && i >= 0; i--)
-            if(depDiff & (1<<i)) dist += sparseDist[b][i], b = sparsePar[b][i], depDiff ^= (1<<i);
-        for(long long i = logH; i >= 0; i--)
-            if(sparsePar[a][i] != sparsePar[b][i])
-                dist += sparseDist[a][i] + sparseDist[b][i], a = sparsePar[a][i], b = sparsePar[b][i];
-        if(a == b) return {a, dist};
-        return {sparsePar[a][0], dist + sparseDist[a][0] + sparseDist[b][0]};
-    }
-
-    /// if hld is made => returns lca using hld
-    /// else => makes sparse tree
-    long long lca(long long a, long long b) {
-        if(usingHld) return hld(a, b, [&](long long, long long){});
-        return sparseLca(a, b).first;
-    }
-
-    /// uses sparse table
-    long long dist(long long a, long long b) { return sparseLca(a, b).second; }
-};
-
-/// Persistent Li Chao Tree
-class Plct {
-public:
-    struct Line { long long a = 0, b = 9223372036854775807; long long operator[](long long x) const { return a*x+b; } };
-private:
-    std::vector<Line> tr; std::vector<signed> l, r; long long ln, rn; long long mode = 1;
-public:
-    Plct(long long leftBound, long long rightBound, bool useMaxQuery = false) : ln(leftBound), rn(rightBound) {
-        for(signed i=0; i<2; i++) tr.emplace_back(), l.emplace_back(0), r.emplace_back(0);
-        if(useMaxQuery) mode = -1;
-    }
-    struct Root {
-        signed pos = 0, prvPos = 0; Plct* ptr = nullptr;
-        Root next() const {
-            Root ret; ret.pos = ssize(ptr->tr); ret.prvPos = pos; ret.ptr = ptr;
-            ptr->tr.emplace_back(ptr->tr[pos]); ptr->l.emplace_back(ptr->l[pos]); ptr->r.emplace_back(ptr->r[pos]);
-            return ret;
-        }
-        /// @returns self
-        Root& add(long long a, long long b) { ptr->update({a*ptr->mode, b*ptr->mode}, prvPos, pos, ptr->ln, ptr->rn); return *this; }
-        /// @returns self
-        Root& add(const Line& line) { add(line.a, line.b); return *this; }
-        /// @returns self
-        Root& addAt(long long left, long long right, long long a, long long b) { ptr->updateAt(left, right, prvPos, pos, ptr->ln, ptr->rn, {a*ptr->mode, b*ptr->mode}); return *this; }
-        long long query(long long x) const { return ptr->mode * ptr->query(x, pos, ptr->ln, ptr->rn); }
-    };
-    friend Root; Root root() { return { 1, 0, this }; }
-private:
-    void updateAt(long long ul, long long ur, long long pp, long long p, long long s, long long e, const Line& line) {
-        if(ur < s || e < ul) return;
-        if(ul <= s && e <= ur) { update(line, pp, p, s, e); return; }
-        if(!l[p] || l[p] == l[pp]) l[p] = std::ssize(tr), tr.emplace_back(tr[l[pp]]), l.emplace_back(l[r[pp]]), r.emplace_back(r[r[pp]]);
-        if(!r[p] || r[p] == r[pp]) r[p] = std::ssize(tr), tr.emplace_back(tr[r[pp]]), l.emplace_back(l[l[pp]]), r.emplace_back(r[l[pp]]);
-        updateAt(ul, ur, l[pp], l[p], s, (s+e)/2, line);
-        updateAt(ul, ur, r[pp], r[p], (s+e)/2+1, e, line);
-    }
-    void update(const Line& line, long long pp, long long p, long long s, long long e) {
-        long long m = (s + e) >> 1; Line low = tr[p], high = line;
-        if(low[s] > high[s]) std::swap(low, high);
-        if(low[e] <= high[e]) { tr[p] = low; return; }
-        if(low[m] < high[m]) {
-            tr[p] = low;
-            if(!l[p]) l[p] = l[pp];
-            if(!r[p] || r[p] == r[pp]) r[p] = std::ssize(tr), tr.emplace_back(tr[r[pp]]), l.emplace_back(l[r[pp]]), r.emplace_back(r[r[pp]]);
-            update(high, r[pp], r[p], m+1, e);
-        } else {
-            tr[p] = high;
-            if(!l[p] || l[p] == l[pp]) l[p] = std::ssize(tr), tr.emplace_back(tr[l[pp]]), l.emplace_back(l[l[pp]]), r.emplace_back(r[l[pp]]);
-            if(!r[p]) r[p] = r[pp];
-            update(low, l[pp], l[p], s, m);
-        }
-    }
-    long long query(long long x, long long p, long long s, long long e) const {
-        if(!p) { return 9223372036854775807; } long long m = (s + e) >> 1;
-        if(x <= m) return std::min(tr[p][x], query(x, l[p], s, m));
-        return std::min(tr[p][x], query(x, r[p], m+1, e));
-    }
-};
-using PlctRoot = Plct::Root;
-
-// ans[i] = min(ans[j] + (dst[i]-dst[j]) * v[i]) + s[i] )
-//        = dst[i] * v[i] + s[i] + min(ans[j] + -dst[j] * v[i])
 
 i32 main() {
     fastio;
-    in64(n);
-    Tree t(1, [&](){Graph<DistEdge> g(n); rep(n-1) g.makeUEdge(qin(3)); return g;}());
-    Plct cht(-1000, 1010011557);
-    vl ans(n+1, INF), dist(n+1, 0);
-    vec<ll> msgr(n+1, {0,0}); forf(i, 2, n) input(msgr[i][0], msgr[i][1]);
-    vec<PlctRoot> roots(1, cht.root());
-    ans[0] = ans[1] = 0;
-    fun<void(i64)> dfs = [&](i64 cur) {
-        if(cur-1) {
-            ans[cur] = dist[cur] * msgr[cur][1] + msgr[cur][0];
-            i64 q = roots.back().query(msgr[cur][1]);
-            i64 q2 = dist[cur] * msgr[cur][1] + msgr[cur][0];
-            setMin(ans[cur], q + q2);
-        }
-        roots.pb(roots.back().next().add(-dist[cur], ans[cur]));
-        for(auto [CUR, i, d] : t.child[cur]) {
-            dist[i] = dist[cur] + d; dfs(i);
-        }
-        pop(roots);
-    };
-    dfs(1);
-    forf(i, 2, n) print(ans[i], "");
+    SegSet s(true);
+    inRep() s.insert(-input());
+
 }

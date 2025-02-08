@@ -7,7 +7,7 @@
 template <typename T = long long>
 class Pst {
     std::vector<T> tree; std::vector<signed> l, r; long long ln, rn;
-    static inline long long m(long long s, long long e) { return (s + e) < 0 ? ((s + e) >> 1) - 1 : ((s + e) >> 1); }
+    static inline long long m(long long s, long long e) { return s + (e - s) / 2; }
     template <typename V> static inline long long Size(const V& v) { return static_cast<long long>(v.size()); }
 public:
     Pst(long long leftBound, long long rightBound) : ln(leftBound), rn(rightBound) { for(signed i=0; i<2; i++) tree.emplace_back(), l.emplace_back(0), r.emplace_back(0); }
@@ -63,6 +63,7 @@ using PstIter = Pst<long long>::Iter; using PstRoot = Pst<long long>::Root;
 
 /// 2D Persistent Segment Tree
 class Pst2d {
+    static inline long long m(long long s, long long e) { return s + (e - s) / 2; }
     std::vector<PstRoot> tree; std::vector<signed> l, r; long long ln, rn;
     Pst<long long> pst;
     template <typename V> static inline long long Size(const V& v) { return static_cast<long long>(v.size()); }
@@ -98,21 +99,20 @@ private:
     void update(signed prv, signed cur, long long s, long long e, long long yt, long long xt, long long d, bool isAdd) {
         if(isAdd) { tree[cur].add(xt, d); } else { tree[cur].set(xt, d); }
         if(s == e) return;
-        long long m = (s + e) >> 1;
-        if(yt <= m) {
+        if(yt <= m(s, e)) {
             if(!l[cur] || l[cur] == l[prv]) l[cur] = Size(tree), tree.emplace_back(tree[l[prv]].next()), l.emplace_back(l[l[prv]]), r.emplace_back(r[l[prv]]);
             if(!r[cur]) r[cur] = r[prv];
-            update(l[prv], l[cur], s, m, yt, xt, d, isAdd);
+            update(l[prv], l[cur], s, m(s, e), yt, xt, d, isAdd);
         } else {
             if(!l[cur]) l[cur] = l[prv];
             if(!r[cur] || r[cur] == r[prv]) r[cur] = Size(tree), tree.emplace_back(tree[r[prv]].next()), l.emplace_back(l[r[prv]]), r.emplace_back(r[r[prv]]);
-            update(r[prv], r[cur], m + 1, e, yt, xt, d, isAdd);
+            update(r[prv], r[cur], m(s, e) + 1, e, yt, xt, d, isAdd);
         }
     }
     void query(signed cur, long long s, long long e, long long ql, long long qr) {
         if(!cur) return;
         if(qr < s || e < ql) { return; } if(ql <= s && e <= qr) { queryRet.push_back(tree[cur]); return; }
-        query(l[cur], s, (s+e)>>1, ql, qr); query(r[cur], ((s+e)>>1)+1, e, ql, qr);
+        query(l[cur], s, m(s, e), ql, qr); query(r[cur], m(s, e)+1, e, ql, qr);
     }
 };
 using Pst2dIter = Pst2d::Iter; using Pst2dRoot = Pst2d::Root;

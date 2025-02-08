@@ -60,6 +60,11 @@ class SegSet {
             if(tree[l[p]] >= t) return kth(l[p], s, m(s, e), t, lSum);
             return kth(r[p], m(s, e) + 1, e, t - tree[l[p]], lSum + tree[l[p]]);
         }
+        void forEach(signed p, long long s, long long e, const std::function<void(long long)>& f) const {
+            if(p == -1 || tree[p] == 0) return;
+            if(s == e) for(signed i = 0; i < tree[p]; i++) f(s);
+            else forEach(l[p], s, m(s, e), f), forEach(r[p], m(s, e)+1, e, f);
+        }
     };
     DynamicSeg_ mem; bool isMultiSet;
 public:
@@ -68,8 +73,7 @@ public:
     /// insert나 erase 시행 후에도 계속 유효함이 보장되지 않음.
     /// 단, (이전에 erase되지 않은 iter라면) erase(iter)는 안전하게 동작함.
     class iter { friend SegSet;
-        /// end : {0, ptr, -1, 0, 0}
-        /// rend : {0, ptr, -2, 0, 0}
+        /// end : {0, ptr, -1, 0, 0}, rend : {0, ptr, -2, 0, 0}
         long long v = 0; // value
         const SegSet* ptr = nullptr;
         signed p = -1, c = 0, i = 0; // pointer, currentIdx, idx
@@ -154,6 +158,9 @@ public:
     inline signed size() const { return mem.tree[0]; }
     inline iter begin() const { return operator[](0); }
     inline iter end() const { iter ret; ret.ptr = this; return ret; }
+    /// for(auto i : SegSet)은 iter++이 O(logN)이므로 O(NlogN) 시간복잡도를 가지고,
+    /// 이 함수는 O(N)에 동작함.
+    void forEach(const std::function<void(long long)>& func) const { mem.forEach(0, mem.ln, mem.rn, func); }
 };
 
 // Example : BOJ 2750. 수 정렬하기
@@ -165,5 +172,6 @@ int main() {
     for(int i = 0; i < n; i++) {
         int j; cin >> j; s.insert(j);
     }
-    for(auto i : s) cout << i << '\n';
+//    for(auto i : s) cout << i << '\n'; // O(NlogN)
+    s.forEach([](long long i){ cout << i << '\n'; });
 }

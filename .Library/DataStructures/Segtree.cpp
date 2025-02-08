@@ -9,7 +9,7 @@ class Segtree {
 public:
     Segtree() : n(0) {}
     explicit Segtree(signed treeSize) { tree = std::vector<T>(4*treeSize, T()); n = treeSize; }
-    explicit Segtree(const std::vector<T> &a) { n = std::ssize(a); tree = vector<T>(4*n, T()); init(a, 1, 1, n); }
+    explicit Segtree(const std::vector<T> &a) { n = std::ssize(a); tree = std::vector<T>(4*n, T()); init(a, 1, 1, n); }
     void set(signed tar, const T& val) { set(1, tar, 1, n, val); }
     void add(signed tar, const T& diff) { update(1, tar, 1, n, diff); }
     void update(signed tar, const T& diff) { update(1, tar, 1, n, diff); }

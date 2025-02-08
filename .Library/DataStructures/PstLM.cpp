@@ -1,4 +1,4 @@
-/* Update : 2025-02-04 */
+/* Update : 2025-02-09 */
 
 /// Persistent Segment Tree with Low Memory usage
 /// implemented with std::shared_ptr, very slow in debug mode because of memory deallocation.
@@ -9,7 +9,7 @@
 template <typename T = long long>
 class PstLM {
     long long ln, rn;
-    static inline long long m(long long s, long long e) { return (s + e) < 0 ? (s + e) / 2 - 1 : (s + e) / 2; }
+    static inline long long m(long long s, long long e) { return s + (e - s) / 2; }
 public:
     struct Node { std::shared_ptr<Node> l = nullptr, r = nullptr; T val = T(); };
     PstLM(long long leftBound, long long rightBound) : ln(leftBound), rn(rightBound) { }

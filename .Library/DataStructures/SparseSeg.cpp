@@ -1,4 +1,4 @@
-/* Update : 2025-02-04 */
+/* Update : 2025-02-09 */
 
 #include <bits/stdc++.h>
 
@@ -46,14 +46,14 @@ private:
         push(p, s, e);
         if(qr < s || e < ql) return tree[p];
         if(ql <= s && e <= qr) { lazy[p] = lazy[p] + v; push(p, s, e); return tree[p]; }
-        long long m = (s + e) >> 1;
+        long long m = s + (e - s) / 2;
         return tree[p] = update(l[p], s, m, ql, qr, v) + update(r[p], m+1, e, ql, qr, v);
     }
     TreeType query(long long p, long long s, long long e, long long ql, long long qr) {
         push(p, s, e);
         if(qr < s || e < ql) return TreeType();
         if(ql <= s && e <= qr) return tree[p];
-        long long m = (s + e) >> 1;
+        long long m = s + (e - s) / 2;
         return query(l[p], s, m, ql, qr) + query(r[p], m+1, e, ql, qr);
     }
 };

@@ -1,10 +1,10 @@
-/* Update : 2025-02-04 */
+/* Update : 2025-02-09 */
 
 #include <bits/stdc++.h>
 
 template <typename T = long long>
 class DynamicSeg {
-    inline long long m(long long s, long long e) { return (s+e)>=0 ? (s+e)>>1 : ((s+e)>>1)-1; }
+    static inline long long m(long long s, long long e) { return s + (e - s) / 2; }
     std::vector<T> tree; long long ln, rn; std::vector<signed> l, r;
     signed next() { tree.emplace_back(); l.emplace_back(-1); r.emplace_back(-1); return ((long long)tree.size())-1; }
 public:
@@ -15,7 +15,7 @@ public:
 private:
     T& add(signed p, long long s, long long e, long long t, const T& v) {
         if(s == e) return tree[p] = tree[p] + v;
-        if(t <= (s + e) / 2) {
+        if(t <= m(s, e)) {
             if(l[p] == -1) l[p] = next();
             return tree[p] = add(l[p], s, m(s, e), t, v) + (r[p] == -1 ? T() : tree[r[p]]);
         }
@@ -24,7 +24,7 @@ private:
     }
     T& set(signed p, long long s, long long e, long long t, const T& v) {
         if(s == e) return tree[p] = v;
-        if(t <= (s + e) / 2) {
+        if(t <= m(s, e)) {
             if(l[p] == -1) l[p] = next();
             return tree[p] = set(l[p], s, m(s, e), t, v) + (r[p] == -1 ? T() : tree[r[p]]);
         }
@@ -41,6 +41,7 @@ private:
 template <typename T = long long>
 class Dynamic2dSeg {
     long long lx, rx, ly, ry; std::vector<DynamicSeg<T>> tree; std::vector<signed> l, r;
+    static inline long long m(long long s, long long e) { return s + (e - s) / 2; }
 public:
     Dynamic2dSeg(long long lxi, long long rxi, long long lyi, long long ryi) : lx(lxi), rx(rxi), ly(lyi), ry(ryi) { tree.emplace_back(ly, ry); l.emplace_back(-1); r.emplace_back(-1); }
     void add(long long tx, long long ty, const T& val) { add(0, lx, rx, tx, ty, val); }
@@ -49,7 +50,7 @@ public:
 private:
     void add(signed p, long long sx, long long ex, long long tx, long long ty, const T& val) {
         tree[p].add(ty, val); if(sx == ex) { return; }
-        long long mx = (sx + ex) / 2;
+        long long mx = m(sx, ex);
         if(tx <= mx) {
             if(l[p] == -1) l[p] = signed(tree.size()), tree.emplace_back(ly, ry), l.emplace_back(-1), r.emplace_back(-1);
             add(l[p], sx, mx, tx, ty, val);
@@ -59,7 +60,7 @@ private:
         }
     }
     void set(signed p, long long sx, long long ex, long long tx, long long ty, const T& val) {
-        tree[p].set(ty, val); if(sx == ex) { return; } long long mx = (sx + ex) / 2;
+        tree[p].set(ty, val); if(sx == ex) { return; } long long mx =  m(sx, ex);
         if(tx <= mx) { if(l[p] == -1) l[p] = signed(tree.size()), tree.emplace_back(ly, ry), l.emplace_back(-1), r.emplace_back(-1);
             set(l[p], sx, mx, tx, ty, val); } else { if(r[p] == -1) r[p] = signed(tree.size()), tree.emplace_back(ly, ry), l.emplace_back(-1), r.emplace_back(-1);
             set(r[p], mx+1, ex, tx, ty, val); }
@@ -67,7 +68,7 @@ private:
     T query(signed p, long long sx, long long ex, long long qlx, long long qrx, long long qly, long long qry) {
         if(p == -1 || ex < qlx || qrx < sx) return T();
         if(qlx <= sx && ex <= qrx) return tree[p].query(qly, qry);
-        return query(l[p], sx, (sx+ex)/2, qlx, qrx, qly, qry) + query(r[p], (sx+ex)/2+1, ex, qlx, qrx, qly, qry);
+        return query(l[p], sx,  m(sx, ex), qlx, qrx, qly, qry) + query(r[p],  m(sx, ex)+1, ex, qlx, qrx, qly, qry);
     }
 };
 

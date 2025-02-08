@@ -1,4 +1,4 @@
-/* Update : 2025-02-04 */
+/* Update : 2025-02-09 */
 
 #include <bits/stdc++.h>
 
@@ -7,7 +7,7 @@
 template <typename T = long long>
 class Pst {
     std::vector<T> tree; std::vector<signed> l, r; long long ln, rn;
-    static inline long long m(long long s, long long e) { return (s + e) < 0 ? ((s + e) >> 1) - 1 : ((s + e) >> 1); }
+    static inline long long m(long long s, long long e) { return s + (e - s) / 2; }
     template <typename V> static inline long long Size(const V& v) { return static_cast<long long>(v.size()); }
 public:
     Pst(long long leftBound, long long rightBound) : ln(leftBound), rn(rightBound) { for(signed i=0; i<2; i++) tree.emplace_back(), l.emplace_back(0), r.emplace_back(0); }

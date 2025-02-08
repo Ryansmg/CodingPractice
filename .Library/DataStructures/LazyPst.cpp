@@ -1,4 +1,4 @@
-/* Update : 2025-02-04 */
+/* Update : 2025-02-09 */
 
 #include <bits/stdc++.h>
 
@@ -11,7 +11,7 @@
 template <typename TreeType, typename LazyType, typename UpdateType>
 class LazyPst {
     std::vector<TreeType> tree; std::vector<LazyType> lazy; std::vector<bool> flag; std::vector<signed> l, r; long long ln, rn;
-    static inline long long m(long long s, long long e) { return (s + e) < 0 ? ((s + e) >> 1) - 1 : ((s + e) >> 1); }
+    static inline long long m(long long s, long long e) { return s + (e - s) / 2; }
 public:
     LazyPst(long long leftBound, long long rightBound) : ln(leftBound), rn(rightBound) { for(signed i=0; i<2; i++) tree.emplace_back(), lazy.emplace_back(), flag.emplace_back(0), l.emplace_back(0), r.emplace_back(0); }
     // index = [1..n]
