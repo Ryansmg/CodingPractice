@@ -1,6 +1,6 @@
-/* Update : 2025-02-04 */
+/* Update : 2025-02-11 */
 
-#include <bits/stdc++.h>
+#include <vector>
 
 template <typename T = long long>
 struct PrefixSum2d {
@@ -26,6 +26,8 @@ struct PrefixSum2d {
 
 
 // Example : BOJ 2167. 2차원 배열의 합
+#include <iostream>
+
 int main() {
     using namespace std;
     ios_base::sync_with_stdio(false); cin.tie(nullptr);

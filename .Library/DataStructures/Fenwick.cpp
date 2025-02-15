@@ -1,19 +1,21 @@
-/* Update : 2025-02-04 */
+/* Update : 2025-02-11 */
 
-#include <bits/stdc++.h>
+#include <vector>
 
 /// 1-based index
 template <typename T = long long> struct Fenwick {
     std::vector<T> tree; signed n;
     explicit Fenwick(signed treeSize) { n = treeSize; tree = std::vector<T>(treeSize+10, T()); }
-    void add(signed tar, const T& val) { if(tar <= 0) { return; } for(; tar<=n; tar+=tar&-tar) tree[tar] += val; }
+    inline void add(signed tar, const T& val) { if(tar <= 0) { return; } for(; tar<=n; tar+=tar&-tar) tree[tar] += val; }
     /// [l, r]
-    T query(signed left, signed right) { if(left > right) { return T(); } left = std::max(left, 1); return query(right) - query(left-1); }
+    inline T query(signed left, signed right) { if(left > right) { return T(); } left = std::max(left, 1); return query(right) - query(left-1); }
     /// [1, tar]
-    T query(signed tar) { T ans = T(); for(; tar; tar-=(tar&-tar)) ans += tree[tar]; return ans; }
+    inline T query(signed tar) { T ans = T(); for(; tar; tar-=(tar&-tar)) ans += tree[tar]; return ans; }
 };
 
 // Example : BOJ 2042. 구간 합 구하기
+#include <iostream>
+
 int main() {
     using namespace std;
     ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr);

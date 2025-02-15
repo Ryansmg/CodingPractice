@@ -1,6 +1,6 @@
-/* Update : 2025-02-04 */
+/* Update : 2025-02-11 */
 
-#include <bits/stdc++.h>
+#include <vector>
 
 
 /// Persistent Segment Tree
@@ -119,6 +119,11 @@ using Pst2dIter = Pst2d::Iter; using Pst2dRoot = Pst2d::Root;
 
 
 // Example : BOJ 17960. 3차원 점과 쿼리
+#include <iostream>
+#include <algorithm>
+#include <array>
+#include <cassert>
+
 template <typename T> inline long long idx(const T &val, const std::vector<T> &compressed) {
     return std::ranges::lower_bound(compressed, val) - compressed.begin();
 }

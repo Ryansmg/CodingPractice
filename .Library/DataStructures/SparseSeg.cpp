@@ -1,6 +1,7 @@
-/* Update : 2025-02-09 */
+/* Update : 2025-02-11 */
 
-#include <bits/stdc++.h>
+#include <vector>
+#include <cassert>
 
 struct SpSumLazy;
 
@@ -73,6 +74,10 @@ long long operator+(long long a, const SparseSeg<long long, SpSumLazy, long long
 
 
 // Example : BOJ 20212. 나무는 쿼리를 싫어해~
+#include <iostream>
+#include <array>
+#include <algorithm>
+
 int main() {
     using namespace std;
     ios_base::sync_with_stdio(false); cin.tie(nullptr);

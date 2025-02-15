@@ -1,6 +1,7 @@
-/* Update : 2025-02-04 */
+/* Update : 2025-02-11 */
 
-#include <bits/stdc++.h>
+#include <vector>
+#include <functional>
 
 
 /// requirements: (TreeType + TreeType), (LazyType + UpdateType), (TreeType + LazyIter&&), (LazyType + LazyIter&&)
@@ -69,6 +70,8 @@ long long operator+(long long a, const Lazyprop<long long, SumLazy, long long>::
 }
 
 // Example : BOJ 10999. 구간 합 구하기 2
+#include <iostream>
+
 int main() {
     using namespace std;
     ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr);

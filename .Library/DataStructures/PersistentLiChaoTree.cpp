@@ -1,6 +1,6 @@
-/* Update : 2025-02-04 */
+/* Update : 2025-02-11 */
 
-#include <bits/stdc++.h>
+#include <vector>
 
 /// Persistent Li Chao Tree
 class Plct {

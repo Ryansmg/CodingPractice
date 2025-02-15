@@ -1,6 +1,6 @@
-/* Update : 2025-02-09 */
+/* Update : 2025-02-11 */
 
-#include <bits/stdc++.h>
+#include <vector>
 
 
 /// Persistent Segment Tree
@@ -62,6 +62,8 @@ using PstIter = Pst<long long>::Iter; using PstRoot = Pst<long long>::Root;
 
 
 // Example : BOJ 11012. Egg
+#include <iostream>
+
 signed main() {
     using namespace std;
     ios_base::sync_with_stdio(false); cin.tie(nullptr);

@@ -1,6 +1,6 @@
-/* Update : 2025-02-04 */
+/* Update : 2025-02-11 */
 
-#include <bits/stdc++.h>
+#include <vector>
 
 struct Fenwick2d {
     std::vector<std::vector<long long>> tree; signed xn, yn;
@@ -12,6 +12,8 @@ struct Fenwick2d {
 };
 
 // Example : BOJ 11658. 구간 합 구하기 3
+#include <iostream>
+
 int main() {
     using namespace std;
     ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr);

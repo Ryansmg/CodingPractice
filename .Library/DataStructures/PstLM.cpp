@@ -1,10 +1,11 @@
-/* Update : 2025-02-09 */
+/* Update : 2025-02-11 */
 
 /// Persistent Segment Tree with Low Memory usage
 /// implemented with std::shared_ptr, very slow in debug mode because of memory deallocation.
 /// Does not guarantee low memory usage in general, can use more memory than Pst.
 
-#include <bits/stdc++.h>
+#include <vector>
+#include <memory>
 
 template <typename T = long long>
 class PstLM {
@@ -65,6 +66,8 @@ private:
 };
 
 // Example : BOJ 11012. Egg
+#include <iostream>
+
 signed main() {
     using namespace std;
     ios_base::sync_with_stdio(false); cin.tie(nullptr);

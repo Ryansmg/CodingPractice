@@ -1,6 +1,6 @@
-/* Update : 2025-02-09 */
+/* Update : 2025-02-11 */
 
-#include <bits/stdc++.h>
+#include <vector>
 
 class LiChaoTree {
     static inline long long m(long long s, long long e) { return s + (e - s) / 2; }
@@ -46,6 +46,8 @@ private:
 };
 
 // Example : BOJ 12795. 반평면 땅따먹기
+#include <iostream>
+
 int main() {
     using namespace std;
     ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr);

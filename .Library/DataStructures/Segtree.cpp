@@ -1,6 +1,7 @@
-/* Update : 2025-02-04 */
+/* Update : 2025-02-11 */
 
-#include <bits/stdc++.h>
+#include <vector>
+#include <functional>
 
 /// requirements: operator+(T, T)
 template <typename T = long long>
@@ -57,6 +58,8 @@ protected:
 };
 
 // Example : BOJ 2243. 사탕상자
+#include <iostream>
+
 int main() {
     using namespace std;
     ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr);

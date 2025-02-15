@@ -1,169 +1,42 @@
 #include <bits/stdc++.h>
 
-/// [-4*10^18, 4*10^18]
-/// 2^30개 이상의 수는 저장 불가
-class SegSet {
-    struct DynamicSeg_ {
-        static inline long long m(long long s, long long e) { return s + (e - s) / 2; }
-        std::vector<signed> tree; long long ln, rn; std::vector<signed> l, r;
-        signed next() { tree.emplace_back(); l.emplace_back(-1); r.emplace_back(-1); return ((signed)tree.size())-1; }
-        explicit DynamicSeg_(long long li, long long ri) : ln(li), rn(ri) { next(); }
-        void add(long long tar, const signed& val) { add(0, ln, rn, tar, val); }
-        void set(long long tar, const signed& val) { set(0, ln, rn, tar, val); }
-        signed query(long long left, long long right) const { return query(0, ln, rn, left, right); }
-        signed& add(signed p, long long s, long long e, long long t, const signed& v) {
-            if(s == e) return tree[p] = tree[p] + v;
-            if(t <= m(s, e)) {
-                if(l[p] == -1) l[p] = next();
-                return tree[p] = add(l[p], s, m(s, e), t, v) + (r[p] == -1 ? 0 : tree[r[p]]);
-            }
-            if(r[p] == -1) r[p] = next();
-            return tree[p] = (l[p] == -1 ? 0 : tree[l[p]]) + add(r[p], m(s, e)+1, e, t, v);
-        }
-        signed& set(signed p, long long s, long long e, long long t, const signed& v) {
-            if(s == e) return tree[p] = v;
-            if(t <= m(s, e)) {
-                if(l[p] == -1) l[p] = next();
-                return tree[p] = set(l[p], s, m(s, e), t, v) + (r[p] == -1 ? 0 : tree[r[p]]);
-            }
-            if(r[p] == -1) r[p] = next();
-            return tree[p] = (l[p] == -1 ? 0 : tree[l[p]]) + set(r[p], m(s, e)+1, e, t, v);
-        }
-        signed query(signed p, long long s, long long e, long long ql, long long qr) const {
-            if(p == -1 || qr < s || e < ql) return 0;
-            if(ql <= s && e <= qr) return tree[p];
-            return query(l[p], s, m(s, e), ql, qr) + query(r[p], m(s, e)+1, e, ql, qr);
-        }
-        std::pair<signed, signed> getIter(signed p, long long s, long long e, long long t, signed lSum) const { // returns {ptr, idx}
-            if(p == -1 || tree[p] == 0) {return {-1, 0};} if(s == e) return {p, lSum};
-            if(m(s, e) <= t) return getIter(l[p], s, m(s, e), t, lSum);
-            else return getIter(r[p], m(s, e)+1, e, t, lSum + (l[p] == -1 ? 0 : tree[l[p]]));
-        }
-        std::pair<signed, signed> lb_(signed p, long long s, long long e, long long t, signed lSum) const { // returns {ptr, idx}
-            if(p == -1 || e < t || tree[p] == 0) return {-1, 0};
-            if(s == e) return {p, lSum};
-            auto tmp = lb_(l[p], s, m(s, e), t, lSum);
-            if(tmp.first != -1) return tmp;
-            return lb_(r[p], m(s, e) + 1, e, t, lSum + (l[p] == -1 ? 0 : tree[l[p]]));
-        }
-        std::array<long long, 3> ub_(signed p, long long s, long long e, long long t, signed lSum) const { // returns {ptr, idx, s}
-            if(p == -1 || e <= t || tree[p] == 0) return {-1, 0, 0};
-            if(s == e) return {p, lSum, s};
-            auto tmp = ub_(l[p], s, m(s, e), t, lSum);
-            if(tmp[0] != -1) return tmp;
-            return ub_(r[p], m(s, e) + 1, e, t, lSum + (l[p] == -1 ? 0 : tree[l[p]]));
-        }
-        std::array<long long, 3> kth(signed p, long long s, long long e, signed t, signed lSum) const {
-            if(p == -1 || tree[p] == 0) return {-1, 0, 0};
-            if(s == e) return {p, lSum, s};
-            if(l[p] == -1) return kth(r[p], m(s, e) + 1, e, t, lSum);
-            if(tree[l[p]] >= t) return kth(l[p], s, m(s, e), t, lSum);
-            return kth(r[p], m(s, e) + 1, e, t - tree[l[p]], lSum + tree[l[p]]);
-        }
-    };
-    DynamicSeg_ mem; bool isMultiSet;
-public:
-    explicit SegSet(bool multiSet = false) : mem(-4000000000000000000, 4000000000000000000), isMultiSet(multiSet) {}
-    explicit SegSet(const std::vector<long long>& arr, bool multiSet = false) : SegSet(multiSet) { for(long long i : arr) insert(i); }
-    /// insert나 erase 시행 후에도 계속 유효함이 보장되지 않음.
-    /// 단, (이전에 erase되지 않은 iter라면) erase(iter)는 안전하게 동작함.
-    class iter { friend SegSet;
-        /// end : {0, ptr, -1, 0, 0}
-        /// rend : {0, ptr, -2, 0, 0}
-        long long v = 0; // value
-        const SegSet* ptr = nullptr;
-        signed p = -1, c = 0, i = 0; // pointer, currentIdx, idx
-        iter()=default;
-        iter(long long v, const SegSet* ptr, signed p, signed c, signed i) : v(v), ptr(ptr), p(p), c(c), i(i) {}
-        inline signed i_() const { if(p == -2) { return -1; }  if(p == -1) { return ptr->size(); } return i; }
-    public:
-        inline operator bool() const { return p != -1; } //NOLINT(*-explicit-constructor)
-        inline auto operator<=>(const iter& b) const { return i_() <=> b.i_(); }
-        inline bool operator==(const iter& b) const { return i_() == b.i_(); }
-        inline signed operator-(const iter& b) const { return i_() - b.i_(); }
-        iter& operator++() {
-            if(p == -2) return *this = ptr->begin();
-            ++i;
-            if(++c == ptr->mem.tree[p]) {
-                iter nxt = ptr->upper_bound(v);
-                v = nxt.v; p = nxt.p; c = nxt.c; i = nxt.i;
-            }
-            return *this;
-        }
-        iter& operator--() {
-            if(p == -1) {
-                iter nxt = ptr->operator[](ptr->size()-1);
-                v = nxt.v; p = nxt.p; c = nxt.c; i = nxt.i;
-            } else { --i;
-                if(i == -1) return *this = {0, ptr, -2, 0, 0};
-                if(c) c--;
-                else { iter nxt = ptr->operator[](i); v = nxt.v; p = nxt.p; c = nxt.c; }
-            }
-            return *this;
-        }
-        inline iter operator++(signed) { iter ret = *this; operator++(); return ret; }
-        inline iter operator--(signed) { iter ret = *this; operator--(); return ret; }
-        inline long long operator*() const { return v; }
+using namespace std;
+vector<int> shika;
+void PUSH(int x) {
+    if(shika.empty()) {
+        shika.push_back(x); return;
+    }
+    int i = shika.size()-1;
+    shika.push_back(x);
+    while(x > shika[i]) {
+        shika[i+1] = shika[i];
+        shika[i] = x;
+    }
+}
 
-        friend iter prev(const iter& b) { iter ret = b; return --ret; }
-        friend iter next(const iter& b) { iter ret = b; return ++ret; }
-    };
-    inline void insert(long long v) {
-        if(isMultiSet) mem.add(v, 1);
-        else mem.set(v, 1);
-    }
-    inline void erase(long long v) { mem.set(v, 0); }
-    inline void erase_one(long long v) { if(contains(v)) mem.add(v, -1); }
-    inline void erase(const iter& iter) { mem.add(iter.v, -1); }
-    iter find(long long v) const {
-        iter ret{}; ret.v = v; ret.c = 0; ret.ptr = this;
-        std::tie(ret.p, ret.i) = mem.getIter(0, mem.ln, mem.rn, v, 0);
-        if(ret.p != -1 && mem.tree[ret.p] == 0) exit(1);
-        return ret;
-    }
-    inline bool contains(long long v) const { return mem.query(v, v); }
-    inline iter lower_bound(long long v) const {
-        iter ret{}; ret.v = v; ret.c = 0; ret.ptr = this;
-        std::tie(ret.p, ret.i) = mem.lb_(0, mem.ln, mem.rn, v, 0);
-        if(ret.p != -1 && mem.tree[ret.p] == 0) exit(1);
-        return ret;
-    }
-    inline iter upper_bound(long long v) const {
-        iter ret{}; ret.c = 0; ret.ptr = this;
-        auto t = mem.ub_(0, mem.ln, mem.rn, v, 0);
-        ret.p = t[0]; ret.i = t[1]; ret.v = t[2];
-        if(ret.p != -1 && mem.tree[ret.p] == 0) exit(1);
-        return ret;
-    }
-    inline iter find_first(long long v) const { return find(v); }
-    inline iter find_last(long long v) const {
-        iter ret = find(v); if(ret.p == -1) return ret;
-        ret.i += mem.tree[ret.p] - 1 - ret.c;
-        ret.c = mem.tree[ret.p] - 1;
-        return ret;
-    }
-    /// k >= 0
-    inline iter operator[](signed k) const { k++;
-        iter ret; ret.ptr = this;
-        auto [p, ls, v] = mem.kth(0, mem.ln, mem.rn, k, 0);
-        if(p == -1) return ret;
-        assert(ls <= k - 1 && ls + mem.tree[p] + ls >= k);
-        ret.v = v; ret.p = p; ret.i = k - 1; ret.c = k - 1 - ls;
-        return ret;
-    }
-    inline signed size() const { return mem.tree[0]; }
-    inline iter begin() const { return operator[](0); }
-    inline iter end() const { iter ret; ret.ptr = this; return ret; }
-};
+int main()
+{
+    ios_base::sync_with_stdio(false); // printf scanf 쓰면 안됨
+    cin.tie(nullptr);
 
-// Example : BOJ 2750. 수 정렬하기
-int main() {
-    using namespace std;
-    ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr);
-    SegSet s(true);
-    int n; cin >> n;
+    int n;
+    int x = 0;
+    cin >> n;
     for(int i = 0; i < n; i++) {
-        int j; cin >> j; s.insert(j);
+        cin >> x;
+        //cout << x << "xxxxx\n";
+        if(x == 0) {
+            if(shika.empty()) {
+                cout << "0 \n";
+            }
+            else {
+                cout << shika.back() << "\n";
+                shika.pop_back();
+            }
+        }
+        else {
+            PUSH(x);
+        }
+
     }
-    for(auto i : s) cout << i << '\n';
 }

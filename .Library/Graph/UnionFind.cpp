@@ -1,9 +1,40 @@
-/* Update : 2025-02-04 */
+/* Update : 2025-02-15 */
 
 #include <bits/stdc++.h>
 
 /// Union-Find
 class UF {
+    std::vector<signed> par; signed n;
+public:
+    class Group { friend UF;
+        signed v; UF* ptr;
+        Group(signed v, UF* ptr) : v(v), ptr(ptr) {}
+    public:
+        inline explicit operator signed() const { return ptr->group(v); }
+        inline Group& operator=(const Group& other) {
+            if(this == &other) [[unlikely]] return *this;
+            ptr->merge(v, other.v); return *this;
+        }
+        inline bool operator==(const Group& other) const { return ptr->group(v) == ptr->group(other.v); }
+        inline signed operator()() const { return ptr->group(v); }
+    };
+    UF() : n(0) {}
+    explicit UF(signed maxNodeNum) : par(maxNodeNum+1), n(maxNodeNum+1) { for(signed i = 0; i < n; i++) par[i] = i; }
+    inline signed group(signed v) {
+        if(par[v] == v) return v;
+        return par[v] = group(par[v]);
+    }
+    inline signed merge(signed a, signed b) {
+        signed ga = group(a), gb = group(b);
+        if(ga != gb) par[ga] = gb;
+        return gb;
+    }
+    inline signed operator()(signed v) { return group(v); }
+    inline Group operator[](signed v) { return {group(v), this}; }
+};
+
+/// Union-Find with group Size
+class UFS {
     bool useUnionFind = false; long long n{};
     std::vector<signed> groupNum, groupSize;
     long long uf_find(long long tar) { if(groupNum[tar] == tar) return tar;
@@ -21,7 +52,7 @@ class UF {
 public:
     void merge(long long a, long long b) { uf_init(); uf_union(a, b); }
     void clear() { useUnionFind = false; n = 0; groupNum = groupSize = std::vector<signed>(); }
-    explicit UF(long long maxNodeNum) : n(maxNodeNum+1) { }
+    explicit UFS(long long maxNodeNum) : n(maxNodeNum+1) { }
     /// union-find ( 0 <= parent <= maxNodeNum ), O(N) (calls uf_find for all nodes)
     /// @return {[node] = parent}
     [[nodiscard]] std::vector<signed> getAllGroup() { uf_init(); for(long long i = 0; i < n; i++) groupNum[i] = uf_find(i);
@@ -64,7 +95,7 @@ int main() {
     UF uf(n);
     for(long long i = 0; i < m; i++) {
         long long op, a, b; cin >> op >> a >> b;
-        if(op == 0) uf.merge(a, b);
-        else cout << (uf.group(a) == uf.group(b) ? "YES" : "NO") << '\n';
+        if(op == 0) uf[a] = uf[b];
+        else cout << (uf[a] == uf[b] ? "YES" : "NO") << '\n';
     }
 }

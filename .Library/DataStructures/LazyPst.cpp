@@ -1,6 +1,6 @@
-/* Update : 2025-02-09 */
+/* Update : 2025-02-11 */
 
-#include <bits/stdc++.h>
+#include <vector>
 
 
 /// Persistent Segment Tree with Lazy Propagation  // <br>

@@ -60,7 +60,6 @@
 #include <set>
 #include <sstream>
 #include <stack>
-#include <span>
 #include <string>
 #include <vector>
 #include <random>
@@ -70,51 +69,49 @@
 #include <ext/pb_ds/tree_policy.hpp>
 #include <ext/rope>
 #pragma endregion
-#define CPPP 250215
+#define CPPP 250209
 #pragma region MMAP
 #ifndef LOCAL
 #if ENABLE_MMAP
 #include <sys/stat.h>
 #include <sys/mman.h>
+#define fastio mmi_.init(); std::ios_base::sync_with_stdio(false); std::cout.tie(nullptr)
 #define cin mmi_
-namespace std {
-    class MmapInput_ {
-        struct stat st{}; char* data = nullptr; bool initCalled = false;
-        inline void skipBlank() {
-            assert(initCalled);
-            while(data && (*data == ' ' || *data == '\n')) data++;
-        }
-    public:
-        MmapInput_() {
-            fstat(0, &st); initCalled = true;
-            data = (char*) mmap(nullptr, st.st_size, PROT_READ, MAP_SHARED, 0, 0);
-            assert(data != MAP_FAILED);
-        }
-        inline char get() { return *(data++); }
-        MmapInput_& operator>>(char& v) { skipBlank(); v = *(data++); return *this; }
-        MmapInput_& operator>>(long long& v) {
-            long long sign = 1; v = 0;
-            skipBlank(); if(*data == '-') sign = -1, data++;
-            while('0' <= *data && *data <= '9') v = v * 10 + *data - '0', data++;
-            v *= sign;
-            return *this;
-        }
-        MmapInput_& operator>>(__int128& v) {
-            long long sign = 1; v = 0;
-            skipBlank(); if(*data == '-') sign = -1, data++;
-            while('0' <= *data && *data <= '9') v = v * 10 + *data - '0', data++;
-            v *= sign;
-            return *this;
-        }
-        MmapInput_& operator>>(signed& v) { long long t; *this >> t; v = static_cast<signed>(t); return *this; }
-        MmapInput_& operator>>(std::string& v) {
-            skipBlank(); v.clear();
-            while(*data != ' ' && *data != '\n') v.push_back(*(data++));
-            return *this;
-        }
-        inline void tie(void*) {}
-    } mmi_;
-}
+class MmapInput_ {
+    struct stat st{}; char* data = nullptr; bool initCalled = false;
+    inline void skipBlank() {
+        assert(initCalled);
+        while(data && (*data == ' ' || *data == '\n')) data++;
+    }
+public:
+    inline void init() {
+        fstat(0, &st); initCalled = true;
+        data = (char*) mmap(nullptr, st.st_size, PROT_READ, MAP_SHARED, 0, 0);
+        assert(data != MAP_FAILED);
+    }
+    inline char get() { return *(data++); }
+    MmapInput_& operator>>(char& v) { skipBlank(); v = *(data++); return *this; }
+    MmapInput_& operator>>(long long& v) {
+        long long sign = 1; v = 0;
+        skipBlank(); if(*data == '-') sign = -1, data++;
+        while('0' <= *data && *data <= '9') v = v * 10 + *data - '0', data++;
+        v *= sign;
+        return *this;
+    }
+    MmapInput_& operator>>(__int128& v) {
+        long long sign = 1; v = 0;
+        skipBlank(); if(*data == '-') sign = -1, data++;
+        while('0' <= *data && *data <= '9') v = v * 10 + *data - '0', data++;
+        v *= sign;
+        return *this;
+    }
+    MmapInput_& operator>>(signed& v) { long long t; *this >> t; v = static_cast<signed>(t); return *this; }
+    MmapInput_& operator>>(std::string& v) {
+        skipBlank(); v.clear();
+        while(*data != ' ' && *data != '\n') v.push_back(*(data++));
+        return *this;
+    }
+} mmi_;
 #endif // ENABLE_MMAP
 #endif // ifndef LOCAL
 #pragma endregion
@@ -123,11 +120,14 @@ namespace std {
 #define strcc_(a, b) a##b
 // C++ keywords without modification
 /// io
-using std::cin, std::cout, std::cerr, std::clog, std::endl, std::istream, std::ostream, std::ifstream, std::ofstream;
+#ifndef cin
+using std::cin;
+#endif
+using std::cout, std::cerr, std::clog, std::endl, std::istream, std::ostream, std::ifstream, std::ofstream;
 using std::stringstream, std::istringstream, std::ostringstream;
 /// data structures
 using std::array, std::list, std::tuple, std::get, std::tie, std::initializer_list, std::bitset;
-using std::ssize, std::span;
+using std::ssize;
 /// math
 using std::complex, std::polar, std::popcount;
 using std::max, std::min, std::gcd, std::lcm, std::pow, std::swap, std::abs, std::sin, std::cos, std::tan, std::asin;
@@ -164,11 +164,10 @@ template <typename T = long long> using uset = std::unordered_set<T>;
 template <typename T = long long> using umset = std::unordered_multiset<T>;
 template <typename T = long long> using ordered_set = __gnu_pbds::tree<T, __gnu_pbds::null_type, less<>, __gnu_pbds::rb_tree_tag, __gnu_pbds::tree_order_statistics_node_update>;
 template <typename T = long long> using ordered_multiset = __gnu_pbds::tree<T, __gnu_pbds::null_type, less_equal<>, __gnu_pbds::rb_tree_tag, __gnu_pbds::tree_order_statistics_node_update>;
-template <typename T = long long> using vector = std::vector<T>;
-//template <typename T = long long> using vec = std::vector<T>;
-//template <typename T = long long> using vec2 = std::vector<std::vector<T>>;
-//using vl = std::vector<long long>; using vi = std::vector<signed>; using vb = std::vector<bool>;
-//using v2l = std::vector<std::vector<long long>>; using v2i = std::vector<std::vector<signed>>; using v2b = std::vector<std::vector<bool>>;
+template <typename T = long long> using vec = std::vector<T>;
+template <typename T = long long> using vec2 = std::vector<std::vector<T>>;
+using vl = std::vector<long long>; using vi = std::vector<signed>; using vb = std::vector<bool>;
+using v2l = std::vector<std::vector<long long>>; using v2i = std::vector<std::vector<signed>>; using v2b = std::vector<std::vector<bool>>;
 using ll = std::array<long long, 2>; using lll = std::array<long long, 3>; using ii = std::array<signed, 2>; using iii = std::array<signed, 3>;
 /// miscellaneous
 #define ci64 const i64 &
@@ -188,16 +187,16 @@ using ll = std::array<long long, 2>; using lll = std::array<long long, 3>; using
 #pragma region constants
 constexpr long long
         i64max = 9223372036854775807,    /// lim<i64>::max()
-i64min = -9223372036854775807-1, /// lim<i64>::min()
-lmax   = 9221557155715571557,    /// lmax + inf < i64max
-INFIN  = 4001557155715570000,    /// INFIN * 2 < i64max
-INF    = 1000000000000000000,    /// INF * 9 < i64max
-inf    = 3000000000,             /// inf * inf < i64max
-i32max = 2147483647,             /// lim<i32>::max()
-i32min = -2147483648,           /// lim<i32>::min()
-imax   = 2147481557,             /// imax + 1000 < i32max
-iinf   = 2000000000,             /// iinf + 1e8 < i32max
-mod1   = 1000000007,
+        i64min = -9223372036854775807-1, /// lim<i64>::min()
+        lmax   = 9221557155715571557,    /// lmax + inf < i64max
+        INFIN  = 4001557155715570000,    /// INFIN * 2 < i64max
+        INF    = 1000000000000000000,    /// INF * 9 < i64max
+        inf    = 3000000000,             /// inf * inf < i64max
+        i32max = 2147483647,             /// lim<i32>::max()
+        i32min = -2147483648,           /// lim<i32>::min()
+        imax   = 2147481557,             /// imax + 1000 < i32max
+        iinf   = 2000000000,             /// iinf + 1e8 < i32max
+        mod1   = 1000000007,
         mod9   = 998244353;
 constexpr long double
         PI = 3.141592653589793238462643383279502884L;
@@ -247,27 +246,7 @@ template <typename T> inline void autoCompress0(T &v_) { auto comp_ = compressed
 template <typename T> inline T autoCompressed(T v_) { autoCompress(v_); return v_; }
 template <typename T> inline T autoCompressed0(T v_) { autoCompress0(v_); return v_; }
 
-/// 처음 cnt 개만 정렬, O(arr.size() * log2(cnt))
-template <typename T> inline void partial_sort(T& arr, long long cnt) { std::partial_sort(arr.begin(), arr.begin() + cnt, arr.end()); }
-template <typename T, typename Cmp> inline void partial_sort(T& arr, long long cnt, const Cmp& cmp) {
-    std::partial_sort(arr.begin(), arr.begin() + cnt, arr.end(), cmp);
-}
-
-/// sorted(arr)[i]를 반환. arr의 값들의 순서는 변경된다.
-template <typename T> inline T& nth_element(std::vector<T>& arr, long long i) {
-    std::nth_element(arr.begin(), arr.begin() + i, arr.end()); return arr[i];
-}
-template <typename T, typename Cmp> inline T& nth_element(std::vector<T>& arr, long long i, const Cmp& cmp) {
-    std::nth_element(arr.begin(), arr.begin() + i, arr.end(), cmp); return arr[i];
-}
-
 template <typename T2, typename T1> inline std::vector<T2> castVec(const T1& arr) { std::vector<T2> ret; for(const auto& t : arr) { ret.emplace_back(t); } return ret; }
-
-template <typename T> inline std::vector<T> merge(const std::vector<T>&a, const std::vector<T>&b) {
-    std::vector<T> ret(a.size()+b.size());
-    std::merge(a.begin(), a.end(), b.begin(), b.end(), ret.begin());
-    return ret;
-}
 #pragma endregion
 #pragma region math
 template <typename T> inline T pow_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)ans=ans*a%mod;b>>=1;a=a*a%mod;} return ans; }
@@ -308,7 +287,9 @@ inline long long rand_(const long long& l_, const long long& r_) { return randl(
 #else
 #define lfastio fastio
 #endif
+#ifndef fastio
 #define fastio std::ios_base::sync_with_stdio(false); std::cin.tie(nullptr); std::cout.tie(nullptr)
+#endif
 #ifdef LOCAL
 #define fileio filein; fileout
 #define filein freopen(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\z.etcBJ\input.txt)", "r", stdin)
@@ -326,22 +307,24 @@ inline long long rand_(const long long& l_, const long long& r_) { return randl(
 #endif // LOCAL
 
 // input
-template <typename T = long long> inline T input() { T t; std::cin >> t; return t; }
+#ifndef cin
+using std::cin;
+#endif
+template <typename T = long long> inline T input() { T t; cin >> t; return t; }
 
-template <typename ...T> inline void input(T&... a_) { (std::cin >> ... >> a_); }
+template <typename ...T> inline void input(T&... a_) { (cin >> ... >> a_); }
 #define in64(...) long long __VA_ARGS__; input(__VA_ARGS__)
-#define in32(...) signed __VA_ARGS__; input<signed>(__VA_ARGS__)
 
-inline std::string inStr() { std::string t; std::cin >> t; return t; }
+inline std::string inStr() { std::string t; cin >> t; return t; }
 template <typename T = long long> inline std::vector<T> inArr(long long sz) {
     std::vector<T> a;
-    for(long long i = 0; i<sz; i++) { T t; std::cin >> t; a.push_back(t); }
+    for(long long i = 0; i<sz; i++) { T t; cin >> t; a.push_back(t); }
     return a;
 }
 
 template <typename T = long long> inline void inArr(std::vector<T> &arr, long long sz, bool clear = false) {
     if(clear) arr.clear();
-    for(long long i = 0; i < sz; i++) { T t; std::cin >> t; arr.push_back(t); }
+    for(long long i = 0; i < sz; i++) { T t; cin >> t; arr.push_back(t); }
 }
 template <typename T = long long> inline std::vector<T> inArr() { return inArr<T>(input()); }
 #ifndef cin
@@ -357,11 +340,11 @@ std::vector<long long> qin_data_;
 short qin_t_ = 0, qin_c_ = 0;
 long long qin_h_(const long long& idx, const long long& n) {
     if(!qin_c_) { qin_t_ = n; qin_data_.resize(n);
-        for(long long i = 0; i < n; i++) std::cin >> qin_data_[i]; }
+        for(long long i = 0; i < n; i++) cin >> qin_data_[i]; }
     if(++qin_c_ == qin_t_) qin_t_ = qin_c_ = 0;
     return qin_data_[idx];
 }
-long long QIN_H_() { long long t; std::cin >> t; return t; } // qin() support
+long long QIN_H_() { long long t; cin >> t; return t; } // qin() support
 #define EXPAND_(x) x
 #define QIN_H1_(n) qin_h_(0, n)
 #define QIN_H2_(n) QIN_H1_(n), qin_h_(1, n)
@@ -387,9 +370,9 @@ template <typename... Args> void printf_legacy(const Args&... args) { printf(arg
                                template <typename T> concept is##name = is##name##Struct_<T>::value;
 template <typename T> using vector2_ = std::vector<std::vector<T>>;
 defIsChild(Vector_, std::vector) defIsChild(Queue_, std::queue) defIsChild(Stack_, std::stack)
-defIsChild(PQ_, std::priority_queue) defIsChild(Vector2_, vector2_) defIsChild(Span_, std::span)
+defIsChild(PQ_, std::priority_queue) defIsChild(Vector2_, vector2_)
 template <typename T> concept isStQue_ = isStack_<T> || isQueue_<T> || isPQ_<T>;
-template <typename T> concept isVector1_ = (isVector_<T> && !isVector2_<T>) || isSpan_<T>;
+template <typename T> concept isVector1_ = isVector_<T> && !isVector2_<T>;
 
 struct Printf {
     std::string sep = " ", end;
@@ -504,111 +487,6 @@ template <typename T, typename T2> inline void setMax(T& tar, const T2& val) req
 #pragma endregion
 #pragma region custom_types
 
-template <typename T = long long>
-class vec : public std::vector<T> {
-public:
-    vec() = default;
-    explicit vec(unsigned size) : std::vector<T>(size) {}
-    vec(unsigned size, const T& value) : std::vector<T>(size, value) {}
-    inline T& operator[](long long idx) {
-        if(idx < 0 || idx >= sz()) [[unlikely]] { std::cerr << "vec::OutOfBounds\n"; exit(43301); }
-        return *(this->begin() + idx);
-    }
-    inline const T& operator[](long long idx) const {
-        if(idx < 0 || idx >= sz()) [[unlikely]] { std::cerr << "vec::OutOfBounds\n"; exit(43301); }
-        return *(this->begin() + idx);
-    }
-    template <typename Cmp> inline void sort(const Cmp& cmp) { std::sort(this->begin(), this->end(), cmp); }
-    inline void sort() { sort(std::less<T>()); }
-    template <typename Cmp> inline vec sorted(const Cmp& cmp) const { vec r = *this; r.sort(cmp); return r; }
-    inline vec sorted() const { return sorted(std::less<T>()); }
-    inline void reverse() { std::reverse(this->begin(), this->end()); }
-    inline vec reversed() const { vec r = *this; r.reverse(); return r; }
-    inline T pop() {
-        if(mt()) [[unlikely]] { std::cerr << "vec::EmptyPop\n"; exit(43302); }
-        T r = this->back(); this->pop_back(); return r;
-    }
-    template <typename Cmp> inline void unique(const Cmp& cmp) { sort(cmp); std::unique(this->begin(), this->end()); }
-    inline void unique() { unique(std::less<T>()); }
-    template <typename Cmp> inline void compress(const Cmp& cmp) { unique(cmp); }
-    inline void compress() { unique(std::less<T>()); }
-    template <typename Cmp> inline vec compressed(const Cmp& cmp) const { vec r = *this; r.unique(cmp); return r; }
-    inline vec compressed() const { return compressed(std::less<T>()); }
-    template <typename Cmp> inline auto lb(const T& v, const Cmp& cmp) const {
-        return std::lower_bound(this->begin(), this->end(), v, cmp);
-    }
-    inline auto lb(const T& v) const { return lb(v, std::less<T>()); }
-    template <typename Cmp> inline auto lower_bound(const T& v, const Cmp& cmp) { return lb(v, cmp); }
-    inline auto lower_bound(const T& v) const { return lb(v); }
-    template <typename Cmp> inline auto ub(const T& v, const Cmp& cmp) const {
-        return std::upper_bound(this->begin(), this->end(), v, cmp);
-    }
-    inline auto ub(const T& v) const { return ub(v, std::less<T>()); }
-    template <typename Cmp> inline auto upper_bound(const T& v, const Cmp& cmp) const { return ub(v, cmp); }
-    inline auto upper_bound(const T& v) const { return ub(v); }
-    inline signed idx(const T& v) const { return lb(v) - this->begin(); }
-    template <typename Cmp> inline signed idx(const T& v, const Cmp& cmp) const { return lb(v, cmp) - this->begin(); }
-    inline long long sz() const { return this->size(); }
-    inline bool mt() const { return this->empty(); }
-    template <typename T2> vec<T2> to() {
-        vec<T2> ret; for(const auto& t : *this) ret.emplace_back(t);
-        return ret;
-    }
-    void iota(long long offset = 0) { for(long long i = 0; i < sz(); i++) this->operator[](i) = offset + i; }
-    void concat(const std::vector<T>& v) { for(const T& t : v) this->push_back(t); }
-    void accumulate() { for(long long i = 1; i < sz(); i++) this->operator[](i) += this->operator[](i-1); }
-};
-template<> class vec<bool> : std::vector<bool> {
-public:
-    vec() = default;
-    explicit vec(unsigned size) : std::vector<bool>(size) {}
-    vec(unsigned size, bool value) : std::vector<bool>(size, value) {}
-    inline long long sz() const { return this->size(); }
-    inline bool mt() const { return this->empty(); }
-    template <typename T2> vec<T2> to() {
-        vec<T2> ret; for(const bool t : *this) ret.emplace_back(t);
-        return ret;
-    }
-    inline void reverse() { std::reverse(this->begin(), this->end()); }
-    inline vec reversed() const { vec r = *this; r.reverse(); return r; }
-    inline bool pop() {
-        if(mt()) [[unlikely]] { std::cerr << "vec::EmptyPop\n"; exit(43302); }
-        bool r = this->back(); this->pop_back(); return r;
-    }
-    inline auto operator[](long long idx) {
-        if(idx < 0 || idx >= sz()) [[unlikely]] { std::cerr << "vec::OutOfBounds\n"; exit(43301); }
-        return this->begin()[idx];
-    }
-    inline auto operator[](long long idx) const {
-        if(idx < 0 || idx >= sz()) [[unlikely]] { std::cerr << "vec::OutOfBounds\n"; exit(43301); }
-        return this->begin()[idx];
-    }
-};
-#pragma region VEC_IF_CPPP
-#ifdef CPPP
-template <typename T> struct isVector_Struct_<vec<T>> : std::true_type {};
-template <typename T> struct isVector2_Struct_<vec<vec<T>>> : std::true_type {};
-template <typename T = long long> using vec2 = vec<vec<T>>;
-using vl = vec<long long>; using vi = vec<signed>; using vb = vec<bool>;
-using v2l = vec<vec<long long>>; using v2i = vec<vec<signed>>; using v2b = vec<vec<bool>>;
-
-template <typename T = long long> inline vec<T> inVec(long long sz) {
-    vec<T> a;
-    for(long long i = 0; i<sz; i++) { T t; std::cin >> t; a.push_back(t); }
-    return a;
-}
-
-template <typename T = long long> inline void inVec(vec<T> &arr, long long sz, bool clear = false) {
-    if(clear) arr.clear();
-    for(long long i = 0; i < sz; i++) { T t; std::cin >> t; arr.push_back(t); }
-}
-template <typename T = long long> inline vec<T> inVec() { return inVec<T>(input()); }
-#define inArr inVec
-
-template <typename T2, typename T1> inline vec<T2> castVec(const vec<T1>& arr) { vec<T2> ret; for(const auto& t : arr) { ret.emplace_back(t); } return ret; }
-#endif
-#pragma endregion
-
 template <long long mod = 1000000007>
 struct ModInt {
     long long v = 0;
@@ -627,12 +505,14 @@ struct ModInt {
     ModInt& operator+=(long long b) { b = (b % mod + mod) % mod; v = (v + b) % mod; return *this; }
     ModInt& operator-=(long long b) { b = (b % mod + mod) % mod; v = (v - b + mod) % mod; return *this; }
     ModInt& operator*=(long long b) { b = (b % mod + mod) % mod; v = (v * b) % mod; return *this; }
-    friend std::istream& operator>>(std::istream& in, ModInt& t) { in >> t.v; return in; }
-    friend std::ostream& operator<<(std::ostream& out, const ModInt& t) { out << t.v; return out; }
-    friend ModInt operator+(long long a, const ModInt& b) { a = (a % mod + mod) % mod; return {(b.v + a) % mod}; }
-    friend ModInt operator-(long long a, const ModInt& b) { a = (a % mod + mod) % mod; return {(b.v - a + mod) % mod}; }
-    friend ModInt operator*(long long a, const ModInt& b) { a = (a % mod + mod) % mod; return {(b.v * a) % mod}; }
 };
+namespace ModIntOpInternal {
+    template <long long mod> std::istream& operator>>(std::istream& in, ModInt<mod>& t) { in >> t.v; return in; }
+    template <long long mod> std::ostream& operator<<(std::ostream& out, const ModInt<mod>& t) { out << t.v; return out; }
+    template <long long mod> ModInt<mod> operator+(long long a, const ModInt<mod>& b) { a = (a % mod + mod) % mod; return {(b.v + a) % mod}; }
+    template <long long mod> ModInt<mod> operator-(long long a, const ModInt<mod>& b) { a = (a % mod + mod) % mod; return {(b.v - a + mod) % mod}; }
+    template <long long mod> ModInt<mod> operator*(long long a, const ModInt<mod>& b) { a = (a % mod + mod) % mod; return {(b.v * a) % mod}; }
+} using namespace ModIntOpInternal;
 
 /// 1/0 == infinity, -1/0 == -infinity (only comparisons are available)
 class Frac {
@@ -649,40 +529,40 @@ public:
         reduction();
     }
     template <typename T> explicit operator T() { return static_cast<T>(numerator) / static_cast<T>(denominator); }
-    inline Frac& operator+=(const Frac& b) { checkDivZ(b);
+    Frac& operator+=(const Frac& b) { checkDivZ(b);
         long long l = std::lcm(denominator, b.denominator);
         numerator *= l / denominator; numerator += b.numerator * (l / b.denominator);
         denominator = l; reduction(); return *this;
     }
-    inline Frac& operator+=(const long long& i) { checkDivZ(); numerator += i * denominator; return *this; }
-    inline Frac operator+(const Frac& b) const { checkDivZ(b); Frac ret = *this; ret += b; return ret; }
-    inline Frac operator+(const long long& i) const { checkDivZ(); Frac ret = *this; ret += i; return ret; }
-    inline Frac& operator-=(const Frac& b) {checkDivZ(b);
+    Frac& operator+=(const long long& i) { checkDivZ(); numerator += i * denominator; return *this; }
+    Frac operator+(const Frac& b) const { checkDivZ(b); Frac ret = *this; ret += b; return ret; }
+    Frac operator+(const long long& i) const { checkDivZ(); Frac ret = *this; ret += i; return ret; }
+    Frac& operator-=(const Frac& b) {checkDivZ(b);
         long long l = std::lcm(denominator, b.denominator);
         numerator *= l / denominator; numerator -= b.numerator * (l / b.denominator);
         denominator = l; reduction(); return *this;
     }
-    inline Frac& operator-=(const long long& i) { checkDivZ(); numerator -= i * denominator; return *this; }
-    inline Frac operator-(const Frac& b) const { checkDivZ(b);  Frac ret = *this; ret -= b; return ret; }
-    inline Frac operator-(const long long& i) const { checkDivZ(); Frac ret = *this; ret -= i; return ret; }
-    inline Frac& operator*=(const Frac& b) { checkDivZ(b);
+    Frac& operator-=(const long long& i) { checkDivZ(); numerator -= i * denominator; return *this; }
+    Frac operator-(const Frac& b) const { checkDivZ(b);  Frac ret = *this; ret -= b; return ret; }
+    Frac operator-(const long long& i) const { checkDivZ(); Frac ret = *this; ret -= i; return ret; }
+    Frac& operator*=(const Frac& b) { checkDivZ(b);
         numerator *= b.numerator; denominator *= b.denominator;
         reduction(); return *this;
     }
-    inline Frac& operator*=(const long long& i) { checkDivZ(); numerator *= i; reduction(); return *this; }
-    inline Frac operator*(const Frac& b) const { checkDivZ(b); Frac ret = *this; ret *= b; return ret; }
-    inline Frac operator*(const long long& i) const { checkDivZ(); Frac ret = *this; ret *= i; return ret; }
-    inline Frac& operator/=(const Frac& b) { checkDivZ(b);
+    Frac& operator*=(const long long& i) { checkDivZ(); numerator *= i; reduction(); return *this; }
+    Frac operator*(const Frac& b) const { checkDivZ(b); Frac ret = *this; ret *= b; return ret; }
+    Frac operator*(const long long& i) const { checkDivZ(); Frac ret = *this; ret *= i; return ret; }
+    Frac& operator/=(const Frac& b) { checkDivZ(b);
         assert(b.numerator); // cannot divide by 0
         numerator *= b.denominator; denominator *= b.numerator;
         reduction(); return *this;
     }
-    inline Frac& operator/=(const long long& i) { checkDivZ();
+    Frac& operator/=(const long long& i) { checkDivZ();
         assert(i); // cannot divide by 0
         denominator *= i; reduction(); return *this;
     }
-    inline Frac operator/(const Frac& b) const { checkDivZ(b); Frac ret = *this; ret /= b; return ret; }
-    inline Frac operator/(const long long& i) const { checkDivZ(); Frac ret = *this; ret /= i; return ret; }
+    Frac operator/(const Frac& b) const { checkDivZ(b); Frac ret = *this; ret /= b; return ret; }
+    Frac operator/(const long long& i) const { checkDivZ(); Frac ret = *this; ret /= i; return ret; }
     inline bool operator==(const Frac& b) const { return numerator == b.numerator && denominator == b.denominator; }
     inline bool operator!=(const Frac& b) const { return numerator != b.numerator || denominator != b.denominator; }
     inline bool operator<(const Frac& b) const {
@@ -708,41 +588,42 @@ public:
     inline bool operator<=(const long long& b) const { return denominator && numerator <= b * denominator; }
     inline bool operator>(const long long& b) const { return !denominator ? numerator > 0 : numerator > b * denominator; }
     inline bool operator>=(const long long& b) const { return denominator && numerator >= b * denominator; }
-    friend inline Frac operator+(const long long& a, const Frac& b) { Frac ret(a); ret += b; return ret; }
-    friend inline Frac operator-(const long long& a, const Frac& b) { Frac ret(a); ret -= b; return ret; }
-    friend inline Frac operator*(const long long& a, const Frac& b) { Frac ret(a); ret *= b; return ret; }
-    friend inline Frac operator/(const long long& a, const Frac& b) { Frac ret(a); ret /= b; return ret; }
-    friend inline bool operator==(const long long &a, const Frac& b) { return b.numerator == a && b.denominator == 1; }
-    friend inline bool operator!=(const long long &a, const Frac& b) { return b.numerator != a || b.denominator != 1; }
-    friend inline bool operator<(const long long &a, const Frac& b) { return !b.denominator ? 0 < b.numerator : a * b.denominator < b.numerator; }
-    friend inline bool operator<=(const long long &a, const Frac& b) { return b.denominator && a * b.denominator <= b.numerator; }
-    friend inline bool operator>(const long long &a, const Frac& b) { return !b.denominator ? 0 > b.numerator : a * b.denominator > b.numerator; }
-    friend inline bool operator>=(const long long &a, const Frac& b) { return b.denominator && a * b.denominator >= b.numerator; }
 };
+namespace FracOpInternal {
+    Frac operator+(const long long& a, const Frac& b) { Frac ret(a); ret += b; return ret; }
+    Frac operator-(const long long& a, const Frac& b) { Frac ret(a); ret -= b; return ret; }
+    Frac operator*(const long long& a, const Frac& b) { Frac ret(a); ret *= b; return ret; }
+    Frac operator/(const long long& a, const Frac& b) { Frac ret(a); ret /= b; return ret; }
+    inline bool operator==(const long long &a, const Frac& b) { return b.numerator == a && b.denominator == 1; }
+    inline bool operator!=(const long long &a, const Frac& b) { return b.numerator != a || b.denominator != 1; }
+    inline bool operator<(const long long &a, const Frac& b) { return !b.denominator ? 0 < b.numerator : a * b.denominator < b.numerator; }
+    inline bool operator<=(const long long &a, const Frac& b) { return b.denominator && a * b.denominator <= b.numerator; }
+    inline bool operator>(const long long &a, const Frac& b) { return !b.denominator ? 0 > b.numerator : a * b.denominator > b.numerator; }
+    inline bool operator>=(const long long &a, const Frac& b) { return b.denominator && a * b.denominator >= b.numerator; }
+} using namespace FracOpInternal;
 
 #define defStructIO_(name) std::istream& operator>>(std::istream& in, name& t) { in >> t.v; return in; }\
                            std::ostream& operator<<(std::ostream& out, const name& t) { out << t.v; return out; }
 
 struct Mx64 { long long v = -4001557155715570000; Mx64 operator+(const Mx64& b) const { return { std::max(v, b.v) }; }
     Mx64& operator+=(const Mx64& b) { if(v < b.v) { v = b.v; } return *this; }
-    bool operator<(const Mx64& b) const { return v < b.v; } explicit operator long long() const { return v; }}; defStructIO_(Mx64)
+    bool operator<(const Mx64& b) const { return v < b.v; } explicit operator long long() const { return v; }};
 struct Mn64 { long long v = 4001557155715570000; Mn64 operator+(const Mn64& b) const { return { std::min(v, b.v) }; }
     Mn64& operator+=(const Mn64& b) { if(v > b.v) { v = b.v; } return *this; }
-    bool operator<(const Mn64& b) const { return v < b.v; } explicit operator long long() const { return v; }}; defStructIO_(Mn64)
+    bool operator<(const Mn64& b) const { return v < b.v; } explicit operator long long() const { return v; }};
 struct Mx32 { signed v = -2147481557; Mx32 operator+(const Mx32& b) const { return { std::max(v, b.v) }; }
     Mx32& operator+=(const Mx32& b) { if(v < b.v) { v = b.v; } return *this; }
-    bool operator<(const Mx32& b) const { return v < b.v; } explicit operator signed() const { return v; }}; defStructIO_(Mx32)
+    bool operator<(const Mx32& b) const { return v < b.v; } explicit operator signed() const { return v; }};
 struct Mn32 { signed v = 2147481557; Mn32 operator+(const Mn32& b) const { return { std::min(v, b.v) }; }
     Mn32& operator+=(const Mn32& b) { if(v > b.v) { v = b.v; } return *this; }
-    bool operator<(const Mn32& b) const { return v < b.v; } explicit operator signed() const { return v; }}; defStructIO_(Mn32)
+    bool operator<(const Mn32& b) const { return v < b.v; } explicit operator signed() const { return v; }};
+defStructIO_(Mx64) defStructIO_(Mn64) defStructIO_(Mx32) defStructIO_(Mn32)
 
 struct GoldMine {
     long long mx = -1000000000000000000, lmx = - 1000000000000000000, rmx = -1000000000000000000, sum = 0; GoldMine() = default;
     GoldMine(long long a, long long la, long long ra, long long s) : mx(a), lmx(la), rmx(ra), sum(s) {}
     GoldMine(long long v) : mx(v), lmx(v), rmx(v), sum(v) {} // NOLINT(*-explicit-constructor)
     GoldMine operator+(const GoldMine&b) const { return {std::max({mx,b.mx,rmx+b.lmx}),std::max(lmx,sum+b.lmx),std::max(rmx+b.sum,b.rmx),sum+b.sum};}
-    friend std::istream& operator>>(std::istream& in, GoldMine& t) { long long v; in >> v; t.mx = t.lmx = t.rmx = t.sum = v; return in; }
-    friend std::ostream& operator<<(std::ostream& out, const GoldMine& t) { out << t.mx; return out; }
 };
 
 #pragma endregion
@@ -750,8 +631,30 @@ struct GoldMine {
 //@formatter:on
 #pragma endregion
 
+vec t, v, ans;
+i64 N, D;
+
+// 넣는 날짜 j가 s..e이고, 가능한 최적 꺼내는 날짜 i가 l..r
+void f(i64 s, i64 e, i64 l, i64 r) {
+    if(s > e) return;
+    i64 j = s + (e-s)/2;
+    ans[j] = -INF; i64 opt = l;
+    forf(i, l, r) {
+        if(i - j < 0 || i - j > D) continue;
+        i64 cur = (i - j) * t[i];
+        if(ans[j] < cur) ans[j] = cur, opt = i;
+    }
+    f(s, j-1, l, opt); f(j+1, e, opt, r);
+}
 
 i32 main() {
     fastio;
-
+    input(N, D);
+    t = v = ans = vl(N+1, -1);
+    forf(i, 1, N) input(t[i]);
+    forf(i, 1, N) input(v[i]);
+    f(1, N, 1, N);
+    i64 mx = -INF;
+    forf(i, 1, N) setMax(mx, ans[i] + v[i]);
+    println(mx);
 }
