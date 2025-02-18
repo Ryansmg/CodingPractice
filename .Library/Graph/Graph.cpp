@@ -1,4 +1,4 @@
-/* Update : 2025-02-04 */
+/* Update : 2025-02-18 */
 
 #include <bits/stdc++.h>
 
@@ -14,16 +14,16 @@ template <typename T> concept isEdge = isEdge1_<T> || isEdge2_<T>;
 /// detects : start/s, end/e, distance/dist/d
 template <isEdge EdgeType = SimpleEdge>
 class Graph {
-#define defGCFs_ static long long es_(const EdgeType& edge) { if constexpr(isEdge1_<EdgeType>) { return edge.s; } return edge.start; }\
-                 static long long ee_(const EdgeType& edge) { if constexpr(isEdge1_<EdgeType>) { return edge.e; } return edge.end; }\
-                 static long long ed_(const EdgeType& edge) {\
+#define defGCFs_ inline static constexpr long long es_(const EdgeType& edge) { if constexpr(isEdge1_<EdgeType>) { return edge.s; } return edge.start; }\
+                 inline static constexpr long long ee_(const EdgeType& edge) { if constexpr(isEdge1_<EdgeType>) { return edge.e; } return edge.end; }\
+                 inline static constexpr long long ed_(const EdgeType& edge) {\
                      if constexpr(requires{edge.d;}) return edge.d;\
                      if constexpr(requires{edge.dist;}) return edge.dist;\
                      if constexpr(requires{edge.distance;}) return edge.distance;\
                      return 1;\
                  }
     defGCFs_
-    static EdgeType revEdge_(EdgeType e) {
+    inline static EdgeType revEdge_(EdgeType e) {
         if constexpr(isEdge1_<EdgeType>) std::swap(e.s, e.e);
         else if constexpr(isEdge2_<EdgeType>) std::swap(e.start, e.end);
         return e;
@@ -112,113 +112,6 @@ public:
         std::vector<EdgeType> ret; for(const auto& e : child[node]) ret.emplace_back(e); for(const auto& e : undir[node]) ret.emplace_back(e); return ret; 
     }
     Graph& setUnsafe(bool _ = true) { unsafe = _; return *this; }
-};
-
-template <isEdge EdgeType = SimpleEdge>
-class DGraph : public Graph<EdgeType> { defGCFs_
-public:
-    explicit DGraph() = default;
-    explicit DGraph(long long maxNodeNum) : Graph<EdgeType>(maxNodeNum) {}
-    explicit DGraph(const Graph<EdgeType>& g) : Graph<EdgeType>(g) {
-        if(!this->unsafe) for(const auto& arr : this->undir) if(!arr.empty()) { std::cerr << "Not a valid DGraph.\n"; exit(1); }
-    }
-    /// SCC들은 위상 정렬되어 반환됨
-    /// SCC 안 노드들은 번호 순서대로 정렬됨
-    std::vector<std::vector<long long>> getScc(const std::set<long long>& ignore = {}) {
-        std::vector<bool> finished(this->nodeCnt, false);
-        std::vector<long long> id(this->nodeCnt, -1); long long curId = 0;
-        std::vector<long long> st; std::vector<std::vector<long long>> ret;
-        std::function<long long(long long)> f = [&](long long node) {
-            id[node] = ++curId; st.push_back(node);
-            long long parent = id[node];
-            for(const auto& e : this->child[node]) {
-                long long i = ee_(e);
-                if(id[i] == -1) parent = std::min(parent, f(i));
-                else if(!finished[i]) parent = std::min(parent, id[i]);
-            }
-            if(parent == id[node]) {
-                std::vector<long long> scc;
-                while(true) {
-                    long long top = st.back(); st.pop_back();
-                    scc.emplace_back(top); finished[top] = true;
-                    if(top == node) break;
-                }
-                std::ranges::sort(scc); ret.emplace_back(scc);
-            }
-            return parent;
-        };
-        for(long long i = 0; i < this->nodeCnt; i++) {
-            if(ignore.contains(i)) continue;
-            if(finished[i]) continue;
-            f(i);
-        }
-        std::ranges::reverse(ret); return ret;
-    }
-};
-
-template <isEdge EdgeType = SimpleEdge>
-class Dag : public DGraph<EdgeType> {
-public:
-    /// does not check cycles.
-    explicit Dag(const DGraph<EdgeType>& g) : DGraph<EdgeType>(g) { }
-    std::vector<long long> topologySort(const std::set<long long>& ignore = {}) {
-        std::vector<long long> ret, inDegree(this->nodeCnt); long long n = 0;
-        for(long long i = 0; i < this->nodeCnt; i++) inDegree[i] = Size(this->parent[i]);
-        std::queue<long long> q;
-        for(long long i = 0; i < this->nodeCnt; i++) { if(ignore.contains(i)) { continue; } ++n; if(!inDegree[i]) q.emplace(i); }
-        for(long long t = 0; t < n; t++) {
-            if(q.empty()) { std::cerr << "Dag has cycles!\n"; exit(1); }
-            long long x = q.front(); q.pop(); ret.emplace_back(x);
-            for(const auto& [X, i] : this->child[x]) if(--inDegree[i] == 0) q.emplace(i);
-        }
-        return ret;
-    }
-};
-
-template <typename EdgeType = SimpleEdge>
-class UGraph : public Graph<EdgeType> { defGCFs_
-    bool useUnionFind = false; std::vector<long long> groupNum, groupSize;
-    long long uf_find(long long tar) { if(groupNum[tar] == tar) return tar;
-        return groupNum[tar] = uf_find(groupNum[tar]); }
-    void uf_union(long long a, long long b) {
-        if(uf_find(a) == uf_find(b)) return;
-        if(groupSize[uf_find(a)] < groupSize[uf_find(b)]) std::swap(a, b);
-        groupSize[uf_find(a)] += groupSize[uf_find(b)]; groupSize[uf_find(b)] = 0; groupNum[uf_find(b)] = uf_find(a);
-    }
-    void uf_init() {
-        if(useUnionFind) { return; } useUnionFind = true;
-        std::vector<bool> vis(this->nodeCnt, false); groupNum.resize(this->nodeCnt, -1); groupSize.resize(this->nodeCnt, 0);
-        for(long long i = 0; i < this->nodeCnt; i++) groupNum[i] = i;
-        for(long long i = 0; i < this->nodeCnt; i++) {
-            if(vis[i]) { continue; } std::queue<long long> bfs; bfs.emplace(i); vis[i] = true; groupSize[i]++;
-            while(!bfs.empty()) {
-                long long cur = bfs.front(); bfs.pop();
-                for(const auto& e : this->undir[cur]) {
-                    long long dest = ee_(e); if(vis[dest]) continue;
-                    vis[dest] = true; groupNum[dest] = i; groupSize[i]++; bfs.emplace(dest);
-                } } } }
-public:
-    void clear() { Graph<EdgeType>::clear(); useUnionFind = false; groupNum = groupSize = std::vector<long long>(); }
-    void addEdge(const EdgeType& edge) { Graph<EdgeType>::addUEdge(edge); if(useUnionFind) uf_union(es_(edge), ee_(edge)); }
-    template <typename... Args> void makeEdge(Args&&... args) { EdgeType edge(std::forward<Args>(args)...);
-        Graph<EdgeType>::addUEdge(edge); if(useUnionFind) uf_union(es_(edge), ee_(edge)); }
-    UGraph() = default;
-    explicit UGraph(long long maxNodeNum) : Graph<EdgeType>(maxNodeNum) { this->child = this->parent = std::vector<std::vector<EdgeType>>(); }
-    explicit UGraph(const Graph<EdgeType>& g) : Graph<EdgeType>(g) { if(this->unsafe) return;
-        for(const auto& arr : this->child) if(Size(arr)) { std::cerr << "Not a valid UGraph."; exit(1); }
-        this->child = this->parent = v2<EdgeType>(); }
-    void resize(long long maxNodeNum) { if(!this->unsafe && this->nodeCnt >= maxNodeNum) { std::cerr << "Invalid resizing"; exit(1); }
-        long long preNodeCnt = this->nodeCnt; this->nodeCnt = maxNodeNum + 1; this->undir.resize(this->nodeCnt, std::vector<EdgeType>());
-        if(useUnionFind) for(long long i = preNodeCnt; i <= maxNodeNum; i++) { groupNum.emplace_back(i); groupSize.emplace_back(1); } }
-    /// union-find ( 0 <= parent < nodeCnt ), O(N) (calls uf_find for all nodes)
-    /// @return {[node] = parent}
-    [[nodiscard]] std::vector<long long> getAllGroup() { uf_init(); for(long long i = 0; i < this->nodeCnt; i++) groupNum[i] = uf_find(i);
-        return groupNum; }
-    std::vector<long long> getAllGroupSize() { uf_init(); return groupSize; }
-    /// union-find ( 0 <= parent < nodeCnt ), O(1) (O(N) at first uf call)
-    long long getGroup(long long node) { uf_init(); return uf_find(node); }
-    /// union-find ( 0 <= parent < nodeCnt ), O(1) (O(N) at first uf call)
-    long long getGroupSize(long long group) { uf_init(); return groupSize[group]; }
 };
 
 template <typename EdgeType>
@@ -338,9 +231,9 @@ private:
             else sparsePar[v].emplace_back(par(v)), sparseDist[v].emplace_back(ed_(this->parent[v][0]));
         }
         for(long long i = 0; i < logH+1; i++) for(long long v = 0; v <= this->nodeCnt-1; v++) {
-            sparsePar[v].emplace_back(sparsePar[sparsePar[v][i]][i]);
-            sparseDist[v].emplace_back(sparseDist[v][i] + sparseDist[sparsePar[v][i]][i]);
-        }
+                sparsePar[v].emplace_back(sparsePar[sparsePar[v][i]][i]);
+                sparseDist[v].emplace_back(sparseDist[v][i] + sparseDist[sparsePar[v][i]][i]);
+            }
     }
 public:
     std::pair<long long, long long> sparseLca(long long a, long long b) { initSparse();
@@ -364,4 +257,111 @@ public:
 
     /// uses sparse table
     long long dist(long long a, long long b) { return sparseLca(a, b).second; }
+};
+
+template <isEdge EdgeType = SimpleEdge>
+class DGraph : public Graph<EdgeType> { defGCFs_
+public:
+    explicit DGraph() = default;
+    explicit DGraph(long long maxNodeNum) : Graph<EdgeType>(maxNodeNum) {}
+    explicit DGraph(const Graph<EdgeType>& g) : Graph<EdgeType>(g) {
+        if(!this->unsafe) for(const auto& arr : this->undir) if(!arr.empty()) { std::cerr << "Not a valid DGraph.\n"; exit(1); }
+    }
+    /// SCC들은 위상 정렬되어 반환됨
+    /// SCC 안 노드들은 번호 순서대로 정렬됨
+    std::vector<std::vector<long long>> getScc(const std::set<long long>& ignore = {}) {
+        std::vector<bool> finished(this->nodeCnt, false);
+        std::vector<long long> id(this->nodeCnt, -1); long long curId = 0;
+        std::vector<long long> st; std::vector<std::vector<long long>> ret;
+        std::function<long long(long long)> f = [&](long long node) {
+            id[node] = ++curId; st.push_back(node);
+            long long parent = id[node];
+            for(const auto& e : this->child[node]) {
+                long long i = ee_(e);
+                if(id[i] == -1) parent = std::min(parent, f(i));
+                else if(!finished[i]) parent = std::min(parent, id[i]);
+            }
+            if(parent == id[node]) {
+                std::vector<long long> scc;
+                while(true) {
+                    long long top = st.back(); st.pop_back();
+                    scc.emplace_back(top); finished[top] = true;
+                    if(top == node) break;
+                }
+                std::ranges::sort(scc); ret.emplace_back(scc);
+            }
+            return parent;
+        };
+        for(long long i = 0; i < this->nodeCnt; i++) {
+            if(ignore.contains(i)) continue;
+            if(finished[i]) continue;
+            f(i);
+        }
+        std::ranges::reverse(ret); return ret;
+    }
+};
+
+template <isEdge EdgeType = SimpleEdge>
+class Dag : public DGraph<EdgeType> {
+public:
+    /// does not check cycles.
+    explicit Dag(const DGraph<EdgeType>& g) : DGraph<EdgeType>(g) { }
+    std::vector<long long> topologySort(const std::set<long long>& ignore = {}) {
+        std::vector<long long> ret, inDegree(this->nodeCnt); long long n = 0;
+        for(long long i = 0; i < this->nodeCnt; i++) inDegree[i] = Size(this->parent[i]);
+        std::queue<long long> q;
+        for(long long i = 0; i < this->nodeCnt; i++) { if(ignore.contains(i)) { continue; } ++n; if(!inDegree[i]) q.emplace(i); }
+        for(long long t = 0; t < n; t++) {
+            if(q.empty()) { std::cerr << "Dag has cycles!\n"; exit(1); }
+            long long x = q.front(); q.pop(); ret.emplace_back(x);
+            for(const auto& [X, i] : this->child[x]) if(--inDegree[i] == 0) q.emplace(i);
+        }
+        return ret;
+    }
+};
+
+template <typename EdgeType = SimpleEdge>
+class UGraph : public Graph<EdgeType> { defGCFs_
+    bool useUnionFind = false; std::vector<long long> groupNum, groupSize;
+    long long uf_find(long long tar) { if(groupNum[tar] == tar) return tar;
+        return groupNum[tar] = uf_find(groupNum[tar]); }
+    void uf_union(long long a, long long b) {
+        if(uf_find(a) == uf_find(b)) return;
+        if(groupSize[uf_find(a)] < groupSize[uf_find(b)]) std::swap(a, b);
+        groupSize[uf_find(a)] += groupSize[uf_find(b)]; groupSize[uf_find(b)] = 0; groupNum[uf_find(b)] = uf_find(a);
+    }
+    void uf_init() {
+        if(useUnionFind) { return; } useUnionFind = true;
+        std::vector<bool> vis(this->nodeCnt, false); groupNum.resize(this->nodeCnt, -1); groupSize.resize(this->nodeCnt, 0);
+        for(long long i = 0; i < this->nodeCnt; i++) groupNum[i] = i;
+        for(long long i = 0; i < this->nodeCnt; i++) {
+            if(vis[i]) { continue; } std::queue<long long> bfs; bfs.emplace(i); vis[i] = true; groupSize[i]++;
+            while(!bfs.empty()) {
+                long long cur = bfs.front(); bfs.pop();
+                for(const auto& e : this->undir[cur]) {
+                    long long dest = ee_(e); if(vis[dest]) continue;
+                    vis[dest] = true; groupNum[dest] = i; groupSize[i]++; bfs.emplace(dest);
+                } } } }
+public:
+    void clear() { Graph<EdgeType>::clear(); useUnionFind = false; groupNum = groupSize = std::vector<long long>(); }
+    void addEdge(const EdgeType& edge) { Graph<EdgeType>::addUEdge(edge); if(useUnionFind) uf_union(es_(edge), ee_(edge)); }
+    template <typename... Args> void makeEdge(Args&&... args) { EdgeType edge(std::forward<Args>(args)...);
+        Graph<EdgeType>::addUEdge(edge); if(useUnionFind) uf_union(es_(edge), ee_(edge)); }
+    UGraph() = default;
+    explicit UGraph(long long maxNodeNum) : Graph<EdgeType>(maxNodeNum) { this->child = this->parent = std::vector<std::vector<EdgeType>>(); }
+    explicit UGraph(const Graph<EdgeType>& g) : Graph<EdgeType>(g) { if(this->unsafe) return;
+        for(const auto& arr : this->child) if(Size(arr)) { std::cerr << "Not a valid UGraph."; exit(1); }
+        this->child = this->parent = v2<EdgeType>(); }
+    void resize(long long maxNodeNum) { if(!this->unsafe && this->nodeCnt >= maxNodeNum) { std::cerr << "Invalid resizing"; exit(1); }
+        long long preNodeCnt = this->nodeCnt; this->nodeCnt = maxNodeNum + 1; this->undir.resize(this->nodeCnt, std::vector<EdgeType>());
+        if(useUnionFind) for(long long i = preNodeCnt; i <= maxNodeNum; i++) { groupNum.emplace_back(i); groupSize.emplace_back(1); } }
+    /// union-find ( 0 <= parent < nodeCnt ), O(N) (calls uf_find for all nodes)
+    /// @return {[node] = parent}
+    [[nodiscard]] std::vector<long long> getAllGroup() { uf_init(); for(long long i = 0; i < this->nodeCnt; i++) groupNum[i] = uf_find(i);
+        return groupNum; }
+    std::vector<long long> getAllGroupSize() { uf_init(); return groupSize; }
+    /// union-find ( 0 <= parent < nodeCnt ), O(1) (O(N) at first uf call)
+    long long getGroup(long long node) { uf_init(); return uf_find(node); }
+    /// union-find ( 0 <= parent < nodeCnt ), O(1) (O(N) at first uf call)
+    long long getGroupSize(long long group) { uf_init(); return groupSize[group]; }
 };

@@ -1,0 +1,23 @@
+template <typename T = long long> inline std::vector<T> inArr(long long sz) {
+    std::vector<T> a;
+    for(long long i = 0; i<sz; i++) { T t; std::cin >> t; a.push_back(t); }
+    return a;
+}
+
+template <typename T = long long> inline void inArr(std::vector<T> &arr, long long sz, bool clear = false) {
+    if(clear) arr.clear();
+    for(long long i = 0; i < sz; i++) { T t; std::cin >> t; arr.push_back(t); }
+}
+template <typename T = long long> inline std::vector<T> inArr() { return inArr<T>(input()); }
+
+
+struct GoldMine {
+    long long mx = -1000000000000000000, lmx = - 1000000000000000000, rmx = -1000000000000000000, sum = 0; GoldMine() = default;
+    GoldMine(long long a, long long la, long long ra, long long s) : mx(a), lmx(la), rmx(ra), sum(s) {}
+    GoldMine(long long v) : mx(v), lmx(v), rmx(v), sum(v) {} // NOLINT(*-explicit-constructor)
+    GoldMine operator+(const GoldMine&b) const { return {std::max({mx,b.mx,rmx+b.lmx}),std::max(lmx,sum+b.lmx),std::max(rmx+b.sum,b.rmx),sum+b.sum};}
+    friend std::istream& operator>>(std::istream& in, GoldMine& t) { long long v; in >> v; t.mx = t.lmx = t.rmx = t.sum = v; return in; }
+    friend std::ostream& operator<<(std::ostream& out, const GoldMine& t) { out << t.mx; return out; }
+};
+
+
