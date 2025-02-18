@@ -1,10 +1,8 @@
-#define ENABLE_O3 0
-#define ENABLE_MMAP 0
-#define ENABLE_LOCAL_FASTIO 1
+#define ENABLE_O3 false
+#define ENABLE_MMAP false
 
 #pragma region C+++
 //@formatter:off
-#define CPPP 250218
 #pragma region settings
 #define ENABLE_OFAST false
 
@@ -17,11 +15,6 @@
 #pragma ide diagnostic ignored "UnusedLocalVariable"
 #pragma ide diagnostic ignored "UnusedValue"
 
-#ifdef LOCAL
-#define LOCAL_DEFINED 1
-#else
-#define LOCAL_DEFINED 0
-#endif
 
 #if ENABLE_OFAST
 #ifndef LOCAL
@@ -78,6 +71,7 @@
 #include <ext/pb_ds/tree_policy.hpp>
 #include <ext/rope>
 #pragma endregion
+#define CPPP 250215
 #pragma region MMAP
 #ifndef LOCAL
 #if ENABLE_MMAP
@@ -188,7 +182,6 @@ using ll = std::array<long long, 2>; using lll = std::array<long long, 3>; using
 #define Tpl64 template <typename T = long long>
 #ifdef LOCAL
 #define lassert assert
-#define inline // preventing debugging issue
 #else
 #define lassert(...)
 #endif
@@ -196,16 +189,16 @@ using ll = std::array<long long, 2>; using lll = std::array<long long, 3>; using
 #pragma region constants
 constexpr long long
         i64max = 9223372036854775807,    /// lim<i64>::max()
-        i64min = -9223372036854775807-1, /// lim<i64>::min()
-        lmax   = 9221557155715571557,    /// lmax + inf < i64max
-        INFIN  = 4001557155715570000,    /// INFIN * 2 < i64max
-        INF    = 1000000000000000000,    /// INF * 9 < i64max
-        inf    = 3000000000,             /// inf * inf < i64max
-        i32max = 2147483647,             /// lim<i32>::max()
-        i32min = -2147483648,            /// lim<i32>::min()
-        imax   = 2147481557,             /// imax + 1000 < i32max
-        iinf   = 2000000000,             /// iinf + 1e8 < i32max
-        mod1   = 1000000007,
+i64min = -9223372036854775807-1, /// lim<i64>::min()
+lmax   = 9221557155715571557,    /// lmax + inf < i64max
+INFIN  = 4001557155715570000,    /// INFIN * 2 < i64max
+INF    = 1000000000000000000,    /// INF * 9 < i64max
+inf    = 3000000000,             /// inf * inf < i64max
+i32max = 2147483647,             /// lim<i32>::max()
+i32min = -2147483648,            /// lim<i32>::min()
+imax   = 2147481557,             /// imax + 1000 < i32max
+iinf   = 2000000000,             /// iinf + 1e8 < i32max
+mod1   = 1000000007,
         mod9   = 998244353;
 constexpr long double
         PI = 3.141592653589793238462643383279502884L;
@@ -334,17 +327,6 @@ inline long long rand_(const long long& l_, const long long& r_) { return randl(
 #define outputin print()
 #define ansout print()
 #endif // LOCAL
-
-#if (!LOCAL_DEFINED) || ENABLE_LOCAL_FASTIO
-
-struct enable_fastio_ {
-    enable_fastio_() {
-        std::ios_base::sync_with_stdio(false);
-        std::cin.tie(nullptr); std::cout.tie(nullptr);
-    }
-} efio_;
-
-#endif
 
 // input
 template <typename T = long long> inline T input() { T t; std::cin >> t; return t; }
@@ -519,18 +501,11 @@ requires std::is_convertible_v<T2, T> && std::is_convertible_v<T3, T> {
 template <typename T, typename T2> inline void setMin(T& tar, const T2& val) requires std::is_convertible_v<T2, T> {
     if(static_cast<T>(val) < tar) tar = static_cast<T>(val);
 }
-template <typename T, typename T2, typename... T3> requires (sizeof...(T3) > 0)
-inline void setMin(T& tar, const T2 &val, const T3&... arr) { setMin(tar, val); setMin(tar, arr...); }
-
 template <typename T, typename T2> inline void setMax(T& tar, const T2& val) requires std::is_convertible_v<T2, T> {
     if(static_cast<T>(val) > tar) tar = static_cast<T>(val);
 }
-template <typename T, typename T2, typename... T3> requires (sizeof...(T3) > 0)
-inline void setMax(T& tar, const T2 &val, const T3&... arr) { setMax(tar, val); setMax(tar, arr...); }
 #pragma endregion
 #pragma region custom_types
-
-#pragma region data_structures
 
 template <typename T = long long>
 class vec : public std::vector<T> {
@@ -543,15 +518,11 @@ public:
     }
     vec(unsigned size, const T& value) : std::vector<T>(size, value) {}
     inline T& operator[](long long idx) {
-        if(idx < 0 || idx >= sz()) [[unlikely]] {
-            std::cerr << "vec::OutOfBounds\n"; exit(43301);
-        }
+        if(idx < 0 || idx >= sz()) [[unlikely]] { std::cerr << "vec::OutOfBounds\n"; exit(43301); }
         return *(this->begin() + idx);
     }
     inline const T& operator[](long long idx) const {
-        if(idx < 0 || idx >= sz()) [[unlikely]] {
-            std::cerr << "vec::OutOfBounds\n"; exit(43301);
-        }
+        if(idx < 0 || idx >= sz()) [[unlikely]] { std::cerr << "vec::OutOfBounds\n"; exit(43301); }
         return *(this->begin() + idx);
     }
     template <typename Cmp> inline void sort(const Cmp& cmp) { std::sort(this->begin(), this->end(), cmp); }
@@ -561,9 +532,7 @@ public:
     inline void reverse() { std::reverse(this->begin(), this->end()); }
     inline vec reversed() const { vec r = *this; r.reverse(); return r; }
     inline T pop() {
-        if(mt()) [[unlikely]] {
-            std::cerr << "vec::EmptyPop\n"; exit(43302);
-        }
+        if(mt()) [[unlikely]] { std::cerr << "vec::EmptyPop\n"; exit(43302); }
         T r = this->back(); this->pop_back(); return r;
     }
     inline void unique() { this->erase(std::unique(this->begin(), this->end()), this->end()); }
@@ -651,45 +620,6 @@ template <typename T2, typename T1> inline vec<T2> castVec(const vec<T1>& arr) {
 #endif
 #pragma endregion
 
-
-/// requirements: (T + T), add -> (T += AddType)
-template <typename T = long long, typename AddType = T>
-struct segtree {
-    std::vector<T> tree; signed n = -1;
-    explicit segtree(const std::vector<T> &arr) {
-        n = signed(arr.size()); tree = std::vector<T>(2 * n, T());
-        for(signed i = n, j = 0; i < 2 * n; i++, j++) tree[i] = arr[j];
-        for(signed i = n - 1; i > 0; i--) tree[i] = tree[i << 1] + tree[i << 1 | 1];
-    }
-    explicit segtree(signed i) { tree = std::vector<T>(i * 2, T()); n = i; }
-    void add(signed tar, const AddType& val) { tar--;
-        tree[n + tar] += val;
-        for(signed i = (n + tar) >> 1; i; i >>= 1) tree[i] = tree[i << 1] + tree[i << 1 | 1];
-    }
-    void set(signed tar, const T &val) { tar--;
-        tree[n + tar] = val;
-        for(signed i = (n + tar) >> 1; i; i >>= 1) tree[i] = tree[i << 1] + tree[i << 1 | 1];
-    }
-    template <typename T2> requires (!std::is_convertible_v<T2, T>)
-    inline void set(signed tar, const T2& val) { set(tar, T(val)); }
-    template <typename T2, typename... T3> requires (sizeof...(T3) > 0)
-    inline void set(signed tar, const T2& val, const T3&... arr) { set(tar, T(val, arr...)); }
-    T query(signed left, signed right) { left--;
-        signed l = n + left, r = n + right;
-        T ansL = T(), ansR = T();
-        for(; l < r; l >>= 1, r >>= 1) {
-            if(l & 1) ansL = ansL + tree[l++];
-            if(r & 1) ansR = tree[--r] + ansR;
-        }
-        return ansL + ansR;
-    }
-    inline T query(signed tar) { return tree[n + tar - 1]; }
-    std::span<T> getLeafs() { return std::span<T>(tree.begin() + n, tree.begin() + 2 * n - 1); }
-};
-
-#pragma endregion // data_structures
-
-#pragma region modified_integers
 template <long long mod = 1000000007>
 struct ModInt {
     long long v = 0;
@@ -825,7 +755,6 @@ struct GoldMine {
     friend std::istream& operator>>(std::istream& in, GoldMine& t) { long long v; in >> v; t.mx = t.lmx = t.rmx = t.sum = v; return in; }
     friend std::ostream& operator<<(std::ostream& out, const GoldMine& t) { out << t.mx; return out; }
 };
-#pragma endregion // modified_integers
 
 #pragma endregion
 #pragma clang diagnostic pop
@@ -834,13 +763,28 @@ struct GoldMine {
 
 
 i32 main() {
-    deque<ii> dq;
-    in64(n, l);
-    forn(i, n) {
-        while(!dq.empty() && dq.front()[1] <= i-l) dq.pop_front();
-        in64(v);
-        while(!dq.empty() && dq.back()[0] >= v) dq.pop_back();
-        dq.push_back({toi32(v), toi32(i)});
-        print(dq.front()[0], "");
+    fastio;
+    tcRep() {
+        in64(n);
+        vl arr = inVec(n);
+        set once, mult;
+        for(i64 i : arr) {
+            if(mult.contains(i)) continue;
+            if(auto it = once.find(i); it != once.end()) {
+                once.erase(it); mult.insert(i);
+                continue;
+            }
+            once.insert(i);
+        }
+        i64 curSum = 0, curLeft = -1, ans = 0, ansLeft = -1;
+        forn(i, n) {
+            if(once.contains(arr[i])) {
+                if(!curSum) curLeft = i, curSum = 1;
+                else curSum++;
+            } else curSum = 0;
+            if(ans < curSum) ans = curSum, ansLeft = curLeft;
+        }
+        if(ans) println(ansLeft + 1, ansLeft + ans);
+        else println(0);
     }
 }

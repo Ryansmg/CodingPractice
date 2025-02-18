@@ -1,12 +1,14 @@
 /* Update : 2025-02-11 */
 
 /// 교환법칙이 성립하지 않는 연산을 지원
+/// i > j인 i와 j에 대해 operator+(arr[i], arr[j])가 호출될 수 있으나,
+/// 그 결과는 query 함수에서 사용하지 않음.
 
 #include <vector>
 #include <span>
 
 /// requirements: (T + T), add -> (T += UpdateType)
-template <typename T = long long, typename UpdateType = long long>
+template <typename T = long long, typename UpdateType = T>
 struct iterSeg {
     std::vector<T> tree; signed n = -1;
     explicit iterSeg(const std::vector<T> &arr) {

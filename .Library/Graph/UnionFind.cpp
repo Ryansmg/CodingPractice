@@ -1,4 +1,4 @@
-/* Update : 2025-02-15 */
+/* Update : 2025-02-17 */
 
 #include <bits/stdc++.h>
 
@@ -16,6 +16,11 @@ public:
             ptr->merge(v, other.v); return *this;
         }
         inline bool operator==(const Group& other) const { return ptr->group(v) == ptr->group(other.v); }
+        inline Group& operator=(signed other) {
+            ptr->merge(v, other); return *this;
+        }
+        inline bool operator==(signed other) const { return ptr->group(v) == ptr->group(other); }
+        friend inline bool operator==(signed a, const Group& b) { return b.ptr->group(b.v) == b.ptr->group(a); }
         inline signed operator()() const { return ptr->group(v); }
     };
     UF() : n(0) {}
@@ -31,6 +36,8 @@ public:
     }
     inline signed operator()(signed v) { return group(v); }
     inline Group operator[](signed v) { return {group(v), this}; }
+    inline signed operator()(const Group& v) { return group(v.v); }
+    inline Group operator[](const Group& v) { return {group(v.v), this}; }
 };
 
 /// Union-Find with group Size
