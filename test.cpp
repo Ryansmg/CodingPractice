@@ -1,113 +1,93 @@
-//code by p1ckle/sft/yukicoder
-//#pragma GCC optimize("O3")
-//#pragma GCC optimize("Ofast")
-//#pragma GCC optimize("unroll-loops")
 #include <bits/stdc++.h>
-#define int long long int
-#define F first
-#define X first
-#define S second
-#define Y second
-#define mid ((start+end)/2)
-#define all(x) x.begin(), x.end()
-#define ub(a, b) upper_bound(all(a), b)
-#define lb(a, b) lower_bound(all(a), b)
-#define pb push_back
-#define endl '\n'
-
 using namespace std;
+#define all(v) (v).begin(), (v).end()
+using ll = long long int;
+using pl = pair<ll, ll>;
+using vl = vector<ll>;
+using vvl = vector<vl>;
 
-typedef vector<int> vi;
-typedef pair<int, int> pii;
-typedef vector<pair<int, int>> vpii;
+void solve()
+{
+    ll N;
+    scanf("%lld", &N);
+    ll sq = (ll)sqrt(N);
+    vl A(N);
+    for(ll i = 0; i < N; i++) scanf("%lld", &A[i]);
+    vvl bucket(N, vl{});
+    vl group(N);
+    for(ll i = 0; i < N; i++) group[i] = i / sq;
 
-const int inf = 1e18, mod = 1e9+7;
-
-int n, q, T;
-vi vq;
-int a[200003], b[200003], s[200003];
-
-int seg[800013];
-int init(int start, int end, int idx) {
-
-    if (start == end) return seg[idx] = b[start];
-    return seg[idx] = max(init(start, mid, idx*2), init(mid+1, end, idx*2+1));
-
-}
-
-int query(int start, int end, int idx, int left, int right) {
-
-    if (start > right || end < left) return 0;
-    if (start >= left && end <= right) return seg[idx];
-    return max(query(start, mid, idx*2, left, right), query(mid+1, end, idx*2+1, left, right));
-
-}
-
-signed main() {
-
-    ios_base::sync_with_stdio(0);
-    cin.tie(0); cout.tie(0);
-
-    cin >> T;
-    while (T--) {
-
-        cin >> n >> q;
-        for (int i = 1; i <= n; i++) cin >> a[n-i+1];
-        for (int i = 1; i <= n; i++) {
-
-            s[i] = (a[i]^s[i-1]);
-            int t = 0, nt = a[i];
-            while (nt > 0) {
-
-                nt >>= 1;
-                t++;
-
-            }
-            b[i] = t;
-
+    function<void()> init = [&]()
+    {
+        for(ll i = 0; i < N; i++)
+        {
+            bucket[group[i]].push_back(A[i]);
         }
-        b[n+1] = 31; a[n+1] = 2147483647;
-        init(1, n+1, 1);
 
-        while (q--) {
-
-            int x, xb = 0; cin >> x;
-            int xt = x;
-            while (xt > 0) {xt >>= 1; xb++;}
-
-            int ans = 0;
-            while (1) {
-
-                int st = ans+1, ed = n, cn = ans+1;
-                while (st <= ed) {
-
-                    int m = (st+ed)/2;
-                    int tm = query(1, n, 1, ans+1, m);
-
-                    if (tm < xb) {
-
-                        st = m+1;
-                        cn = m;
-
-                    }
-                    else ed = m-1;
-
-                }
-
-                st = cn;
-                ans = st-1;
-                if ((x^s[st-1]) < a[st]) break;
-                ans = st;
-
-                xt = (x^s[ans]); xb = 0;
-                while (xt > 0) {xt >>= 1; xb++;}
-
-            }
-            cout << ans << ' ';
-
+        for(ll i = group[0]; i <= group[N - 1]; i++)
+        {
+            sort(all(bucket[i]));
         }
-        cout << endl;
+    };
 
+    function<void(ll, ll)> update = [&](ll i, ll x)
+    {
+        ll g = group[i];
+
+        ll index = lower_bound(all(bucket[g]), A[i]) - bucket[g].begin();
+
+        A[i] = x;
+        bucket[g][index] = x;
+
+        sort(all(bucket[g]));
+    };
+
+    function<ll(vl&, ll)> G = [&](vl& v, ll x)
+    {
+        ll n = v.size();
+
+        return n - (upper_bound(all(v), x) - v.begin());
+    };
+
+    function<ll(ll, ll, ll)> query = [&](ll l, ll r, ll x)
+    {
+        ll ret = 0;
+
+        while(l <= r && l % sq) ret += (A[l++] > x);
+        while(l <= r && (r + 1) % sq) ret += (A[r--] > x);
+        for(ll i = group[l]; i <= group[r]; i++) ret += G(bucket[i], x);
+
+        return ret;
+    };
+
+    init();
+
+    ll Q;
+    scanf("%lld", &Q);
+
+    for(ll q = 1; q <= Q; q++)
+    {
+        ll com;
+        scanf("%lld", &com);
+
+        if(com == 1)
+        {
+            ll l, r, x;
+            scanf("%lld %lld %lld", &l, &r, &x); l--; r--;
+            printf("%lld\n", query(l, r, x));
+        }
+        else if(com == 2)
+        {
+            ll i, x;
+            scanf("%lld %lld", &i, &x); i--;
+            update(i, x);
+        }
     }
+}
 
+int main()
+{
+    solve();
+
+    return 0;
 }

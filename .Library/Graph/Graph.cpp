@@ -1,4 +1,4 @@
-/* Update : 2025-02-18 */
+/* Update : 2025-02-21 */
 
 #include <bits/stdc++.h>
 
@@ -11,15 +11,17 @@ template <typename T> concept isEdge = isEdge1_<T> || isEdge2_<T>;
 
 /// node >= 0
 /// requirements : (EdgeType.s && EdgeType.e) || (EdgeType.start && EdgeType.end)
-/// detects : start/s, end/e, distance/dist/d
+/// detects : start/s, end/e, distance/dist/d/weight/w
 template <isEdge EdgeType = SimpleEdge>
 class Graph {
-#define defGCFs_ inline static constexpr long long es_(const EdgeType& edge) { if constexpr(isEdge1_<EdgeType>) { return edge.s; } return edge.start; }\
-                 inline static constexpr long long ee_(const EdgeType& edge) { if constexpr(isEdge1_<EdgeType>) { return edge.e; } return edge.end; }\
+#define defGCFs_ inline static constexpr long long es_(const EdgeType& edge) { if constexpr(isEdge1_<EdgeType>) { return edge.s; } else return edge.start; }\
+                 inline static constexpr long long ee_(const EdgeType& edge) { if constexpr(isEdge1_<EdgeType>) { return edge.e; } else return edge.end; }\
                  inline static constexpr long long ed_(const EdgeType& edge) {\
                      if constexpr(requires{edge.d;}) return edge.d;\
                      if constexpr(requires{edge.dist;}) return edge.dist;\
                      if constexpr(requires{edge.distance;}) return edge.distance;\
+                     if constexpr(requires{edge.weight;}) return edge.weight;\
+                     if constexpr(requires{edge.w;}) return edge.w;\
                      return 1;\
                  }
     defGCFs_
@@ -94,8 +96,8 @@ public:
     /// Complexity : O(ElogV)
     /// @returns {minDist, parent}
     std::pair<std::vector<long long>, std::vector<long long>> dijkstra(long long startNode) {
-        std::vector<long long> dist(nodeCnt, 1000000000000000000), par(nodeCnt, -1); 
-        std::priority_queue<std::pair<long long, long long>, std::vector<std::pair<long long, long long>>, std::greater<>> q; 
+        std::vector<long long> dist(nodeCnt, 1000000000000000000), par(nodeCnt, -1);
+        std::priority_queue<std::pair<long long, long long>, std::vector<std::pair<long long, long long>>, std::greater<>> q;
         q.emplace(0, startNode); dist[startNode] = 0;
         while(!q.empty()) {
             auto [d, cur] = q.top(); q.pop(); if(d > dist[cur]) continue;
@@ -108,8 +110,8 @@ public:
         return {dist, par};
     }
     /// Complexity : O(N)
-    std::vector<EdgeType> getConnectionArr(long long node) { 
-        std::vector<EdgeType> ret; for(const auto& e : child[node]) ret.emplace_back(e); for(const auto& e : undir[node]) ret.emplace_back(e); return ret; 
+    std::vector<EdgeType> getConnectionArr(long long node) {
+        std::vector<EdgeType> ret; for(const auto& e : child[node]) ret.emplace_back(e); for(const auto& e : undir[node]) ret.emplace_back(e); return ret;
     }
     Graph& setUnsafe(bool _ = true) { unsafe = _; return *this; }
 };
@@ -164,6 +166,7 @@ public:
     }
 
     /// heavy_light decomposition
+    /// 'in' range : [1..n]
     void initHld() {
         sz = dep = top = in = out = inRev = vl(this->nodeCnt, 0); usingHld = true;
         long long pv = 0; top[this->root] = this->root;
@@ -189,14 +192,15 @@ public:
     /// for decomposed chains for a ~ b
     /// calls initHld() automatically if you didn't
     /// @returns lca(a, b)
-    long long hld(long long a, long long b, const std::function<void(long long, long long)> &func) {
+    long long hld(long long a, long long b, const std::function<void(long long, long long)> &func, bool excludeLca = false) {
         if(!usingHld) initHld();
         while(top[a] != top[b]) {
             if(dep[top[a]] < dep[top[b]]) std::swap(a, b);
             long long st = top[a]; func(in[st], in[a]); a = par(st);
         }
         if(dep[a] > dep[b]) std::swap(a, b);
-        func(in[a], in[b]);
+        if(!excludeLca) func(in[a], in[b]);
+        else if(in[a] != in[b]) func(in[a] + 1, in[b]);
         return a;
     }
 

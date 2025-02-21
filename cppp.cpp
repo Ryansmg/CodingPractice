@@ -7,7 +7,7 @@
 
 #pragma region C+++
 //@formatter:off
-#define CPPP 250219
+#define CPPP 250221
 #pragma region settings
 #define ENABLE_OFAST false
 
@@ -88,14 +88,13 @@
 #define cin mmi_
 namespace std {
     class MmapInput_ {
-        struct stat st{}; char* data = nullptr; bool initCalled = false;
+        struct stat st{}; char* data = nullptr;
         inline void skipBlank() {
-            assert(initCalled);
             while(data && (*data == ' ' || *data == '\n')) data++;
         }
     public:
         MmapInput_() {
-            fstat(0, &st); initCalled = true;
+            fstat(0, &st);
             data = (char*) mmap(nullptr, st.st_size, PROT_READ, MAP_SHARED, 0, 0);
             assert(data != MAP_FAILED);
         }
@@ -114,6 +113,9 @@ namespace std {
             while('0' <= *data && *data <= '9') v = v * 10 + *data - '0', data++;
             v *= sign;
             return *this;
+        }
+        MmapInput_& operator>>(bool& v) {
+            long long tmp; operator>>(tmp); v = tmp; return *this;
         }
         MmapInput_& operator>>(signed& v) { long long t; *this >> t; v = static_cast<signed>(t); return *this; }
         MmapInput_& operator>>(std::string& v) {
@@ -159,8 +161,8 @@ template <typename T = long long> using set = std::set<T>;
 template <typename Key = long long, typename Value = long long> using map = std::map<Key, Value>;
 template <typename T = long long> using multiset = std::multiset<T>;
 template <typename Key = long long, typename Value = long long> using multimap = std::multimap<Key, Value>;
-template <typename T = long long> using stack = std::stack<T>;
-template <typename T = long long> using queue = std::queue<T>;
+template <typename T = long long> using stack = std::stack<T, std::vector<T>>;
+template <typename T = long long> using queue = std::queue<T, std::list<T>>;
 template <typename T = long long> using deque = std::deque<T>;
 template <typename T1 = long long, typename T2 = long long> using pair = std::pair<T1, T2>;
 template <typename T = long long> using rope = __gnu_cxx::rope<T>;
@@ -189,7 +191,6 @@ using ll = std::array<long long, 2>; using lll = std::array<long long, 3>; using
 #if (!ENABLE_LOCAL_INLINE)
 #define inline // preventing debugging issue
 #endif
-
 #else
 #define lassert(...)
 #endif
@@ -258,7 +259,7 @@ template <typename T> inline void autoCompress0(T &v_) { auto comp_ = compressed
 template <typename T> inline T autoCompressed(T v_) { autoCompress(v_); return v_; }
 template <typename T> inline T autoCompressed0(T v_) { autoCompress0(v_); return v_; }
 
-/// 처음 cnt 개만 정렬, O(arr.size() * log2(cnt))
+/// 가장 작은 cnt개 값만 정렬해서 배열 맨 앞에 옮김, O(arr.size() * log2(cnt))
 template <typename T> inline void partial_sort(T& arr, long long cnt) { std::partial_sort(arr.begin(), arr.begin() + cnt, arr.end()); }
 template <typename T, typename Cmp> inline void partial_sort(T& arr, long long cnt, const Cmp& cmp) {
     std::partial_sort(arr.begin(), arr.begin() + cnt, arr.end(), cmp);
@@ -291,16 +292,24 @@ inline long long pow(long long a, long long b, long long mod) {
 
 template <typename T> inline T gcd_(T a, T b) { if(a < b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 template <typename T> inline T max(const std::vector<T>& v_) { T ret = v_.empty() ? std::numeric_limits<T>::min() : v_[0]; for(const T &t_ : v_) { ret = std::max(ret, t_); } return ret; }
+template <typename T> inline T max(std::span<const T> v_) { T ret = v_.empty() ? std::numeric_limits<T>::min() : v_[0]; for(const T &t_ : v_) { ret = std::max(ret, t_); } return ret; }
 template <typename T> inline T min(const std::vector<T>& v_) { T ret = v_.empty() ? std::numeric_limits<T>::max() : v_[0]; for(const T &t_ : v_) { ret = std::min(ret, t_); } return ret; }
+template <typename T> inline T min(std::span<const T> v_) { T ret = v_.empty() ? std::numeric_limits<T>::max() : v_[0]; for(const T &t_ : v_) { ret = std::min(ret, t_); } return ret; }
 inline long long max(long long a, long long b) { return a > b ? a : b; } inline long long min(long long a, long long b) { return a < b ? a : b; }
 template <typename T> inline T lcm_(const T& a, const T& b) { return a / gcd_(a, b) * b; }
 template <typename T> inline T sq_(const T& i) { return i * i; }
 template <typename T> inline T sum(const std::vector<T>& v_) { T s_ = T(); {for(const T& i_ : v_) s_ += i_;} return s_; }
+template <typename T> inline T sum(std::span<const T> v_) { T s_ = T(); {for(const T& i_ : v_) s_ += i_;} return s_; }
 
 template <typename T> inline T gcd(const std::initializer_list<T>& l_) { auto iter = l_.begin(); T ret = *iter; long long sz_ = l_.size();
     for(long long i_ = 1; i_ <= sz_-1; i_++) { ret = std::gcd(ret, *(++iter)); } return ret; }
 template <typename T> inline T lcm(const std::initializer_list<T>& l_) { auto iter = l_.begin(); T ret = *iter / gcd(l_); long long sz_ = l_.size();
     for(long long i_ = 1; i_ <= sz_-1; i_++) { ret *= *(++iter); } return ret; }
+
+inline signed popcount(long long v) { return std::popcount((unsigned long long) v); }
+
+inline auto clz(long long v) { return __builtin_clzll(v); } /// count leading zeros (000010 => 4)
+inline signed lmb(long long v) { return 63 - clz(v); } /// left most bit (000100 => 2)
 
 std::random_device mrdvce_; std::mt19937 m1gn_(mrdvce_());
 std::uniform_int_distribution<signed> uni3i32_(0, 2147483647);
@@ -428,7 +437,7 @@ private:
     template <isVector2_ T1, typename ... T2> void prf_imp_(const T1& arr, const T2&... b_) {
         bool pExit = exit; exit = false; prf_imp_(arr); exit = pExit; prf_imp_(b_...);
     }
-} PrfDef_print_, PrfDef_println_(" ", "\n"), PrfDef_rprint_(""), PrfDef_rprintln_("", "\n");
+} PrfDef_print_, PrfDef_println_(" ", "\n"), PrfDef_rprint_(""), PrfDef_rprintln_("", "\n"), PrfDef_printes_(" ", " ");
 #define printf(...) Printf({__VA_ARGS__})
 #define lprintf(...) Printf({__VA_ARGS__}).setLocal()
 #define printfln(...) printf(__VA_ARGS__).appendEnd("\n")
@@ -441,6 +450,7 @@ private:
 #define lprintln(...) printfln().setLocal()(__VA_ARGS__)
 #define rprint(...) PrfDef_rprint_(__VA_ARGS__)
 #define rprintln(...) PrfDef_rprintln_(__VA_ARGS__)
+#define printes(...) PrfDef_printes_(__VA_ARGS__)
 
 #ifdef LOCAL
 #define lprintvar(...) lprintvar_(#__VA_ARGS__, __VA_ARGS__)
@@ -492,13 +502,13 @@ class vec : public std::vector<T> {
 public:
     vec() = default;
     explicit vec(unsigned size) : std::vector<T>(size) {}
-    static vec fromArr(const std::vector<T>& arr) {
-        vec ret(arr.size()); for(long long i = 0; i < arr.size(); i++) ret[i] = arr[i];
-        return ret;
-    }
+    explicit vec(const std::vector<T>& arr) : std::vector<T>(arr) {}
     vec(unsigned size, const T& value) : std::vector<T>(size, value) {}
+    vec(std::initializer_list<T> l) : std::vector<T>(l) {}
+    template <typename InputIterator> vec(InputIterator first, InputIterator last) : std::vector<T>(first, last) {}
     vec(unsigned size, std::istream& in) requires (!std::is_same_v<T, std::istream>)
     : std::vector<T>(size) { for(T& i : *this) in >> i; }
+
     inline T& operator[](long long idx) {
         if(idx < 0 || idx >= ((long long) this->size())) [[unlikely]] {
             std::cerr << "vec::OutOfBounds\n"; exit(43301);
@@ -569,6 +579,9 @@ public:
     vec() = default;
     explicit vec(unsigned size) : std::vector<bool>(size) {}
     vec(unsigned size, bool value) : std::vector<bool>(size, value) {}
+    explicit vec(const std::vector<bool>& arr) : std::vector<bool>(arr) {}
+    vec(std::initializer_list<bool> l) : std::vector<bool>(l) {}
+    template <typename InputIterator> vec(InputIterator first, InputIterator last) : std::vector<bool>(first, last) {}
     vec(unsigned size, std::istream& in) : std::vector<bool>(size) {
         for(signed i = 0; i < ((long long) this->size()); i++) { bool b; in >> b; this->begin()[i] = b; }
     }
@@ -624,22 +637,26 @@ template <typename T2, typename T1> inline vec<T2> castVec(const vec<T1>& arr) {
 
 
 /// requirements: (T + T), add -> (T += AddType)
+/// 1-based index (for default)
 template <typename T = long long, typename AddType = T>
 struct segtree {
-    std::vector<T> tree; signed n = -1;
+    std::vector<T> tree; signed n = -1; signed offset = 1;
     explicit segtree(const std::vector<T> &arr) {
         n = signed(arr.size()); tree = std::vector<T>(2 * n, T());
         for(signed i = n, j = 0; i < 2 * n; i++, j++) tree[i] = arr[j];
         for(signed i = n - 1; i > 0; i--) tree[i] = tree[i << 1] + tree[i << 1 | 1];
     }
+    segtree() = default;
     explicit segtree(signed i) { tree = std::vector<T>(i * 2, T()); n = i; }
-    template <typename T2> requires std::is_convertible_v<T2, T>
-    segtree(signed i, const T2& v) { n = i; tree = std::vector<T>(i * 2, v); }
-    void add(signed tar, const AddType& val) { tar--;
+    segtree(signed lBound, signed rBound) {
+        n = rBound - lBound + 1; offset = lBound;
+        tree = std::vector<T>(n * 2, T());
+    }
+    void add(signed tar, const AddType& val) { tar -= offset;
         tree[n + tar] += val;
         for(signed i = (n + tar) >> 1; i; i >>= 1) tree[i] = tree[i << 1] + tree[i << 1 | 1];
     }
-    void set(signed tar, const T &val) { tar--;
+    void set(signed tar, const T &val) { tar -= offset;
         tree[n + tar] = val;
         for(signed i = (n + tar) >> 1; i; i >>= 1) tree[i] = tree[i << 1] + tree[i << 1 | 1];
     }
@@ -647,8 +664,8 @@ struct segtree {
     inline void set(signed tar, const T2& val) { set(tar, T(val)); }
     template <typename T2, typename... T3> requires (sizeof...(T3) > 0)
     inline void set(signed tar, const T2& val, const T3&... arr) { set(tar, T(val, arr...)); }
-    T query(signed left, signed right) { left--;
-        signed l = n + left, r = n + right;
+    T query(signed left, signed right) { left -= offset; right -= offset;
+        signed l = n + left, r = n + right + 1;
         T ansL = T(), ansR = T();
         for(; l < r; l >>= 1, r >>= 1) {
             if(l & 1) ansL = ansL + tree[l++];
@@ -656,7 +673,7 @@ struct segtree {
         }
         return ansL + ansR;
     }
-    inline T query(signed tar) { return tree[n + tar - 1]; }
+    inline T query(signed tar) { return tree[n + tar - offset]; }
     std::span<T> getLeafs() { return std::span<T>(tree.begin() + n, tree.begin() + 2 * n - 1); }
 };
 
@@ -706,6 +723,7 @@ struct Mn32 { signed v = 2147481557; Mn32 operator+(const Mn32& b) const { retur
     Mn32& operator+=(const Mn32& b) { if(v > b.v) { v = b.v; } return *this; }
     bool operator<(const Mn32& b) const { return v < b.v; } explicit operator signed() const { return v; }
 }; defStructIO_(Mn32)
+
 #pragma endregion // modified_integers
 
 #pragma endregion
@@ -715,5 +733,6 @@ struct Mn32 { signed v = 2147481557; Mn32 operator+(const Mn32& b) const { retur
 
 
 i32 main() {
-
+    i64 a = 100000;
+    println(sqrt(a) * log2(a) * a);
 }
