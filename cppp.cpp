@@ -1,15 +1,16 @@
 #pragma region options
-#define ENABLE_O3 0
-#define ENABLE_MMAP 0
-#define ENABLE_LOCAL_FASTIO 1
-#define ENABLE_LOCAL_INLINE 0
+#define USE_O3 0
+#define USE_OFAST 0
+#define USE_TARGET 0
+#define USE_MMAP 0
+#define LOCAL_FASTIO 1
+#define LOCAL_INLINE 0
 #pragma endregion
 
 #pragma region C+++
 //@formatter:off
-#define CPPP 250221
+#define CPPP 250226
 #pragma region settings
-#define ENABLE_OFAST false
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedMacroInspection"
@@ -19,22 +20,17 @@
 #pragma ide diagnostic ignored "UnreachableCallsOfFunction"
 #pragma ide diagnostic ignored "UnusedLocalVariable"
 #pragma ide diagnostic ignored "UnusedValue"
-
 #ifdef LOCAL
 #define LOCAL_DEFINED 1
 #else
 #define LOCAL_DEFINED 0
-#endif
-
-#if ENABLE_OFAST
-#ifndef LOCAL
+#if USE_TARGET
 #pragma GCC target("avx2,bmi,bmi2,lzcnt,popcnt")
 #endif
+#endif
+#if USE_OFAST
 #pragma GCC optimize("Ofast,unroll-loops")
-#elif ENABLE_O3
-#ifndef LOCAL
-#pragma GCC target("avx2,bmi,bmi2,lzcnt,popcnt")
-#endif
+#elif USE_O3
 #pragma GCC optimize("O3,unroll-loops")
 #endif
 #pragma endregion
@@ -82,16 +78,14 @@
 #include <ext/rope>
 #pragma endregion
 #pragma region MMAP
-#if ENABLE_MMAP && !LOCAL_DEFINED
+#if USE_MMAP && !LOCAL_DEFINED
 #include <sys/stat.h>
 #include <sys/mman.h>
 #define cin mmi_
 namespace std {
     class MmapInput_ {
         struct stat st{}; char* data = nullptr;
-        inline void skipBlank() {
-            while(data && (*data == ' ' || *data == '\n')) data++;
-        }
+        inline void skipBlank() { while(data && (*data == ' ' || *data == '\n')) data++; }
     public:
         MmapInput_() {
             fstat(0, &st);
@@ -99,34 +93,27 @@ namespace std {
             assert(data != MAP_FAILED);
         }
         inline char get() { return *(data++); }
-        MmapInput_& operator>>(char& v) { skipBlank(); v = *(data++); return *this; }
+        inline MmapInput_& operator>>(char& v) { skipBlank(); v = *(data++); return *this; }
         MmapInput_& operator>>(long long& v) {
-            long long sign = 1; v = 0;
-            skipBlank(); if(*data == '-') sign = -1, data++;
+            long long sign = 1; v = 0; skipBlank(); if(*data == '-') sign = -1, data++;
             while('0' <= *data && *data <= '9') v = v * 10 + *data - '0', data++;
-            v *= sign;
-            return *this;
+            v *= sign; return *this;
         }
         MmapInput_& operator>>(__int128& v) {
-            long long sign = 1; v = 0;
-            skipBlank(); if(*data == '-') sign = -1, data++;
+            long long sign = 1; v = 0; skipBlank(); if(*data == '-') sign = -1, data++;
             while('0' <= *data && *data <= '9') v = v * 10 + *data - '0', data++;
-            v *= sign;
-            return *this;
+            v *= sign; return *this;
         }
-        MmapInput_& operator>>(bool& v) {
-            long long tmp; operator>>(tmp); v = tmp; return *this;
-        }
-        MmapInput_& operator>>(signed& v) { long long t; *this >> t; v = static_cast<signed>(t); return *this; }
-        MmapInput_& operator>>(std::string& v) {
-            skipBlank(); v.clear();
+        inline MmapInput_& operator>>(bool& v) { long long tmp; operator>>(tmp); v = tmp; return *this; }
+        inline MmapInput_& operator>>(signed& v) { long long t; *this >> t; v = static_cast<signed>(t); return *this; }
+        MmapInput_& operator>>(std::string& v) { skipBlank(); v.clear();
             while(*data != ' ' && *data != '\n') v.push_back(*(data++));
             return *this;
         }
         inline void tie(void*) {}
     } mmi_;
 }
-#endif // ENABLE_MMAP
+#endif // USE_MMAP
 #pragma endregion
 #pragma region keywords
 #define elif else if
@@ -136,8 +123,7 @@ namespace std {
 using std::cin, std::cout, std::cerr, std::clog, std::endl, std::istream, std::ostream, std::ifstream, std::ofstream;
 using std::stringstream, std::istringstream, std::ostringstream;
 /// data structures
-using std::array, std::list, std::tuple, std::get, std::tie, std::initializer_list, std::bitset;
-using std::ssize, std::span;
+using std::array, std::list, std::tuple, std::get, std::tie, std::initializer_list, std::bitset, std::ssize, std::span;
 /// math
 using std::complex, std::polar, std::popcount;
 using std::max, std::min, std::gcd, std::lcm, std::pow, std::swap, std::abs, std::sin, std::cos, std::tan, std::asin;
@@ -157,10 +143,10 @@ using str = std::string;
 template <typename T> using lim = std::numeric_limits<T>;
 template <typename T> using fun = std::function<T>;
 /// data structures
-template <typename T = long long> using set = std::set<T>;
-template <typename Key = long long, typename Value = long long> using map = std::map<Key, Value>;
-template <typename T = long long> using multiset = std::multiset<T>;
-template <typename Key = long long, typename Value = long long> using multimap = std::multimap<Key, Value>;
+template <typename T = long long, typename Cmp = std::less<>> using set = std::set<T, Cmp>;
+template <typename Key = long long, typename Value = long long, typename Cmp = std::less<>> using map = std::map<Key, Value, Cmp>;
+template <typename T = long long, typename Cmp = std::less<>> using multiset = std::multiset<T, Cmp>;
+template <typename Key = long long, typename Value = long long, typename Cmp = std::less<>> using multimap = std::multimap<Key, Value, Cmp>;
 template <typename T = long long> using stack = std::stack<T, std::vector<T>>;
 template <typename T = long long> using queue = std::queue<T, std::list<T>>;
 template <typename T = long long> using deque = std::deque<T>;
@@ -188,7 +174,7 @@ using ll = std::array<long long, 2>; using lll = std::array<long long, 3>; using
 #ifdef LOCAL
 #define lassert assert
 
-#if (!ENABLE_LOCAL_INLINE)
+#if (!LOCAL_INLINE)
 #define inline // preventing debugging issue
 #endif
 #else
@@ -259,21 +245,8 @@ template <typename T> inline void autoCompress0(T &v_) { auto comp_ = compressed
 template <typename T> inline T autoCompressed(T v_) { autoCompress(v_); return v_; }
 template <typename T> inline T autoCompressed0(T v_) { autoCompress0(v_); return v_; }
 
-/// 가장 작은 cnt개 값만 정렬해서 배열 맨 앞에 옮김, O(arr.size() * log2(cnt))
-template <typename T> inline void partial_sort(T& arr, long long cnt) { std::partial_sort(arr.begin(), arr.begin() + cnt, arr.end()); }
-template <typename T, typename Cmp> inline void partial_sort(T& arr, long long cnt, const Cmp& cmp) {
-    std::partial_sort(arr.begin(), arr.begin() + cnt, arr.end(), cmp);
-}
-
 /// sorted(arr)[i]를 반환. arr의 값들의 순서는 변경된다.
-template <typename T> inline T& nth_element(std::vector<T>& arr, long long i) {
-    std::nth_element(arr.begin(), arr.begin() + i, arr.end()); return arr[i];
-}
-template <typename T, typename Cmp> inline T& nth_element(std::vector<T>& arr, long long i, const Cmp& cmp) {
-    std::nth_element(arr.begin(), arr.begin() + i, arr.end(), cmp); return arr[i];
-}
-
-template <typename T2, typename T1> inline std::vector<T2> castVec(const T1& arr) { std::vector<T2> ret; for(const auto& t : arr) { ret.emplace_back(t); } return ret; }
+template <typename T, typename Cmp> inline T& nth_element(std::vector<T>& arr, long long i, const Cmp& cmp = std::less<>()) { std::nth_element(arr.begin(), arr.begin() + i, arr.end(), cmp); return arr[i]; }
 
 template <typename T> inline std::vector<T> merge(const std::vector<T>&a, const std::vector<T>&b) {
     std::vector<T> ret(a.size()+b.size()); std::merge(a.begin(), a.end(), b.begin(), b.end(), ret.begin()); return ret;
@@ -286,39 +259,29 @@ template <typename T> T modInv(T a, const T& m, bool chkGcd = true) { // by @kuh
     while (b) { T t = a / b; a -= t * b; std::swap(a, b); u -= t * v; std::swap(u, v); }
     u %= m; if (u < 0) {u += m;} return u;
 }
-inline long long pow(long long a, long long b, long long mod) {
-    return pow_(b < 0 ? modInv(a, mod) : a, std::abs(b), mod);
-}
+inline long long pow(long long a, long long b, long long mod) {return pow_(b < 0 ? modInv(a, mod) : a, std::abs(b), mod);}
 
 template <typename T> inline T gcd_(T a, T b) { if(a < b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 template <typename T> inline T max(const std::vector<T>& v_) { T ret = v_.empty() ? std::numeric_limits<T>::min() : v_[0]; for(const T &t_ : v_) { ret = std::max(ret, t_); } return ret; }
-template <typename T> inline T max(std::span<const T> v_) { T ret = v_.empty() ? std::numeric_limits<T>::min() : v_[0]; for(const T &t_ : v_) { ret = std::max(ret, t_); } return ret; }
 template <typename T> inline T min(const std::vector<T>& v_) { T ret = v_.empty() ? std::numeric_limits<T>::max() : v_[0]; for(const T &t_ : v_) { ret = std::min(ret, t_); } return ret; }
-template <typename T> inline T min(std::span<const T> v_) { T ret = v_.empty() ? std::numeric_limits<T>::max() : v_[0]; for(const T &t_ : v_) { ret = std::min(ret, t_); } return ret; }
 inline long long max(long long a, long long b) { return a > b ? a : b; } inline long long min(long long a, long long b) { return a < b ? a : b; }
-template <typename T> inline T lcm_(const T& a, const T& b) { return a / gcd_(a, b) * b; }
-template <typename T> inline T sq_(const T& i) { return i * i; }
+template <typename T> inline T lcm_(const T& a, const T& b) { return a / gcd_(a, b) * b; } template <typename T> inline T sq_(const T& i) { return i * i; }
 template <typename T> inline T sum(const std::vector<T>& v_) { T s_ = T(); {for(const T& i_ : v_) s_ += i_;} return s_; }
-template <typename T> inline T sum(std::span<const T> v_) { T s_ = T(); {for(const T& i_ : v_) s_ += i_;} return s_; }
-
 template <typename T> inline T gcd(const std::initializer_list<T>& l_) { auto iter = l_.begin(); T ret = *iter; long long sz_ = l_.size();
     for(long long i_ = 1; i_ <= sz_-1; i_++) { ret = std::gcd(ret, *(++iter)); } return ret; }
 template <typename T> inline T lcm(const std::initializer_list<T>& l_) { auto iter = l_.begin(); T ret = *iter / gcd(l_); long long sz_ = l_.size();
     for(long long i_ = 1; i_ <= sz_-1; i_++) { ret *= *(++iter); } return ret; }
 
 inline signed popcount(long long v) { return std::popcount((unsigned long long) v); }
-
 inline auto clz(long long v) { return __builtin_clzll(v); } /// count leading zeros (000010 => 4)
 inline signed lmb(long long v) { return 63 - clz(v); } /// left most bit (000100 => 2)
 
 std::random_device mrdvce_; std::mt19937 m1gn_(mrdvce_());
-std::uniform_int_distribution<signed> uni3i32_(0, 2147483647);
-std::uniform_int_distribution<long long> uni3i64_(0, 9223372036854775807);
+std::uniform_int_distribution<signed> uni3i32_(0, 2147483647); std::uniform_int_distribution<long long> uni3i64_(0, 9223372036854775807);
 #define rand rand_
 inline signed randi() { return uni3i32_(m1gn_); } inline long long randl() { return uni3i64_(m1gn_); }
 inline long long rand_(long long l_, long long r_) { return randl() % (r_ - l_ + 1) + l_; } /// inclusive
-constexpr signed dx4[4] = { 0, 1, 0, -1 };
-constexpr signed dy4[4] = { -1, 0, 1, 0 };
+constexpr signed dx4[4] = { 0, 1, 0, -1 }; constexpr signed dy4[4] = { -1, 0, 1, 0 };
 #pragma endregion
 #pragma region I/O
 // settings
@@ -338,7 +301,7 @@ constexpr signed dy4[4] = { -1, 0, 1, 0 };
 #define ansout print()
 #endif // LOCAL
 
-#if (!LOCAL_DEFINED) || ENABLE_LOCAL_FASTIO
+#if (!LOCAL_DEFINED) || LOCAL_FASTIO
 struct enable_fastio_ {
     enable_fastio_() { std::ios_base::sync_with_stdio(false); std::cin.tie(nullptr); std::cout.tie(nullptr); }
 } efio_;
@@ -369,7 +332,7 @@ long long qin_h_(long long idx, long long n) {
     if(++qin_c_ == qin_t_) qin_t_ = qin_c_ = 0;
     return qin_data_[idx];
 }
-long long QIN_H_() { long long t; std::cin >> t; return t; } // qin() support
+inline long long QIN_H_() { long long t; std::cin >> t; return t; } // qin() support
 #define EXPAND_(x) x
 #define QIN_H1_(n) qin_h_(0, n)
 #define QIN_H2_(n) QIN_H1_(n), qin_h_(1, n)
@@ -379,12 +342,11 @@ long long QIN_H_() { long long t; std::cin >> t; return t; } // qin() support
 #define QIN_H6_(n) QIN_H5_(n), qin_h_(5, n)
 #define QIN_H7_(n) QIN_H6_(n), qin_h_(6, n)
 #define QIN_H8_(n) QIN_H7_(n), qin_h_(7, n)
-#define QIN_H9_(n) QIN_H8_(n), qin_h_(8, n)
 #define qin(n) EXPAND_(QIN_H##n##_(n))
 
 // output
 
-template <typename... Args> void printf_legacy(const Args&... args) { printf(args...); }
+template <typename... Args> void cprintf(const Args&... args) { printf(args...); }
 
 #define defIsChild(name, abbv) template <typename> struct is##name##Struct_ : std::false_type {};\
                                template <typename T> struct is##name##Struct_< abbv <T>> : std::true_type {};\
@@ -392,50 +354,52 @@ template <typename... Args> void printf_legacy(const Args&... args) { printf(arg
 template <typename T> using vector2_ = std::vector<std::vector<T>>;
 defIsChild(Vector_, std::vector) defIsChild(Vector2_, vector2_) defIsChild(Span, std::span)
 template <typename T> concept isVector1_ = (isVector_<T> && !isVector2_<T>) || isSpan<T>;
+std::string tostr(const __int128&);
 
 struct Printf {
-    std::string sep = " ", end;
-    signed prec = -1;
-    long long width = -1; char fill = ' ';
-    bool exit = false; bool local = false;
-    void operator()() const { std::cout << end; if(exit) std::exit(0); }
-    template <typename ...T> requires (sizeof...(T) > 0)
-    void operator()(const T&... v_) {
+    std::string sep = " ", end; signed prec = -1, width = -1; char fill = ' '; bool exit = false, local = false;
+    inline void operator()() const {
+#ifndef LOCAL
+        if(local) return;
+#endif
+        std::cout << end;
+        if(exit) std::exit(0);
+    }
+    template <typename ...T> requires (sizeof...(T) > 0) inline void operator()(const T&... v_) {
 #ifdef LOCAL
-        prf_imp_(v_...);
+        pr_(v_...);
 #else
-        if(!local) prf_imp_(v_...);
+        if(!local) pr_(v_...);
 #endif
     }
     Printf& appendEnd(const std::string& end_) { end += end_; return *this; }
     Printf& setExit() { exit = true; return *this; }
     Printf& setLocal() { local = true; return *this; }
 private:
-    inline void prf_imp_preset_() const {
+    inline void preset_() const {
         std::cout << std::fixed;
         if(prec != -1) std::cout.precision(prec);
         if(width != -1) std::cout << std::setw(width) << std::setfill(fill);
     }
-    template <typename T> void prf_imp_(const T& v_) const { prf_imp_preset_(); std::cout << v_ << end; if(exit) std::exit(0); }
-    template <isVector1_ T> void prf_imp_(const T& v_) const {
-        long long len_ = Size(v_);
-        for(long long i = 0; i < len_ - 1; i++) { prf_imp_preset_(); std::cout << v_[i] << sep; }
-        if(len_) prf_imp_preset_(), std::cout << v_[len_-1] << end;
+    template <typename T> void pr_(const T& v_) const { preset_(); std::cout << v_ << end; if(exit) std::exit(0); }
+    template <isVector1_ T> void pr_(const T& v_) const { long long len_ = Size(v_);
+        for(long long i = 0; i < len_ - 1; i++) { preset_(); std::cout << v_[i] << sep; }
+        if(len_) preset_(), std::cout << v_[len_-1] << end;
         if(exit) std::exit(0);
     }
-    template <isVector2_ T> void prf_imp_(const T& arr) {
+    template <isVector2_ T> void pr_(const T& arr) {
         bool pExit = exit; exit = false;
         for(const auto& v_ : arr) prf_imp_(v_);
         exit = pExit; if(exit) std::exit(0);
     }
-    template <typename T1, typename ...T2> void prf_imp_(const T1& _, const T2&... b_) const {
-        prf_imp_preset_(); std::cout << _ << sep; prf_imp_(b_...);
+    template <typename T1, typename ...T2> void pr_(const T1& _, const T2&... b_) const {
+        preset_(); std::cout << _ << sep; pr_(b_...);
     }
-    template <isVector1_ T1, typename ...T2> void prf_imp_(const T1& _, const T2&... b_) const {
-        for(const auto& v_ : _) { prf_imp_preset_(); std::cout << v_ << sep; } prf_imp_(b_...);
+    template <isVector1_ T1, typename ...T2> void pr_(const T1& _, const T2&... b_) const {
+        for(const auto& v_ : _) { preset_(); std::cout << v_ << sep; } pr_(b_...);
     }
-    template <isVector2_ T1, typename ... T2> void prf_imp_(const T1& arr, const T2&... b_) {
-        bool pExit = exit; exit = false; prf_imp_(arr); exit = pExit; prf_imp_(b_...);
+    template <isVector2_ T1, typename ... T2> void pr_(const T1& arr, const T2&... b_) {
+        bool pExit = exit; exit = false; pr_(arr); exit = pExit; pr_(b_...);
     }
 } PrfDef_print_, PrfDef_println_(" ", "\n"), PrfDef_rprint_(""), PrfDef_rprintln_("", "\n"), PrfDef_printes_(" ", " ");
 #define printf(...) Printf({__VA_ARGS__})
@@ -459,7 +423,7 @@ template <typename... Args> void lprintvar_(const std::string& names_, Args... a
     auto print_each = [&](auto&& value) {
         pos = names.find(delim); name = (pos == std::string::npos) ? names : names.substr(0, pos);
         while(name[0] == ' ') {name = name.substr(1);} while(name.back() == ' ') {name.pop_back();}
-        std::cout << name << ": "; printf()(value); std::cout << (pos == std::string::npos ? "\n" : ", ");
+        std::cout << name << ": "; print(value); std::cout << (pos == std::string::npos ? "\n" : ", ");
         if (pos != std::string::npos) names = names.substr(pos + delim.length());
     };
     (print_each(args), ...);
@@ -472,6 +436,11 @@ template <typename... Args> void lprintvar_(const std::string& names_, Args... a
 #pragma region qol
 template <typename T> inline std::string tostr(const T &t) { return std::to_string(t); }
 inline std::string tostr(const std::string &t) { return t; }
+inline std::string tostr(const __int128 &i) {std::string ret,bs;if(i==lim<i128>::min())return tostr(i/10)+"8";
+    if(!i){return"0";}if(i<0)return"-"+tostr(-i);__int128 t=1;forn(as,18)t*=10;__int128 a=i/(t*t);if(a){ret+=tostr((long long)a);
+    bs=tostr((long long)(i/t%(t*10)+t));forn(j,18)ret+=bs[j+1];bs=tostr((long long)((i%t)+t));forn(j,18)ret+=bs[j+1];
+    }else{__int128 b=i/t%(t*10);if(b){ret+=tostr((long long)b);bs=tostr((long long)((i%t)+t));
+    forn(j,18) ret+=bs[j+1];}else{ret+=tostr((long long)(i%t));}}return ret;}
 
 template <typename T, typename T2, typename T3> inline T replace_if(const T& origin, const T2& cond, const T3& replacement)
 requires std::is_convertible_v<T2, T> && std::is_convertible_v<T3, T> {
@@ -505,9 +474,10 @@ public:
     explicit vec(const std::vector<T>& arr) : std::vector<T>(arr) {}
     vec(unsigned size, const T& value) : std::vector<T>(size, value) {}
     vec(std::initializer_list<T> l) : std::vector<T>(l) {}
-    template <typename InputIterator> vec(InputIterator first, InputIterator last) : std::vector<T>(first, last) {}
+    template <typename InputIterator, typename = std::_RequireInputIter<InputIterator>>
+    vec(InputIterator first, InputIterator last) : std::vector<T>(first, last) {}
     vec(unsigned size, std::istream& in) requires (!std::is_same_v<T, std::istream>)
-    : std::vector<T>(size) { for(T& i : *this) in >> i; }
+            : std::vector<T>(size) { for(T& i : *this) in >> i; }
 
     inline T& operator[](long long idx) {
         if(idx < 0 || idx >= ((long long) this->size())) [[unlikely]] {
@@ -522,11 +492,11 @@ public:
         return *(this->begin() + idx);
     }
     void init() {
-        #ifdef CPPP
+#ifdef CPPP
         if constexpr(isVector_<T>) {
             for(auto& a : *this) a.init();
         } else
-        #endif
+#endif
         { for(auto& a : *this) std::cin >> a; }
     }
     template <typename Cmp> inline void sort(const Cmp& cmp) { std::sort(this->begin(), this->end(), cmp); }
@@ -615,6 +585,7 @@ public:
 template <typename T> struct isVector_Struct_<vec<T>> : std::true_type {};
 template <typename T> struct isVector2_Struct_<vec<vec<T>>> : std::true_type {};
 template <typename T = long long> using vec2 = vec<vec<T>>;
+template <typename T = long long> using v2 = vec2<T>;
 using vl = vec<long long>; using vi = vec<signed>; using vb = vec<bool>;
 using v2l = vec<vec<long long>>; using v2i = vec<vec<signed>>; using v2b = vec<vec<bool>>;
 
@@ -733,6 +704,20 @@ struct Mn32 { signed v = 2147481557; Mn32 operator+(const Mn32& b) const { retur
 
 
 i32 main() {
-    i64 a = 100000;
-    println(sqrt(a) * log2(a) * a);
+    in64(n);
+    vec<ii> arr(n);
+    forn(i, n) input(arr[i][0]);
+    forn(i, n) input(arr[i][1]);
+    arr.sort([&](ii& a, ii& b) {
+        if(a[0] == b[0]) return a[1] > b[1];
+        return a[0] < b[0];
+    });
+    vl cur(n, 1);
+    rep(2) {
+        vl nxt(n);
+        segtree seg(-1, 1000000);
+        forn(i, n) nxt[i] = seg.query(-1, arr[i][1]-1), seg.add(arr[i][1], cur[i]);
+        cur = nxt;
+    }
+    println(sum(cur));
 }

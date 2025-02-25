@@ -269,20 +269,20 @@ struct Printf {
     Printf& setExit() { exit = true; return *this; }
     Printf& setLocal() { local = true; return *this; }
 private:
-    inline void prf_imp_preset_() const {
+    inline void preset_() const {
         cout << std::fixed;
         if(prec != -1) cout.precision(prec);
         if(width != -1) cout << std::setw(width) << std::setfill(fill);
     }
-    Tpl void prf_imp_(const T& _) const { prf_imp_preset_(); cout << _ << end; if(exit) std::exit(0); }
+    Tpl void prf_imp_(const T& _) const { preset_(); cout << _ << end; if(exit) std::exit(0); }
     template <isVector1_ T> void prf_imp_(const T& _) const {
         i64 len_ = Size(_);
-        forn(i, len_-1) { prf_imp_preset_(); cout << _[i] << sep; }
-        if(len_) prf_imp_preset_(), cout << _[len_-1] << end;
+        forn(i, len_-1) { preset_(); cout << _[i] << sep; }
+        if(len_) preset_(), cout << _[len_-1] << end;
         if(exit) std::exit(0);
     }
     template <isStQue_ T> void prf_imp_(const T& _) const { T st = _;
-        while(!st.empty()) { prf_imp_preset_();
+        while(!st.empty()) { preset_();
             if(st.size() == 1) {cout << pop(st) << end; break; }
             cout << pop(st) << sep; }
         if(exit) std::exit(0);
@@ -293,13 +293,13 @@ private:
         exit = pExit; if(exit) std::exit(0);
     }
     template <typename T1, typename ...T2> void prf_imp_(const T1& _, const T2&... b_) const {
-        prf_imp_preset_(); cout << _ << sep; prf_imp_(b_...);
+        preset_(); cout << _ << sep; prf_imp_(b_...);
     }
     template <isVector1_ T1, typename ...T2> void prf_imp_(const T1& _, const T2&... b_) const {
-        for(const auto& v_ : _) { prf_imp_preset_(); cout << v_ << sep; } prf_imp_(b_...);
+        for(const auto& v_ : _) { preset_(); cout << v_ << sep; } prf_imp_(b_...);
     }
     template <isStQue_ T1, typename ...T2> void prf_imp_(const T1& _, const T2&... b_) const { T1 st = _;
-        while(!st.empty()) { prf_imp_preset_(); cout << pop(st) << sep; } prf_imp_(b_...);
+        while(!st.empty()) { preset_(); cout << pop(st) << sep; } prf_imp_(b_...);
     }
     template <isVector2_ T1, typename ... T2> void prf_imp_(const T1& arr, const T2&... b_) {
         bool pExit = exit; exit = false; prf_imp_(arr); exit = pExit; prf_imp_(b_...);
