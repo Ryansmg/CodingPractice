@@ -10,7 +10,7 @@
 
 #pragma region C+++
 //@formatter:off
-#define CPPP 250316
+#define CPPP 250309
 #pragma region settings
 
 #pragma clang diagnostic push
@@ -475,9 +475,6 @@ template <typename T, typename T2, typename... T3> requires (sizeof...(T3) > 0)
 inline void setMax(T& tar, const T2 &val, const T3&... arr) { setMax(tar, val); setMax(tar, arr...); }
 
 inline void setAbs(auto& v) { if(v < 0) v *= -1; }
-
-#define yn yn_
-str yn_[] = {"No", "Yes"};
 #pragma endregion
 #pragma region custom_types
 
@@ -498,21 +495,20 @@ public:
 
     inline T& operator[](long long idx) { return this->at(idx); }
     inline const T& operator[](long long idx) const { return this->at(idx); }
-    vec& init() {
+    void init() {
 #ifdef CPPP
         if constexpr(isVector_<T>) {
             for(auto& a : *this) a.init();
         } else
 #endif
         { for(auto& a : *this) std::cin >> a; }
-        return *this;
     }
-    inline vec& fill(const T& v) { forn(i, sz()) operator[](i) = v; return *this; }
+    inline void fill(const T& v) { forn(i, sz()) operator[](i) = v; }
     template <typename Cmp> inline void sort(const Cmp& cmp) { std::sort(this->begin(), this->end(), cmp); }
-    inline vec& sort() { sort(std::less<T>()); return *this; }
+    inline void sort() { sort(std::less<T>()); }
     template <typename Cmp> inline vec sorted(const Cmp& cmp) const { vec r = *this; r.sort(cmp); return r; }
     inline vec sorted() const { return sorted(std::less<T>()); }
-    inline vec& reverse() { std::reverse(this->begin(), this->end()); return *this; }
+    inline void reverse() { std::reverse(this->begin(), this->end()); }
     inline vec reversed() const { vec r = *this; r.reverse(); return r; }
     inline T pop() {
         if(mt()) [[unlikely]] {
@@ -520,9 +516,9 @@ public:
         }
         T r = this->back(); this->pop_back(); return r;
     }
-    inline vec& unique() { this->erase(std::unique(this->begin(), this->end()), this->end()); return *this; }
-    template <typename Cmp> inline vec& compress(const Cmp& cmp) { sort(cmp); return unique(); }
-    inline vec& compress() { return compress(std::less<T>()); }
+    inline void unique() { this->erase(std::unique(this->begin(), this->end()), this->end()); }
+    template <typename Cmp> inline void compress(const Cmp& cmp) { sort(cmp); unique(); }
+    inline void compress() { compress(std::less<T>()); }
     template <typename Cmp> inline vec compressed(const Cmp& cmp) const { vec r = *this; r.compress(cmp); return r; }
     inline vec compressed() const { return compressed(std::less<T>()); }
     template <typename Cmp> inline auto lb(const T& v, const Cmp& cmp) const {
@@ -549,9 +545,9 @@ public:
         vec<T> ret(size); for(long long i = 0; i < size; i++) ret[i] = offset + i;
         return ret;
     }
-    vec& concat(const std::vector<T>& v) { for(const T& t : v) this->push_back(t); return *this; }
-    vec& accumulate() { for(long long i = 1; i < sz(); i++) this->operator[](i) += this->operator[](i-1); return *this; }
-    vec& revAccumulate() { for(long long i = sz()-2; i >= 0; i--) this->operator[](i) += this->operator[](i+1); return *this; }
+    void concat(const std::vector<T>& v) { for(const T& t : v) this->push_back(t); }
+    void accumulate() { for(long long i = 1; i < sz(); i++) this->operator[](i) += this->operator[](i-1); }
+    void revAccumulate() { for(long long i = sz()-2; i >= 0; i--) this->operator[](i) += this->operator[](i+1); }
 };
 template<> class vec<bool> : public std::vector<bool> {
 public:
@@ -710,16 +706,6 @@ struct Mn32 { signed v = 2147481557; Mn32 operator+(const Mn32& b) const { retur
 #pragma endregion // modified_integers
 
 #pragma endregion
-#pragma endregion
-
-#pragma region ext
-
-v2l adj_list(int n, int m) {
-    v2l adj(n+1);
-    rep(m) { in64(u, v); adj[u].pb(v); adj[v].pb(u); }
-    return adj;
-}
-
 #pragma clang diagnostic pop
 //@formatter:on
 #pragma endregion

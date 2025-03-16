@@ -3,14 +3,14 @@
 #define USE_OFAST 0
 #define USE_TARGET 0
 #define USE_MMAP 0
-#define LOCAL_FASTIO 1
+#define LOCAL_FASTIO 0
 #define LOCAL_INLINE 0
-#define DISABLE_LOCAL 0
+#define DISABLE_LOCAL 1
 #pragma endregion
 
 #pragma region C+++
 //@formatter:off
-#define CPPP 250316
+#define CPPP 250226
 #pragma region settings
 
 #pragma clang diagnostic push
@@ -134,7 +134,7 @@ using std::max, std::min, std::gcd, std::lcm, std::pow, std::swap, std::abs, std
 using std::acos, std::atan, std::floor, std::ceil, std::round, std::sinh, std::cosh, std::tanh, std::atan2, std::sqrt;
 using std::less, std::greater, std::less_equal, std::greater_equal;
 /// algorithms
-using std::iota, std::prev_permutation, std::next_permutation;
+using std::iota, std::prev_permutation, std::next_permutation, std::ranges::reverse;
 /// concepts
 using std::is_integral_v, std::is_convertible_v, std::is_arithmetic_v, std::is_floating_point_v, std::is_same_v;
 
@@ -229,13 +229,10 @@ template <typename Arr, typename T, typename Cmp> inline auto ub(const Arr &arr_
 
 template <typename T, typename Compare> inline T pop(std::priority_queue<T, std::vector<T>, Compare> &pq_) { T t_ = pq_.top(); pq_.pop(); return t_; }
 template <typename T> inline T pop(std::stack<T> &st_) { T t_ = st_.top(); st_.pop(); return t_; }
-template <typename T> inline T pop(std::stack<T, std::vector<T>> &st_) { T t_ = st_.top(); st_.pop(); return t_; }
 template <typename T> inline T pop(std::queue<T> &q_) { T t_ = q_.front(); q_.pop(); return t_; }
-template <typename T> inline T pop(std::queue<T, std::list<T>> &q_) { T t_ = q_.front(); q_.pop(); return t_; }
 template <typename T> inline T pop(std::vector<T> &arr_) { T t_ = arr_.back(); arr_.pop_back(); return t_; }
 
-template <typename T> inline void reverse(T& v_) { std::reverse(v_.begin(), v_.end()); }
-template <typename T> inline T reversed(T v_) { reverse(v_); return v_; }
+template <typename T> inline T reversed(T v_) { std::ranges::reverse(v_); return v_; }
 template <typename T> inline void sort(T& v_) { std::sort(v_.begin(), v_.end()); }
 template <typename T, typename Cmp> inline void sort(T& v_, const Cmp& cmp) { std::sort(v_.begin(), v_.end(), cmp); }
 template <typename T> inline T sorted(T v_) { std::sort(v_.begin(), v_.end()); return v_; }
@@ -396,7 +393,7 @@ private:
     }
     template <isVector2_ T> void pr_(const T& arr) {
         bool pExit = exit; exit = false;
-        for(const auto& v_ : arr) pr_(v_);
+        for(const auto& v_ : arr) prf_imp_(v_);
         exit = pExit; if(exit) std::exit(0);
     }
     template <typename T1, typename ...T2> void pr_(const T1& _, const T2&... b_) const {
@@ -422,7 +419,6 @@ private:
 #define rprint(...) PrfDef_rprint_(__VA_ARGS__)
 #define rprintln(...) PrfDef_rprintln_(__VA_ARGS__)
 #define printes(...) PrfDef_printes_(__VA_ARGS__)
-#define lprintes(...) printf().setLocal().appendEnd(" ")(__VA_ARGS__)
 
 #ifdef LOCAL
 #define lprintvar(...) lprintvar_(#__VA_ARGS__, __VA_ARGS__)
@@ -449,12 +445,6 @@ inline std::string tostr(const __int128 &i) {std::string ret,bs;if(i==lim<i128>:
         bs=tostr((long long)(i/t%(t*10)+t));forn(j,18)ret+=bs[j+1];bs=tostr((long long)((i%t)+t));forn(j,18)ret+=bs[j+1];
     }else{__int128 b=i/t%(t*10);if(b){ret+=tostr((long long)b);bs=tostr((long long)((i%t)+t));
             forn(j,18) ret+=bs[j+1];}else{ret+=tostr((long long)(i%t));}}return ret;}
-#define mac_conv_(name, type, sh) template <typename T> inline type to##name(const T &t) { return static_cast<type>(t); } \
-                                                        inline type to##name(const std::string &t) { return sto##sh(t); }
-template <typename T> inline __int128 toi128(const T &t) { return static_cast<__int128>(t); }
-inline __int128 toi128(const std::string &t) { return static_cast<__int128>(stoull(t)); }
-mac_conv_(i64, long long, ll) mac_conv_(i32, signed, i) mac_conv_(u64, unsigned long long, ull)
-mac_conv_(f32, float, f) mac_conv_(f64, double, d) mac_conv_(f128, long double, ld)
 
 template <typename T, typename T2, typename T3> inline T replace_if(const T& origin, const T2& cond, const T3& replacement)
 requires std::is_convertible_v<T2, T> && std::is_convertible_v<T3, T> {
@@ -475,9 +465,6 @@ template <typename T, typename T2, typename... T3> requires (sizeof...(T3) > 0)
 inline void setMax(T& tar, const T2 &val, const T3&... arr) { setMax(tar, val); setMax(tar, arr...); }
 
 inline void setAbs(auto& v) { if(v < 0) v *= -1; }
-
-#define yn yn_
-str yn_[] = {"No", "Yes"};
 #pragma endregion
 #pragma region custom_types
 
@@ -496,23 +483,32 @@ public:
     vec(unsigned size, std::istream& in) requires (!std::is_same_v<T, std::istream>)
             : std::vector<T>(size) { for(T& i : *this) in >> i; }
 
-    inline T& operator[](long long idx) { return this->at(idx); }
-    inline const T& operator[](long long idx) const { return this->at(idx); }
-    vec& init() {
+    inline T& operator[](long long idx) {
+        if(idx < 0 || idx >= ((long long) this->size())) [[unlikely]] {
+            std::cerr << "vec::OutOfBounds\n"; exit(43301);
+        }
+        return *(this->begin() + idx);
+    }
+    inline const T& operator[](long long idx) const {
+        if(idx < 0 || idx >= ((long long) this->size())) [[unlikely]] {
+            std::cerr << "vec::OutOfBounds\n"; exit(43301);
+        }
+        return *(this->begin() + idx);
+    }
+    void init() {
 #ifdef CPPP
         if constexpr(isVector_<T>) {
             for(auto& a : *this) a.init();
         } else
 #endif
         { for(auto& a : *this) std::cin >> a; }
-        return *this;
     }
-    inline vec& fill(const T& v) { forn(i, sz()) operator[](i) = v; return *this; }
+    inline void fill(const T& v) { forn(i, sz()) operator[](i) = v; }
     template <typename Cmp> inline void sort(const Cmp& cmp) { std::sort(this->begin(), this->end(), cmp); }
-    inline vec& sort() { sort(std::less<T>()); return *this; }
+    inline void sort() { sort(std::less<T>()); }
     template <typename Cmp> inline vec sorted(const Cmp& cmp) const { vec r = *this; r.sort(cmp); return r; }
     inline vec sorted() const { return sorted(std::less<T>()); }
-    inline vec& reverse() { std::reverse(this->begin(), this->end()); return *this; }
+    inline void reverse() { std::reverse(this->begin(), this->end()); }
     inline vec reversed() const { vec r = *this; r.reverse(); return r; }
     inline T pop() {
         if(mt()) [[unlikely]] {
@@ -520,9 +516,9 @@ public:
         }
         T r = this->back(); this->pop_back(); return r;
     }
-    inline vec& unique() { this->erase(std::unique(this->begin(), this->end()), this->end()); return *this; }
-    template <typename Cmp> inline vec& compress(const Cmp& cmp) { sort(cmp); return unique(); }
-    inline vec& compress() { return compress(std::less<T>()); }
+    inline void unique() { this->erase(std::unique(this->begin(), this->end()), this->end()); }
+    template <typename Cmp> inline void compress(const Cmp& cmp) { sort(cmp); unique(); }
+    inline void compress() { compress(std::less<T>()); }
     template <typename Cmp> inline vec compressed(const Cmp& cmp) const { vec r = *this; r.compress(cmp); return r; }
     inline vec compressed() const { return compressed(std::less<T>()); }
     template <typename Cmp> inline auto lb(const T& v, const Cmp& cmp) const {
@@ -549,9 +545,9 @@ public:
         vec<T> ret(size); for(long long i = 0; i < size; i++) ret[i] = offset + i;
         return ret;
     }
-    vec& concat(const std::vector<T>& v) { for(const T& t : v) this->push_back(t); return *this; }
-    vec& accumulate() { for(long long i = 1; i < sz(); i++) this->operator[](i) += this->operator[](i-1); return *this; }
-    vec& revAccumulate() { for(long long i = sz()-2; i >= 0; i--) this->operator[](i) += this->operator[](i+1); return *this; }
+    void concat(const std::vector<T>& v) { for(const T& t : v) this->push_back(t); }
+    void accumulate() { for(long long i = 1; i < sz(); i++) this->operator[](i) += this->operator[](i-1); }
+    void revAccumulate() { for(long long i = sz()-2; i >= 0; i--) this->operator[](i) += this->operator[](i+1); }
 };
 template<> class vec<bool> : public std::vector<bool> {
 public:
@@ -579,8 +575,14 @@ public:
         if(mt()) [[unlikely]] { std::cerr << "vec::EmptyPop\n"; exit(43302); }
         bool r = this->back(); this->pop_back(); return r;
     }
-    inline auto operator[](long long idx) { return this->at(idx); }
-    inline auto operator[](long long idx) const { return this->at(idx); }
+    inline auto operator[](long long idx) {
+        if(idx < 0 || idx >= ((long long) this->size())) [[unlikely]] { std::cerr << "vec::OutOfBounds\n"; exit(43301); }
+        return this->begin()[idx];
+    }
+    inline auto operator[](long long idx) const {
+        if(idx < 0 || idx >= ((long long) this->size())) [[unlikely]] { std::cerr << "vec::OutOfBounds\n"; exit(43301); }
+        return this->begin()[idx];
+    }
 };
 
 #pragma region VEC_IF_CPPP
@@ -640,24 +642,15 @@ struct segtree {
     inline void set(signed tar, const T2& val, const T3&... arr) { set(tar, T(val, arr...)); }
     T query(signed left, signed right) { left -= offset; right -= offset;
         signed l = n + left, r = n + right + 1;
-        T ansL, ansR;
-        bool lSet = false, rSet = false;
+        T ansL = T(), ansR = T();
         for(; l < r; l >>= 1, r >>= 1) {
-            if(l & 1) {
-                if(!lSet) lSet = true, ansL = tree[l++];
-                else ansL = ansL + tree[l++];
-            }
-            if(r & 1) {
-                if(!rSet) rSet = true, ansR = tree[--r];
-                else ansR = tree[--r] + ansR;
-            }
+            if(l & 1) ansL = ansL + tree[l++];
+            if(r & 1) ansR = tree[--r] + ansR;
         }
-        if(!lSet) return ansR;
-        if(!rSet) return ansL;
         return ansL + ansR;
     }
     inline T query(signed tar) { return tree[n + tar - offset]; }
-    std::span<T> getLeafs() { return std::span<T>(tree.begin() + n, tree.begin() + 2 * n); }
+    std::span<T> getLeafs() { return std::span<T>(tree.begin() + n, tree.begin() + 2 * n - 1); }
 };
 
 #pragma endregion // data_structures
@@ -710,21 +703,45 @@ struct Mn32 { signed v = 2147481557; Mn32 operator+(const Mn32& b) const { retur
 #pragma endregion // modified_integers
 
 #pragma endregion
-#pragma endregion
-
-#pragma region ext
-
-v2l adj_list(int n, int m) {
-    v2l adj(n+1);
-    rep(m) { in64(u, v); adj[u].pb(v); adj[v].pb(u); }
-    return adj;
-}
-
 #pragma clang diagnostic pop
 //@formatter:on
 #pragma endregion
 
 
 i32 main() {
-
+    tcRep() {
+        in64(n, k);
+        multiset s; i64 ans = 0;
+        rep(n) s.insert(qin());
+        while(!s.empty()) {
+            i64 cur = *begin(s); s.erase(begin(s));
+            lprint(cur, "");
+            if(s.empty()) break;
+            if(cur >= k) {
+                ans++; lprintln(); continue;
+            }
+            if(Size(s) <= 1) {
+                lprint(*s.begin());
+                break;
+            }
+            auto sec = s.lower_bound(k-cur);
+            if(sec == s.begin()) {
+                lprint(*prev(s.end()), "");
+                ans++; s.erase(prev(end(s)));
+                lprintln(); continue;
+            }
+            lprint(*prev(sec), "");
+            cur += *prev(sec); s.erase(prev(sec));
+            assert(cur < k);
+            if(Size(s) <= 1) {
+                lprint(*s.begin());
+                break;
+            }
+            lprintln(*prev(end(s)));
+            s.erase(prev(end(s)));
+            ans++;
+        }
+        lprintln();
+        println(ans);
+    }
 }

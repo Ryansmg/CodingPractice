@@ -10,7 +10,7 @@
 
 #pragma region C+++
 //@formatter:off
-#define CPPP 250316
+#define CPPP 250309
 #pragma region settings
 
 #pragma clang diagnostic push
@@ -475,9 +475,6 @@ template <typename T, typename T2, typename... T3> requires (sizeof...(T3) > 0)
 inline void setMax(T& tar, const T2 &val, const T3&... arr) { setMax(tar, val); setMax(tar, arr...); }
 
 inline void setAbs(auto& v) { if(v < 0) v *= -1; }
-
-#define yn yn_
-str yn_[] = {"No", "Yes"};
 #pragma endregion
 #pragma region custom_types
 
@@ -498,21 +495,20 @@ public:
 
     inline T& operator[](long long idx) { return this->at(idx); }
     inline const T& operator[](long long idx) const { return this->at(idx); }
-    vec& init() {
+    void init() {
 #ifdef CPPP
         if constexpr(isVector_<T>) {
             for(auto& a : *this) a.init();
         } else
 #endif
         { for(auto& a : *this) std::cin >> a; }
-        return *this;
     }
-    inline vec& fill(const T& v) { forn(i, sz()) operator[](i) = v; return *this; }
+    inline void fill(const T& v) { forn(i, sz()) operator[](i) = v; }
     template <typename Cmp> inline void sort(const Cmp& cmp) { std::sort(this->begin(), this->end(), cmp); }
-    inline vec& sort() { sort(std::less<T>()); return *this; }
+    inline void sort() { sort(std::less<T>()); }
     template <typename Cmp> inline vec sorted(const Cmp& cmp) const { vec r = *this; r.sort(cmp); return r; }
     inline vec sorted() const { return sorted(std::less<T>()); }
-    inline vec& reverse() { std::reverse(this->begin(), this->end()); return *this; }
+    inline void reverse() { std::reverse(this->begin(), this->end()); }
     inline vec reversed() const { vec r = *this; r.reverse(); return r; }
     inline T pop() {
         if(mt()) [[unlikely]] {
@@ -520,9 +516,9 @@ public:
         }
         T r = this->back(); this->pop_back(); return r;
     }
-    inline vec& unique() { this->erase(std::unique(this->begin(), this->end()), this->end()); return *this; }
-    template <typename Cmp> inline vec& compress(const Cmp& cmp) { sort(cmp); return unique(); }
-    inline vec& compress() { return compress(std::less<T>()); }
+    inline void unique() { this->erase(std::unique(this->begin(), this->end()), this->end()); }
+    template <typename Cmp> inline void compress(const Cmp& cmp) { sort(cmp); unique(); }
+    inline void compress() { compress(std::less<T>()); }
     template <typename Cmp> inline vec compressed(const Cmp& cmp) const { vec r = *this; r.compress(cmp); return r; }
     inline vec compressed() const { return compressed(std::less<T>()); }
     template <typename Cmp> inline auto lb(const T& v, const Cmp& cmp) const {
@@ -549,9 +545,9 @@ public:
         vec<T> ret(size); for(long long i = 0; i < size; i++) ret[i] = offset + i;
         return ret;
     }
-    vec& concat(const std::vector<T>& v) { for(const T& t : v) this->push_back(t); return *this; }
-    vec& accumulate() { for(long long i = 1; i < sz(); i++) this->operator[](i) += this->operator[](i-1); return *this; }
-    vec& revAccumulate() { for(long long i = sz()-2; i >= 0; i--) this->operator[](i) += this->operator[](i+1); return *this; }
+    void concat(const std::vector<T>& v) { for(const T& t : v) this->push_back(t); }
+    void accumulate() { for(long long i = 1; i < sz(); i++) this->operator[](i) += this->operator[](i-1); }
+    void revAccumulate() { for(long long i = sz()-2; i >= 0; i--) this->operator[](i) += this->operator[](i+1); }
 };
 template<> class vec<bool> : public std::vector<bool> {
 public:
@@ -710,21 +706,191 @@ struct Mn32 { signed v = 2147481557; Mn32 operator+(const Mn32& b) const { retur
 #pragma endregion // modified_integers
 
 #pragma endregion
-#pragma endregion
-
-#pragma region ext
-
-v2l adj_list(int n, int m) {
-    v2l adj(n+1);
-    rep(m) { in64(u, v); adj[u].pb(v); adj[v].pb(u); }
-    return adj;
-}
-
 #pragma clang diagnostic pop
 //@formatter:on
 #pragma endregion
 
+/// 1/0 == infinity, -1/0 == -infinity (only comparisons are available)
+class Frac {
+    inline void reduction() { long long g = std::gcd(numerator, denominator); numerator /= g; denominator /= g; }
+    inline void checkDivZ() const { if(denominator == 0) { std::cerr << "Cannot divide by zero!\n"; exit(1); } }
+    inline void checkDivZ(const Frac& a) const { checkDivZ(); a.checkDivZ(); }
+public:
+    long long numerator = 0; // 분자
+    long long denominator = 1; // 분모 (항상 >= 0, 0인 경우 abs(분자) == 1)
+    Frac() = default;
+    explicit Frac(long long i) : numerator(i), denominator(1) {}
+    Frac(long long Numerator, long long Denominator) : numerator(Numerator), denominator(Denominator) {
+        if(denominator < 0) numerator *= -1, denominator *= -1;
+        reduction();
+    }
+    template <typename T> explicit operator T() { return static_cast<T>(numerator) / static_cast<T>(denominator); }
+    inline Frac& operator+=(const Frac& b) { checkDivZ(b);
+        long long l = std::lcm(denominator, b.denominator);
+        numerator *= l / denominator; numerator += b.numerator * (l / b.denominator);
+        denominator = l; reduction(); return *this;
+    }
+    inline Frac& operator+=(const long long& i) { checkDivZ(); numerator += i * denominator; return *this; }
+    inline Frac operator+(const Frac& b) const { checkDivZ(b); Frac ret = *this; ret += b; return ret; }
+    inline Frac operator+(const long long& i) const { checkDivZ(); Frac ret = *this; ret += i; return ret; }
+    inline Frac& operator-=(const Frac& b) {checkDivZ(b);
+        long long l = std::lcm(denominator, b.denominator);
+        numerator *= l / denominator; numerator -= b.numerator * (l / b.denominator);
+        denominator = l; reduction(); return *this;
+    }
+    inline Frac& operator-=(const long long& i) { checkDivZ(); numerator -= i * denominator; return *this; }
+    inline Frac operator-(const Frac& b) const { checkDivZ(b);  Frac ret = *this; ret -= b; return ret; }
+    inline Frac operator-(const long long& i) const { checkDivZ(); Frac ret = *this; ret -= i; return ret; }
+    inline Frac& operator*=(const Frac& b) { checkDivZ(b);
+        numerator *= b.numerator; denominator *= b.denominator;
+        reduction(); return *this;
+    }
+    inline Frac& operator*=(const long long& i) { checkDivZ(); numerator *= i; reduction(); return *this; }
+    inline Frac operator*(const Frac& b) const { checkDivZ(b); Frac ret = *this; ret *= b; return ret; }
+    inline Frac operator*(const long long& i) const { checkDivZ(); Frac ret = *this; ret *= i; return ret; }
+    inline Frac& operator/=(const Frac& b) { checkDivZ(b);
+        assert(b.numerator); // cannot divide by 0
+        numerator *= b.denominator; denominator *= b.numerator;
+        reduction(); return *this;
+    }
+    inline Frac& operator/=(const long long& i) { checkDivZ();
+        assert(i); // cannot divide by 0
+        denominator *= i; reduction(); return *this;
+    }
+    inline Frac operator/(const Frac& b) const { checkDivZ(b); Frac ret = *this; ret /= b; return ret; }
+    inline Frac operator/(const long long& i) const { checkDivZ(); Frac ret = *this; ret /= i; return ret; }
+    inline bool operator==(const Frac& b) const { return numerator == b.numerator && denominator == b.denominator; }
+    inline bool operator!=(const Frac& b) const { return numerator != b.numerator || denominator != b.denominator; }
+    inline bool operator<(const Frac& b) const {
+        if(!denominator && !b.denominator) return numerator < b.numerator;
+        return numerator * b.denominator < b.numerator * denominator;
+    }
+    inline bool operator<=(const Frac& b) const {
+        if(!denominator && !b.denominator) return numerator <= b.numerator;
+        return numerator * b.denominator <= b.numerator * denominator;
+    }
+    inline bool operator>(const Frac& b) const {
+        if(!denominator && !b.denominator) return numerator > b.numerator;
+        return numerator * b.denominator > b.numerator * denominator;
+    }
+    inline bool operator>=(const Frac& b) const {
+        if(!denominator && !b.denominator) return numerator >= b.numerator;
+        return numerator * b.denominator >= b.numerator * denominator;
+    }
+
+    inline bool operator==(const long long& b) const { return numerator == b && denominator == 1; }
+    inline bool operator!=(const long long& b) const { return numerator != b || denominator != 1; }
+    inline bool operator<(const long long& b) const { return !denominator ? numerator < 0 : numerator < b * denominator; }
+    inline bool operator<=(const long long& b) const { return denominator && numerator <= b * denominator; }
+    inline bool operator>(const long long& b) const { return !denominator ? numerator > 0 : numerator > b * denominator; }
+    inline bool operator>=(const long long& b) const { return denominator && numerator >= b * denominator; }
+    friend inline Frac operator+(const long long& a, const Frac& b) { Frac ret(a); ret += b; return ret; }
+    friend inline Frac operator-(const long long& a, const Frac& b) { Frac ret(a); ret -= b; return ret; }
+    friend inline Frac operator*(const long long& a, const Frac& b) { Frac ret(a); ret *= b; return ret; }
+    friend inline Frac operator/(const long long& a, const Frac& b) { Frac ret(a); ret /= b; return ret; }
+    friend inline bool operator==(const long long &a, const Frac& b) { return b.numerator == a && b.denominator == 1; }
+    friend inline bool operator!=(const long long &a, const Frac& b) { return b.numerator != a || b.denominator != 1; }
+    friend inline bool operator<(const long long &a, const Frac& b) { return !b.denominator ? 0 < b.numerator : a * b.denominator < b.numerator; }
+    friend inline bool operator<=(const long long &a, const Frac& b) { return b.denominator && a * b.denominator <= b.numerator; }
+    friend inline bool operator>(const long long &a, const Frac& b) { return !b.denominator ? 0 > b.numerator : a * b.denominator > b.numerator; }
+    friend inline bool operator>=(const long long &a, const Frac& b) { return b.denominator && a * b.denominator >= b.numerator; }
+};
+
+
+
+long double Gprecision = 1e-6;
+bool Geq(const long double& a, const long double& b) { return abs(a-b) <= Gprecision; }
+
+template <typename T = long long> class GPoint {
+public:
+    T x = T(), y = T(), w = T();
+    std::tuple<T, T> toTuple() { return {x, y}; }
+    template <typename T2> explicit operator GPoint<T2>() const { return GPoint<T2>(static_cast<T2>(x), static_cast<T2>(y)); }
+    T distSq(const GPoint& b) const { return sq_(x-b.x)+sq_(y-b.y); }
+    long double dist(const GPoint& b) const { return sqrt(static_cast<long double>(distSq(b))); }
+    bool operator<(const GPoint& b) const { return x == b.x ? y < b.y : x < b.x; }
+    bool operator==(const GPoint& b) const {
+        if constexpr(std::is_integral_v<T>) return x == b.x && y == b.y;
+        else return Geq(static_cast<long double>(x), static_cast<long double>(b.x)) && Geq(static_cast<long double>(y), static_cast<long double>(b.y));
+    }
+    template <typename T2> requires (!std::is_same_v<T, T2>) bool operator==(const GPoint<T2>& b) const {
+        return Geq(static_cast<long double>(x), static_cast<long double>(b.x)) && Geq(static_cast<long double>(y), static_cast<long double>(b.y));
+    }
+};
+template <typename T> __int128 product(const GPoint<T>& p1, const GPoint<T>& p2, const GPoint<T>& p3) { return __int128(p2.x-p1.x) * (p3.y-p1.y) - __int128(p3.x-p1.x) * (p2.y-p1.y); }
+
+struct GoldMine {
+    i64 l, r, v, s;
+    GoldMine() : l(0), r(0), v(-INF), s(0) {}
+    explicit GoldMine(i64 i) : l(i), r(i), v(i), s(i) {}
+    GoldMine(i64 a, i64 b, i64 c, i64 d) : l(a), r(b), v(c), s(d) {}
+    GoldMine operator+(const GoldMine& b) const {
+        return {max(l, s + b.l), max(b.r, r+b.s), max({v, b.v, r + b.l}), s + b.s};
+    }
+};
 
 i32 main() {
-
+    in64(n);
+    vec<GPoint<i64>> points;
+    rep(n) points.eb(qin(3));
+    sort(points);
+    vec<tuple<Frac, i64, i64>> lines;
+    forn(i, n) forf(j, i+1, n-1) lines.eb(Frac(points[j].y-points[i].y, points[j].x - points[i].x), i, j);
+    sort(lines);
+    vec<GoldMine> gm(n);
+    vec pos(n);
+    forn(i, n) {
+        pos[i] = i;
+        gm[i] = GoldMine(points[i].w);
+    }
+    segtree<GoldMine> seg(gm);
+    i64 ans = 0;
+    for(i64 i = 0, j = 0; i < Size(lines); i = j) {
+        vb vis(n, false), vis2(n);
+        while(j < Size(lines) && get<0>(lines[i]) == get<0>(lines[j])) j++;
+        forf(k, i, j-1) {
+            i64 a = get<1>(lines[k]), b = get<2>(lines[k]);
+            swap(pos[a], pos[b]); swap(points[pos[a]], points[pos[b]]);
+            auto temp = seg.query(pos[a]+1);
+            seg.set(pos[a]+1, seg.query(pos[b]+1));
+            seg.set(pos[b]+1, temp);
+            vis[a] = vis[b] = true;
+//            if(pos[a] > pos[b]) swap(a, b);
+//            if(pos[a] > 0) {
+//                setMin(mn, abs(product(points[pos[a]], points[pos[b]], points[pos[a]-1])));
+//                setMax(mx, abs(product(points[pos[a]], points[pos[b]], points[0])));
+//            }
+//            if(pos[b] < n - 1) {
+//                setMin(mn, abs(product(points[pos[a]], points[pos[b]], points[pos[b]+1])));
+//                setMax(mx, abs(product(points[pos[a]], points[pos[b]], points[n - 1])));
+//            }
+        }
+        for(auto w : seg.getLeafs()) lprintes(w.l);
+        lprintln();
+        GoldMine t; bool flag = true;
+        forn(k, n) vis2[pos[k]] = vis[k];
+        forn(k, n) {
+            if(vis2[k]) {
+                i64 l = k;
+                GoldMine cans(points[k].w);
+                i64 ts = points[k].w;
+                while(k < n-1 && vis2[k+1]) ts += points[++k].w, cans = cans + GoldMine(points[k].w);
+                setMax(ans, cans.v);
+                lprintln("1:", l, k, ts, ts, ts, ts);
+                if(flag) t = GoldMine(ts), flag = false;
+                else t = t + GoldMine(ts);
+                if(l == 0 && k == n-1) setMax(ans, cans.v);
+            } else {
+                i64 l = k, r = k;
+                while(k < n-1 && !vis2[k+1]) r = ++k;
+                auto q = seg.query(l+1, r+1);
+                lprintln("2:", l, r, q.l, q.r, q.v, q.s);
+                if(flag) t = q, flag = false;
+                else t = t + q;
+            }
+        }
+        lprintln(t.v);
+        setMax(ans, t.v);
+    }
+    println(ans);
 }
