@@ -12,7 +12,7 @@
 #define sp " "
 #define kiok2 cout
 #define varn int
-#include iopt
+#include iopt"iostream"
 #define x <<
 #define p cout x
 #define x2 >>
@@ -21,7 +21,7 @@
 #define himp :
 #define pc %
 #define imp ::
-#include vpat
+#include vpat"vector"
 #define ustdwoc std
 #define ustd ustdwoc imp
 #define z 0
