@@ -266,30 +266,20 @@ template <typename T> inline void setAbs(T& v) { if(v < 0) v *= -1; }
 #pragma endregion
 #pragma endregion
 
+i64 n, ia, ib, q, ans = 2147483647;
+vec<i64> arr;
+
+void solve(i64 i, i64 a, i64 b, i64 cnt) {
+    if(i == q) setMin(ans, cnt);
+    else if(arr[i] <= a) solve(i+1, arr[i], b, cnt + a - arr[i]);
+    else if(arr[i] >= b) solve(i+1, a, arr[i], cnt + arr[i] - b);
+    else solve(i+1, a, arr[i], cnt + b - arr[i]),
+                solve(i+1, arr[i], b, cnt + arr[i] - a);
+}
 
 i32 main() {
-    in64(n);
-    vec<vec<i64>> dp(n+2, vec<i64>(n+2));
-    vec<i64> x(n+1), jmp(n+1), st(n+1);
-    forn(i, n) input(x[i], jmp[i], st[i]);
-    x[n] = INF;
-    dp[0][0] = 1;
-    forn(i, n) { // ->
-        forn(j, n) { // <-
-            if(!dp[i][j]) continue;
-            if(i <= j) {
-                forf(k, i+1, n-1) {
-                    if(k == j && k != n-1) continue;
-                    if(x[k] - x[i] <= jmp[i]) dp[k][j] += dp[i][j];
-                }
-            }
-            if(j < i){
-                forf(k, j+1, n-1) {
-                    if(k == i && k != n-1) continue;
-                    if(x[k] - x[j] <= jmp[k] && st[k]) dp[i][k] += dp[i][j];
-                }
-            }
-        }
-    }
-    println(dp[n-1][n-1] ? to_string(dp[n-1][n-1]) : "I will solve 1000 problems.");
+    input(n, ia, ib, q);
+    arr.resize(q); forn(i, q) input(arr[i]);
+    solve(0, ia, ib, 0);
+    println(ans);
 }

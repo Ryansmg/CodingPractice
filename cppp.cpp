@@ -726,5 +726,5 @@ v2l adj_list(int n, int m) {
 
 
 i32 main() {
-
+    
 }

@@ -266,30 +266,25 @@ template <typename T> inline void setAbs(T& v) { if(v < 0) v *= -1; }
 #pragma endregion
 #pragma endregion
 
+i64 ans = 0, n, k;
+
+void solve(i64 mask, i64 cur) {
+    if(popcount(mask) > k) return;
+    if(cur == 0) {
+        solve(mask, cur+1);
+        solve(mask | (1 << cur), cur+1);
+        return;
+    }
+    if(cur == n) {
+        ans += ( !(mask & 1 << (n-1)) || !(mask & 1) ) && popcount(mask) == k;
+        return;
+    }
+    if(!(mask & (1 << (cur-1)))) solve(mask | (1 << cur), cur+1);
+    solve(mask, cur+1);
+}
 
 i32 main() {
-    in64(n);
-    vec<vec<i64>> dp(n+2, vec<i64>(n+2));
-    vec<i64> x(n+1), jmp(n+1), st(n+1);
-    forn(i, n) input(x[i], jmp[i], st[i]);
-    x[n] = INF;
-    dp[0][0] = 1;
-    forn(i, n) { // ->
-        forn(j, n) { // <-
-            if(!dp[i][j]) continue;
-            if(i <= j) {
-                forf(k, i+1, n-1) {
-                    if(k == j && k != n-1) continue;
-                    if(x[k] - x[i] <= jmp[i]) dp[k][j] += dp[i][j];
-                }
-            }
-            if(j < i){
-                forf(k, j+1, n-1) {
-                    if(k == i && k != n-1) continue;
-                    if(x[k] - x[j] <= jmp[k] && st[k]) dp[i][k] += dp[i][j];
-                }
-            }
-        }
-    }
-    println(dp[n-1][n-1] ? to_string(dp[n-1][n-1]) : "I will solve 1000 problems.");
+    input(n, k);
+    solve(0, 0);
+    println(ans);
 }

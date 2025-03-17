@@ -266,30 +266,27 @@ template <typename T> inline void setAbs(T& v) { if(v < 0) v *= -1; }
 #pragma endregion
 #pragma endregion
 
+// 1 2 3
+// 4 5 6
+
+i64 mod = 2052506102;
 
 i32 main() {
     in64(n);
-    vec<vec<i64>> dp(n+2, vec<i64>(n+2));
-    vec<i64> x(n+1), jmp(n+1), st(n+1);
-    forn(i, n) input(x[i], jmp[i], st[i]);
-    x[n] = INF;
-    dp[0][0] = 1;
-    forn(i, n) { // ->
-        forn(j, n) { // <-
-            if(!dp[i][j]) continue;
-            if(i <= j) {
-                forf(k, i+1, n-1) {
-                    if(k == j && k != n-1) continue;
-                    if(x[k] - x[i] <= jmp[i]) dp[k][j] += dp[i][j];
-                }
-            }
-            if(j < i){
-                forf(k, j+1, n-1) {
-                    if(k == i && k != n-1) continue;
-                    if(x[k] - x[j] <= jmp[k] && st[k]) dp[i][k] += dp[i][j];
-                }
-            }
-        }
+    vl linDp(20);
+    linDp[0] = 1;
+    forf(i, 1, 18) {
+        linDp[i] += linDp[i-1];
+        if(i > 1) linDp[i] += linDp[i-2];
+        if(i > 2) linDp[i] += linDp[i-3];
     }
-    println(dp[n-1][n-1] ? to_string(dp[n-1][n-1]) : "I will solve 1000 problems.");
+    i64 ans = 0;
+    forn(mask, 1<<n) { // 세로 1x2 조각이 있는 위치
+        vl arr(1, -1); i64 cans = 1;
+        forn(j, n) if(mask & (1 << j)) arr.pb(j);
+        arr.pb(n);
+        forn(j, Size(arr)-1) cans = cans * sq_(linDp[arr[j+1] - arr[j] - 1]) % mod;
+        ans = ans + cans % mod;
+    }
+    println(ans);
 }

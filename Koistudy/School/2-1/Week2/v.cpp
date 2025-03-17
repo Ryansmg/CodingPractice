@@ -266,30 +266,58 @@ template <typename T> inline void setAbs(T& v) { if(v < 0) v *= -1; }
 #pragma endregion
 #pragma endregion
 
+struct ii {
+    i64 a, b;
+    ii()=default;
+    ii(i64 c, i64 d) : a(c), b(d) {}
+    i64 operator()(const ii &other) const {
+        return abs(a-other.a)+abs(b-other.b);
+    }
+};
 
 i32 main() {
-    in64(n);
-    vec<vec<i64>> dp(n+2, vec<i64>(n+2));
-    vec<i64> x(n+1), jmp(n+1), st(n+1);
-    forn(i, n) input(x[i], jmp[i], st[i]);
-    x[n] = INF;
-    dp[0][0] = 1;
-    forn(i, n) { // ->
-        forn(j, n) { // <-
-            if(!dp[i][j]) continue;
-            if(i <= j) {
-                forf(k, i+1, n-1) {
-                    if(k == j && k != n-1) continue;
-                    if(x[k] - x[i] <= jmp[i]) dp[k][j] += dp[i][j];
+    i64 n = input();
+    i64 w = input();
+    vec<ii> v; i64 a, b;
+    forn(i, w) {
+        input(a, b); v.emplace_back(a, b);
+    }
+    v2l dp(w+2, vl(w+2, INF)); // [w]: 1, [w+1] : 2
+    vec<vec<ii>> pre(w+2, vector<ii>(w+2, {INF, INF}));
+    ii A(1, 1), B(n, n);
+    dp[0][w+1] = A(v[0]); dp[w][0] = B(v[0]);
+    pre[0][w+1] = {w, w+1}; pre[w][0] = {w, w+1};
+    v.emplace_back(A); v.emplace_back(B);
+    i64 ans = INF;
+    forf(i, 1, w-1) {
+        forn(j, w+2) {
+            if(dp[i-1][j] != INF) {
+                if(dp[i][j] > dp[i-1][j] + v[i-1](v[i])) {
+                    dp[i][j] = dp[i-1][j] + v[i-1](v[i]);
+                    pre[i][j] = {i-1, j};
+                }
+                if(dp[i-1][i] > dp[i-1][j] + v[j](v[i])) {
+                    dp[i-1][i] = dp[i-1][j] + v[j](v[i]);
+                    pre[i-1][i] = { i-1, j };
                 }
             }
-            if(j < i){
-                forf(k, j+1, n-1) {
-                    if(k == i && k != n-1) continue;
-                    if(x[k] - x[j] <= jmp[k] && st[k]) dp[i][k] += dp[i][j];
+            if(dp[j][i-1] != INF) {
+                if(dp[j][i] > dp[j][i-1] + v[i-1](v[i])) {
+                    dp[j][i] = dp[j][i-1] + v[i-1](v[i]);
+                    pre[j][i] = { j, i-1 };
+                }
+                if(dp[i][i-1] > dp[j][i-1] + v[i](v[j])) {
+                    dp[i][i-1] = dp[j][i-1] + v[i](v[j]);
+                    pre[i][i-1] = { j, i-1 };
                 }
             }
         }
     }
-    println(dp[n-1][n-1] ? to_string(dp[n-1][n-1]) : "I will solve 1000 problems.");
+    ii r(0, 0);
+    forn(j, w+2) {
+        ans = min({ans, dp[w-1][j], dp[j][w-1]});
+        if(ans == dp[w-1][j]) r = {w-1, j};
+        else if(ans == dp[j][w-1]) r = {j, w-1};
+    }
+    println(ans);
 }

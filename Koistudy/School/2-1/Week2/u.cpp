@@ -268,28 +268,36 @@ template <typename T> inline void setAbs(T& v) { if(v < 0) v *= -1; }
 
 
 i32 main() {
-    in64(n);
-    vec<vec<i64>> dp(n+2, vec<i64>(n+2));
-    vec<i64> x(n+1), jmp(n+1), st(n+1);
-    forn(i, n) input(x[i], jmp[i], st[i]);
-    x[n] = INF;
-    dp[0][0] = 1;
-    forn(i, n) { // ->
-        forn(j, n) { // <-
-            if(!dp[i][j]) continue;
-            if(i <= j) {
-                forf(k, i+1, n-1) {
-                    if(k == j && k != n-1) continue;
-                    if(x[k] - x[i] <= jmp[i]) dp[k][j] += dp[i][j];
-                }
+    in64(p, f);
+    vec<vec<i64>> dp(p+f+10);
+    vec<pair<i64, i64>> pumps(p), trucks(f);
+    forn(i, p) pumps[i] = {input(), 0};
+    forn(i, f) trucks[i] = {input(), 1};
+    vec<pair<i64, i64>> all = merge(pumps, trucks);
+    i64 dep = f+3;
+    forn(i, p+f) {
+        if(!all[i].second) dp[dep++].pb(all[i].first);
+        else dp[--dep].pb(all[i].first);
+    }
+    i64 ans = 0;
+    forn(i, p+f+6) {
+        if(!(Size(dp[i]) & 1)) {
+            forn(j, Size(dp[i])) {
+                if(j&1) ans += dp[i][j];
+                else ans -= dp[i][j];
             }
-            if(j < i){
-                forf(k, j+1, n-1) {
-                    if(k == i && k != n-1) continue;
-                    if(x[k] - x[j] <= jmp[k] && st[k]) dp[i][k] += dp[i][j];
-                }
+        } else {
+            i64 cur; i64 cans = INF;
+            vec<i64> a, b;
+            for(i64 j = 1; j < Size(dp[i]); j += 2) {
+                a.pb(dp[i][j] - dp[i][j-1]);
+                b.pb(dp[i][j+1] - dp[i][j]);
             }
+            cur = sum(a);
+            setMin(cans, cur);
+            forr(j, Size(b)-1, 0) cur += b[j] - a[j], setMin(cans, cur);
+            ans += cans;
         }
     }
-    println(dp[n-1][n-1] ? to_string(dp[n-1][n-1]) : "I will solve 1000 problems.");
+    println(ans);
 }

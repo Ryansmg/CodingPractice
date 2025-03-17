@@ -266,30 +266,38 @@ template <typename T> inline void setAbs(T& v) { if(v < 0) v *= -1; }
 #pragma endregion
 #pragma endregion
 
-
 i32 main() {
     in64(n);
-    vec<vec<i64>> dp(n+2, vec<i64>(n+2));
-    vec<i64> x(n+1), jmp(n+1), st(n+1);
-    forn(i, n) input(x[i], jmp[i], st[i]);
-    x[n] = INF;
-    dp[0][0] = 1;
-    forn(i, n) { // ->
-        forn(j, n) { // <-
-            if(!dp[i][j]) continue;
-            if(i <= j) {
-                forf(k, i+1, n-1) {
-                    if(k == j && k != n-1) continue;
-                    if(x[k] - x[i] <= jmp[i]) dp[k][j] += dp[i][j];
+    if(n == 1) {
+        println(input());
+        return 0;
+    }
+    vec<i64> arr(n); forn(i, n) input(arr[i]);
+    vec<i64> dp(1<<n, inf);
+    dp.back() = 0;
+    forr(i, n, 3) {
+        forn(j, 1<<n) {
+            if(popcount(j) != i) continue;
+            forn(i1, n) forf(i2, i1+1, n-1) {
+                    if((j & (1 << i1)) == 0 || (j & (1 << i2)) == 0) continue;
+                    setMin(dp[j ^ (1 << i1)], dp[j] + max(arr[i1], arr[i2]) + arr[i2]);
+                    setMin(dp[j ^ (1 << i2)], dp[j] + max(arr[i1], arr[i2]) + arr[i1]);
+                    forn(i3, n) {
+                        if(!(j & (1 << i3))) {
+                            setMin(dp[j ^ (1 << i1) ^ (1 << i2) ^ (1 << i3)], dp[j] + max(arr[i1], arr[i2]) + arr[i3]);
+                        }
+                    }
                 }
-            }
-            if(j < i){
-                forf(k, j+1, n-1) {
-                    if(k == i && k != n-1) continue;
-                    if(x[k] - x[j] <= jmp[k] && st[k]) dp[i][k] += dp[i][j];
-                }
-            }
         }
     }
-    println(dp[n-1][n-1] ? to_string(dp[n-1][n-1]) : "I will solve 1000 problems.");
+    i64 ans = inf;
+    forn(j, 1<<n) {
+        if(popcount(j) == 2) {
+            i64 mx = arr[lmb(j)];
+            i64 lsb = j ^ (1 << lmb(j));
+            setMax(mx, arr[lmb(lsb)]);
+            setMin(ans, dp[j] + mx);
+        }
+    }
+    println(ans);
 }
