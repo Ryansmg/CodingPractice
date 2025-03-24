@@ -10,7 +10,7 @@
 
 #pragma region C+++
 //@formatter:off
-#define CPPP 250324
+#define CPPP 250316
 #pragma region settings
 
 #pragma clang diagnostic push
@@ -39,8 +39,44 @@
 #endif
 #pragma endregion
 #pragma region headers
-#include <x86intrin.h>
-#include <bits/stdc++.h>
+#include <cassert>
+#include <climits>
+#include <cstdarg>
+#include <cstddef>
+#include <cstdlib>
+#include <cstdint>
+#include <algorithm>
+#include <bitset>
+#include <functional>
+#include <limits>
+#include <memory>
+#include <new>
+#include <numeric>
+#include <utility>
+#include <array>
+#include <initializer_list>
+#include <tuple>
+#include <bit>
+#include <concepts>
+#include <ranges>
+#include <complex>
+#include <deque>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <list>
+#include <map>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <span>
+#include <string>
+#include <vector>
+#include <random>
+#include <unordered_map>
+#include <unordered_set>
+#include <valarray>
 #include <ext/pb_ds/assoc_container.hpp>
 #include <ext/pb_ds/tree_policy.hpp>
 #include <ext/rope>
@@ -329,30 +365,24 @@ template <typename T> concept isVector1_ = (isVector_<T> && !isVector2_<T>) || i
 std::string tostr(const __int128&);
 
 struct Printf {
-    std::string sep = " ", end; signed prec = -1, width = -1; char fill = ' '; bool exit = false, local = false, flush = false;
+    std::string sep = " ", end; signed prec = -1, width = -1; char fill = ' '; bool exit = false, local = false;
     inline void operator()() const {
 #ifndef LOCAL
         if(local) return;
 #endif
         std::cout << end;
         if(exit) std::exit(0);
-        if(flush) cout.flush();
     }
     template <typename ...T> requires (sizeof...(T) > 0) inline void operator()(const T&... v_) {
 #ifdef LOCAL
         pr_(v_...);
-        if(flush) cout.flush();
 #else
-        if(!local) {
-            pr_(v_...);
-            if(flush) cout.flush();
-        }
+        if(!local) pr_(v_...);
 #endif
     }
     Printf& appendEnd(const std::string& end_) { end += end_; return *this; }
     Printf& setExit() { exit = true; return *this; }
     Printf& setLocal() { local = true; return *this; }
-    Printf& setFlush() { flush = true; return *this; }
 private:
     inline void preset_() const {
         std::cout << std::fixed;
@@ -394,7 +424,6 @@ private:
 #define rprintln(...) PrfDef_rprintln_(__VA_ARGS__)
 #define printes(...) PrfDef_printes_(__VA_ARGS__)
 #define lprintes(...) printf().setLocal().appendEnd(" ")(__VA_ARGS__)
-#define flprintln(...) printfln().setFlush()(__VA_ARGS__)
 
 #ifdef LOCAL
 #define lprintvar(...) lprintvar_(#__VA_ARGS__, __VA_ARGS__)
@@ -581,6 +610,7 @@ template <typename T2, typename T1> inline vec<T2> castVec(const vec<T1>& arr) {
 #endif
 #pragma endregion
 
+
 /// requirements: (T + T), add -> (T += AddType)
 /// 1-based index (for default)
 template <typename T = long long, typename AddType = T>
@@ -689,6 +719,8 @@ struct Mn32 { signed v = 2147481557; Mn32 operator+(const Mn32& b) const { retur
 #pragma endregion // modified_integers
 
 #pragma endregion
+#pragma endregion
+
 #pragma region ext
 
 v2l adj_list(int n, int m) {
@@ -697,123 +729,55 @@ v2l adj_list(int n, int m) {
     return adj;
 }
 
-#pragma endregion
 #pragma clang diagnostic pop
 //@formatter:on
 #pragma endregion
 
-class Bitset {
-    size_t l = 0, wl = 0; std::vector<unsigned __int128> m;
-public:
-    class ref {
-        Bitset* p; size_t wi, bi;
-    public:
-        inline explicit ref(Bitset* p, size_t idx) : p(p), wi(idx/128), bi(idx%128) {}
-        inline ref& flip() { p->m[wi] ^= (__int128(1) << bi); return *this; }
-        inline operator bool() const { return p->m[wi] & (__int128(1) << bi); } // NOLINT(*-explicit-constructor)
-        inline ref& operator=(bool b) {
-            if(b) p->m[wi] |= (__int128(1) << bi);
-            else p->m[wi] &= ~(__int128(1) << bi);
-            return *this;
+#define tryGet(arr, idx) (idx < 0 || idx >= Size(arr) ? 0 : arr[idx])
+
+i32 n1, n2; // 가로, 세로
+str s1, s2;
+vi dp1, dp2, dp3, dp4;
+
+str lcs(i32 l1, i32 r1, i32 l2, i32 r2) {
+    if(l1 == r1) {
+        forf(i, l2, r2) if(s2[i] == s1[l1]) return str(1, s1[l1]);
+        return "";
+    }
+    if(l2 == r2) {
+        forf(i, l1, r1) if(s1[i] == s2[l2]) return str(1, s2[l2]);
+        return "";
+    }
+    i32 m2 = (l2 + r2) / 2;
+    forf(i, l1, r1) dp1[i] = dp2[i] = dp3[i] = dp4[i] = 0;
+    if(l1) dp1[l1-1] = dp2[l1-1] = dp3[l1-1] = dp4[l1-1] = 0;
+    if(r1 < n1-1) dp1[r1+1] = dp2[r1+1] = dp3[r1+1] = dp4[r1+1] = 0;
+    forf(i, l2, m2) {
+        forf(j, l1, r1) {
+            dp2[j] = max({tryGet(dp2, j-1), dp1[j], tryGet(dp1, j-1) + (s1[j] == s2[i])});
         }
-        inline ref& operator=(const ref& b) { operator=(static_cast<bool>(b)); return *this; }
-    };
-    Bitset() = default;
-    explicit Bitset(size_t sz) : l(sz), wl((sz+127)/128), m((sz+127)/128, 0) { }
-    explicit Bitset(size_t sz, __int128 value) : Bitset(sz) { m[0] = value; }
-    static Bitset of(__int128 value) { return Bitset(128, value); }
-    static Bitset of(unsigned __int128 value) { return Bitset(128, value); }
-    static Bitset of(long long value) { return Bitset(64, value); }
-    static Bitset of(unsigned long long value) { return Bitset(64, value); }
-    static Bitset of(signed value) { return Bitset(32, value); }
-    static Bitset of(unsigned value) { return Bitset(32, value); }
-    Bitset& flip() { for(auto& i : m) i = ~i; return *this; }
-    inline Bitset& flip(size_t pos) { m[pos/128] ^= (__int128(1) << (pos % 128)); return *this; }
-    inline bool operator[](size_t i) const { return !!(m[i/128] & (__int128(1) << (i%128))); }
-    inline ref operator[](size_t i) { return ref(this, i); }
-
-    long long count() const {
-        long long r = 0; using ull = unsigned long long;
-        for(size_t i = 0; i < wl; i++)
-            r += __builtin_popcountll(static_cast<ull>(m[i]))
-                 + __builtin_popcountll(static_cast<ull>(m[i] >> 64));
-        return r;
+        swap(dp1, dp2);
     }
-
-#define bs_op_(o) \
-    Bitset& operator o (const Bitset& v) { \
-        size_t ml = std::min(wl, v.wl);           \
-        for(size_t i = 0; i < ml; i++) m[i] o v.m[i]; \
-        return *this; \
-    }
-    bs_op_(&=) bs_op_(|=) bs_op_(^=)
-#define bs_op_2_(o) \
-    inline Bitset operator o (const Bitset& v) const { \
-        Bitset r = *this; r o##= v; return r; \
-    }
-
-    Bitset operator~() const { Bitset r(*this); r.flip(); return r; }
-
-    Bitset& operator+=(const Bitset& v) {
-        size_t ml = std::min(wl, v.wl);
-        bool carry = false;
-        for (size_t i = 0; i < ml; i++) {
-            unsigned __int128 t;
-            bool of = __builtin_add_overflow(m[i], v.m[i], &t);
-            if (carry) of |= __builtin_add_overflow(t, 1, &t);
-            m[i] = t; carry = of;
+    forr(i, r2, m2+1) {
+        forr(j, r1, l1) {
+            dp3[j] = max({tryGet(dp3, j+1), dp4[j], tryGet(dp4, j+1) + (s1[j] == s2[i])});
         }
-        return *this;
+        swap(dp3, dp4);
     }
-
-    Bitset& operator-=(const Bitset& v) {
-        size_t ml = std::min(wl, v.wl);
-        bool br = false;
-        for (size_t i = 0; i < ml; i++) {
-            unsigned __int128 t;
-            bool of = __builtin_sub_overflow(m[i], v.m[i], &t);
-            if (br) of |= __builtin_sub_overflow(t, 1, &t);
-            m[i] = t; br = of;
-        }
-        return *this;
+    i64 mx = -1, mxi = -1;
+    forf(i, l1, r1-1) {
+        if(mx < dp1[i] + dp4[i+1]) mxi = i, mx = dp1[i] + dp4[i+1];
     }
-
-    Bitset& operator<<=(size_t shift) {
-        if (shift == 0) return *this;
-        long long ws = shift / 128, bs = shift % 128;
-        if (ws >= static_cast<long long>(wl)) { std::fill(m.begin(), m.end(), 0); return *this; }
-        for (long long i = wl - 1; i >= ws; --i) {
-            m[i] = m[i - ws] << bs;
-            if (i > ws && bs) m[i] |= m[i - ws - 1] >> (128 - bs);
-        }
-        std::fill(m.begin(), m.begin() + ws, 0);
-        return *this;
-    }
-
-    Bitset& operator>>=(size_t shift) {
-        if (shift == 0) return *this;
-        long long ws = shift / 128, bs = shift % 128;
-        if (ws >= static_cast<long long>(wl)) { std::fill(m.begin(), m.end(), 0); return *this; }
-        for (long long i = 0; i < static_cast<long long>(wl - ws); ++i) {
-            m[i] = m[i + ws] >> bs;
-            if (i + ws + 1 < static_cast<long long>(wl) && bs) m[i] |= m[i + ws + 1] << (128 - bs);
-        }
-        std::fill(m.end() - ws, m.end(), 0);
-        return *this;
-    }
-
-    bs_op_2_(&) bs_op_2_(|) bs_op_2_(^) bs_op_2_(+) bs_op_2_(-)
-
-    inline Bitset operator<<(size_t shift) const { Bitset r(*this); r <<= shift; return r; }
-    inline Bitset operator>>(size_t shift) const { Bitset r(*this); r >>= shift; return r; }
-
-    friend std::ostream& operator<<(std::ostream& out, const Bitset& v) {
-        for(long long i=v.l-1; i>=0; i--) out << ((v.m[i/128] & (__int128(1) << (i % 128))) ? 1 : 0);
-        return out;
-    }
-};
-
+    if(dp4[l1] > mx) return lcs(l1, r1, m2+1, r2);
+    if(dp1[r1] > mx) return lcs(l1, r1, l2, m2);
+    return lcs(l1, mxi, l2, m2) + lcs(mxi+1, r1, m2+1, r2);
+}
 
 i32 main() {
-
+    s1 = inStr(); s2 = inStr();
+    n1 = Size(s1); n2 = Size(s2);
+    dp1 = dp2 = dp3 = dp4 = vi(n1);
+    str ans = lcs(0, n1-1, 0, n2-1);
+    println(ans.length());
+    println(ans);
 }

@@ -266,16 +266,20 @@ template <typename T> inline void setAbs(T& v) { if(v < 0) v *= -1; }
 #pragma endregion
 #pragma endregion
 
-i64 T(i64 n, i64 r) {
-    if(r == 3) return (1LL << n) - 1;
-    if(n == 1) return 1;
-    i64 k = n - round(sqrt(2*n+1)) + 1;
-    return 2 * T(k, r) + T(n-k, r-1);
-}
+
+// A, C의 n을 A로 모으는 이동 = n-1을 B로 모으는 이동 + 1 + 2*(n-1)을 A로 모으는 이동
+// A, C의 n을 B로 모으는 이동 = n-1을 A로 모으는 이동 + 1 + 2*(n-1)을 C로 모으는 이동 + 1 + 2*(n-1)을 이동
+// 2*(n-1)을 이동시키기 : 2*(n-2)를 이동시키기 + 2 + 2*(n-2)를 이동시키기
+
 
 i32 main() {
-    i64 n, i = 1;
-    while(cin >> n) {
-        println("Case ", i++, ": ", T(n, 4));
+    vl dp1(1001000), dp2(1001000), dp3(1001000);
+    dp1[1] = 1; dp2[1] = 2; dp3[1] = 2;
+    forf(i, 2, 1000010) dp3[i] = (dp3[i-1] * 2 + 2) % mod1;
+    forf(i, 2, 1000010) {
+        dp1[i] = (dp2[i-1] + 1 + dp3[i-1]) % mod1;
+        dp2[i] = (dp1[i-1] + 2 + 2*dp3[i-1]) % mod1;
     }
+    in64(n);
+    println(dp2[n]);
 }
