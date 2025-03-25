@@ -10,7 +10,7 @@
 
 #pragma region C+++
 //@formatter:off
-#define CPPP 250324
+#define CPPP 250325
 #pragma region settings
 
 #pragma clang diagnostic push
@@ -646,24 +646,24 @@ template <long long mod = 1000000007>
 struct ModInt {
     long long v = 0;
     ModInt() = default;
-    ModInt(long long val) : v((val % mod + mod) % mod) {} // NOLINT(*-explicit-constructor)
-    explicit operator long long() { return v; }
-    ModInt& operator=(const ModInt& b) = default;
-    ModInt& operator++() { v = (v + 1) % mod; return *this; }
-    ModInt operator++(signed) { ModInt ret = *this; v = (v + 1) % mod; return ret; }
-    ModInt& operator--() { v = (v - 1 + mod) % mod; return *this; }
-    ModInt operator--(signed) { ModInt ret = *this; v = (v - 1 + mod) % mod; return ret; }
-    ModInt operator+(const ModInt& b) const { return {(v + b.v) % mod}; }
-    ModInt operator-(const ModInt& b) const { return {(v - b.v + mod) % mod}; }
-    ModInt operator*(const ModInt& b) const { return {(v * b.v) % mod}; }
-    ModInt& operator+=(const ModInt& b) { v = (v + b.v) % mod; return *this; }
-    ModInt& operator-=(const ModInt& b) { v = (v - b.v + mod) % mod; return *this; }
-    ModInt& operator*=(const ModInt& b) { v = (v * b.v) % mod; return *this; }
-    friend std::istream& operator>>(std::istream& in, ModInt& t) { in >> t.v; return in; }
-    friend std::ostream& operator<<(std::ostream& out, const ModInt& t) { out << t.v; return out; }
-    friend ModInt operator+(long long a, const ModInt& b) { a = (a % mod + mod) % mod; return {(b.v + a) % mod}; }
-    friend ModInt operator-(long long a, const ModInt& b) { a = (a % mod + mod) % mod; return {(b.v - a + mod) % mod}; }
-    friend ModInt operator*(long long a, const ModInt& b) { a = (a % mod + mod) % mod; return {(b.v * a) % mod}; }
+    inline ModInt(long long val) : v((val % mod + mod) % mod) {} // NOLINT(*-explicit-constructor)
+    inline explicit operator long long() { return v; }
+    inline ModInt& operator=(const ModInt& b) = default;
+    inline ModInt& operator++() { v = (v + 1) % mod; return *this; }
+    inline ModInt operator++(signed) { ModInt ret = *this; v = (v + 1) % mod; return ret; }
+    inline ModInt& operator--() { v = (v - 1 + mod) % mod; return *this; }
+    inline ModInt operator--(signed) { ModInt ret = *this; v = (v - 1 + mod) % mod; return ret; }
+    inline ModInt operator+(const ModInt& b) const { return {(v + b.v) % mod}; }
+    inline ModInt operator-(const ModInt& b) const { return {(v - b.v + mod) % mod}; }
+    inline ModInt operator*(const ModInt& b) const { return {(v * b.v) % mod}; }
+    inline ModInt& operator+=(const ModInt& b) { v = (v + b.v) % mod; return *this; }
+    inline ModInt& operator-=(const ModInt& b) { v = (v - b.v + mod) % mod; return *this; }
+    inline ModInt& operator*=(const ModInt& b) { v = (v * b.v) % mod; return *this; }
+    inline friend std::istream& operator>>(std::istream& in, ModInt& t) { in >> t.v; return in; }
+    inline friend std::ostream& operator<<(std::ostream& out, const ModInt& t) { out << t.v; return out; }
+    inline friend ModInt operator+(long long a, const ModInt& b) { a = (a % mod + mod) % mod; return {(b.v + a) % mod}; }
+    inline friend ModInt operator-(long long a, const ModInt& b) { a = (a % mod + mod) % mod; return {(b.v - a + mod) % mod}; }
+    inline friend ModInt operator*(long long a, const ModInt& b) { a = (a % mod + mod) % mod; return {(b.v * a) % mod}; }
 };
 
 #define defStructIO_(name) inline std::istream& operator>>(std::istream& in, name& t) { in >> t.v; return in; }\
@@ -695,6 +695,12 @@ v2l adj_list(int n, int m) {
     v2l adj(n+1);
     rep(m) { in64(u, v); adj[u].pb(v); adj[v].pb(u); }
     return adj;
+}
+
+vb sieve(int n) {
+    vb r(n+1, true); r[0] = r[1] = false;
+    forf(i, 2, n) if(r[i]) for(i64 j = i+i; j<=n; j+=i) r[j] = false;
+    return r;
 }
 
 #pragma endregion
@@ -811,9 +817,58 @@ public:
         for(long long i=v.l-1; i>=0; i--) out << ((v.m[i/128] & (__int128(1) << (i % 128))) ? 1 : 0);
         return out;
     }
+
+    std::string toDecimal() const { // GPT
+        if (l == 0) return "0";
+        std::vector<uint32_t> decimal; decimal.push_back(0);
+        for (ssize_t i = l - 1; i >= 0; i--) {
+            uint32_t carry = (*this)[i];
+            for (unsigned int & j : decimal) {
+                uint64_t cur = static_cast<uint64_t>(j) * 2 + carry;
+                j = cur % 1000000000;
+                carry = cur / 1000000000;
+            }
+            if (carry) decimal.push_back(carry);
+        }
+        std::string result = std::to_string(decimal.back());
+        for (ssize_t i = decimal.size() - 2; i >= 0; i--) {
+            std::string part = std::to_string(decimal[i]);
+            result += std::string(9 - part.size(), '0') + part;
+        }
+        return result;
+    }
+
+    static Bitset fromDecimal(const std::string& s, long long sz = -1) { // GPT
+        if (s == "0") return Bitset(1);
+        std::vector<uint32_t> dec;
+        int len = s.size(), firstDigits = len % 9;
+        if (firstDigits == 0) firstDigits = 9;
+        dec.push_back(std::stoul(s.substr(0, firstDigits)));
+        for (int i = firstDigits; i < len; i += 9)
+            dec.push_back(std::stoul(s.substr(i, 9)));
+        std::vector<bool> bits;
+        const uint64_t base = 1000000000;
+        while (!dec.empty()) {
+            uint64_t carry = 0;
+            for (unsigned int & i : dec) {
+                uint64_t cur = carry * base + i;
+                i = static_cast<uint32_t>(cur / 2);
+                carry = cur % 2;
+            }
+            bits.push_back(carry);
+            while (!dec.empty() && dec[0] == 0) dec.erase(dec.begin());
+        }
+        Bitset result(sz == -1 ? bits.size() : sz);
+        for (size_t i = 0; i < bits.size(); i++) result[i] = bits[i];
+        return result;
+    }
 };
 
 
 i32 main() {
-
+    f64 t = clock() / f64(CLOCKS_PER_SEC);
+    Bitset a(1100000, 1), b(1100000, 1);
+    rep(1000000) a += b, swap(a, b);
+    println(b.toDecimal());
+    println(clock() / f64(CLOCKS_PER_SEC) - t);
 }
