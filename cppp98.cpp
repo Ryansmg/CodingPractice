@@ -266,16 +266,11 @@ template <typename T> inline void setAbs(T& v) { if(v < 0) v *= -1; }
 #pragma endregion
 #pragma endregion
 
-i64 T(i64 n, i64 r) {
-    if(r == 3) return (1LL << n) - 1;
-    if(n == 1) return 1;
-    i64 k = n - round(sqrt(2*n+1)) + 1;
-    return 2 * T(k, r) + T(n-k, r-1);
-}
 
 i32 main() {
-    i64 n, i = 1;
-    while(cin >> n) {
-        println("Case ", i++, ": ", T(n, 4));
+    stack<char, vec<char>> st;
+    str s; cin >> s;
+    forn(i, Size(s)) {
+        
     }
 }

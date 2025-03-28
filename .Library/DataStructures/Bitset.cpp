@@ -1,7 +1,8 @@
-/* Update : 2025-03-24 */
+/* Update : 2025-03-26 */
 
 #include <vector>
 #include <iostream>
+#include <cstdint>
 
 class Bitset {
     size_t l = 0, wl = 0; std::vector<unsigned __int128> m;
@@ -111,5 +112,50 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const Bitset& v) {
         for(long long i=v.l-1; i>=0; i--) out << ((v.m[i/128] & (__int128(1) << (i % 128))) ? 1 : 0);
         return out;
+    }
+
+    std::string toDecimal() const { // GPT
+        if (l == 0) return "0";
+        std::vector<uint32_t> decimal; decimal.push_back(0);
+        for (ssize_t i = l - 1; i >= 0; i--) {
+            uint32_t carry = (*this)[i];
+            for (unsigned int & j : decimal) {
+                uint64_t cur = static_cast<uint64_t>(j) * 2 + carry;
+                j = cur % 1000000000;
+                carry = cur / 1000000000;
+            }
+            if (carry) decimal.push_back(carry);
+        }
+        std::string result = std::to_string(decimal.back());
+        for (ssize_t i = decimal.size() - 2; i >= 0; i--) {
+            std::string part = std::to_string(decimal[i]);
+            result += std::string(9 - part.size(), '0') + part;
+        }
+        return result;
+    }
+
+    static Bitset fromDecimal(const std::string& s, long long sz = -1) { // GPT
+        if (s == "0") return Bitset(1);
+        std::vector<uint32_t> dec;
+        int len = s.size(), firstDigits = len % 9;
+        if (firstDigits == 0) firstDigits = 9;
+        dec.push_back(std::stoul(s.substr(0, firstDigits)));
+        for (int i = firstDigits; i < len; i += 9)
+            dec.push_back(std::stoul(s.substr(i, 9)));
+        std::vector<bool> bits;
+        const uint64_t base = 1000000000;
+        while (!dec.empty()) {
+            uint64_t carry = 0;
+            for (unsigned int & i : dec) {
+                uint64_t cur = carry * base + i;
+                i = static_cast<uint32_t>(cur / 2);
+                carry = cur % 2;
+            }
+            bits.push_back(carry);
+            while (!dec.empty() && dec[0] == 0) dec.erase(dec.begin());
+        }
+        Bitset result(sz == -1 ? bits.size() : sz);
+        for (size_t i = 0; i < bits.size(); i++) result[i] = bits[i];
+        return result;
     }
 };
