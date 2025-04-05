@@ -9,7 +9,7 @@
 
 #pragma region C+++
 //@formatter:off
-#define CPPP 250406
+#define CPPP 250405
 #pragma region settings
 
 #pragma clang diagnostic push
@@ -111,20 +111,18 @@ using ii = std::array<signed, 2>; using iii = std::array<signed, 3>;
 #endif
 
 #define panic() (cerr << "panicked at line " << __LINE__ << "\n", exit(1683))
-inline void do_nothing_() { }
-#define do_nothing do_nothing_()
 
 #pragma endregion
 #pragma region constants
 constexpr long long
         i64max = 9223372036854775807,    /// lim<i64>::max()
-        i64min = -9223372036854775807-1, /// lim<i64>::min()
-        INFIN  = 4001557155715570000,    /// INFIN * 2 < i64max
-        INF    = 1000000000000000000,    /// INF * 9 < i64max
-        inf    = 3000000000,             /// inf * inf < i64max
-        i32max = 2147483647,             /// lim<i32>::max()
-        i32min = -2147483648,            /// lim<i32>::min()
-        mod1   = 1000000007,
+i64min = -9223372036854775807-1, /// lim<i64>::min()
+INFIN  = 4001557155715570000,    /// INFIN * 2 < i64max
+INF    = 1000000000000000000,    /// INF * 9 < i64max
+inf    = 3000000000,             /// inf * inf < i64max
+i32max = 2147483647,             /// lim<i32>::max()
+i32min = -2147483648,            /// lim<i32>::min()
+mod1   = 1000000007,
         mod9   = 998244353;
 constexpr long double PI = 3.141592653589793238462643383279502884L;
 #pragma endregion
@@ -225,12 +223,12 @@ constexpr signed dx4[4] = { 0, 1, 0, -1 }; constexpr signed dy4[4] = { -1, 0, 1,
 #define outputin freopen(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\z.etcBJ\output.txt)", "r", stdin)
 #define ansout freopen(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\z.etcBJ\ans.txt)", "w", stdout)
 #else
-#define fileio do_nothing
-#define filein do_nothing
-#define fileout do_nothing
-#define inputout do_nothing
-#define outputin do_nothing
-#define ansout do_nothing
+#define fileio print()
+#define filein print()
+#define fileout print()
+#define inputout print()
+#define outputin print()
+#define ansout print()
 #endif // LOCAL
 
 #if (!LOCAL_DEFINED) || LOCAL_FASTIO
@@ -358,11 +356,12 @@ private:
 #define lprintln(...) printfln().setLocal()(__VA_ARGS__)
 #define lprintes(...) printf().setLocal().appendEnd(" ")(__VA_ARGS__)
 #else
-#define lprintf(...) do_nothing_
-#define lprintfln(...) do_nothing_
-#define lprint(...) do_nothing_()
-#define lprintln(...) do_nothing_()
-#define lprintes(...) do_nothing_()
+inline void lprint_h_donon_() {}
+#define lprintf(...) lprint_h_donon_
+#define lprintfln(...) lprint_h_donon_
+#define lprint(...) lprint_h_donon_()
+#define lprintln(...) lprint_h_donon_()
+#define lprintes(...) lprint_h_donon_()
 #endif
 
 #ifdef LOCAL
@@ -378,7 +377,7 @@ template <typename... Args> void lprintvar_(const std::string& names_, Args... a
     (print_each(args), ...);
 }
 #else
-#define lprintvar(...) do_nothing_()
+#define lprintvar(...) lprint_h_donon_()
 #endif // LOCAL
 
 #pragma endregion
@@ -416,8 +415,11 @@ template <typename T, typename T2, typename... T3> requires (sizeof...(T3) > 0)
 inline void setMax(T& tar, const T2 &val, const T3&... arr) { setMax(tar, val); setMax(tar, arr...); }
 
 inline void setAbs(auto& v) { if(v < 0) v *= -1; }
+inline void do_nothing_() { }
+#define do_nothing do_nothing_()
 
-str Yn[] = {"No", "Yes"}, YN[] = {"NO", "YES"};
+#define yn yn_
+str yn_[] = {"NO", "YES"};
 #pragma endregion
 #pragma region custom_types
 
@@ -663,10 +665,40 @@ vi prime_list(int n) {
 //@formatter:on
 #pragma endregion
 
+#define no { println(-1); goto end; }
 
 i32 main() {
-    forf(i, 1, 20) {
-        auto k = pow(4, i);
-        println(i, k);
+    tcRep() {
+        in64(n);
+        vl a(n, cin), b(n, cin), idx(n+1, -1), p(n+1, -1);
+        vec<ll> ans;
+        i64 sp = -1;
+        forn(i, n) {
+            idx[a[i]] = i;
+            if(a[i] == b[i]) {
+                if(~n&1 || sp != -1) no
+                sp = i;
+            }
+            if(p[a[i]] == -1) {
+                if(p[b[i]] != -1) no
+                p[a[i]] = b[i]; p[b[i]] = a[i];
+            } else if(p[a[i]] != b[i]) no
+        }
+        if((n&1) && sp != n/2) {
+            ans.eb(sp+1, n/2+1);
+            swap(a[sp], a[n/2]);
+            swap(idx[a[sp]], idx[a[n/2]]);
+        }
+        forn(i, n) {
+            if((n&1) && i == n/2) continue;
+            if(a[n-i-1] == p[a[i]]) continue;
+            assert(i <= n/2);
+            ans.eb(idx[p[a[i]]]+1, n-i);
+            swap(a[idx[p[a[i]]]], a[n-i-1]);
+            swap(idx[a[idx[p[a[i]]]]], idx[a[n-i-1]]);
+        }
+        println(Size(ans));
+        for(auto& [i, j] : ans) println(i, j);
+        end: {}
     }
 }
