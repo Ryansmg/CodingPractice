@@ -21,3 +21,23 @@ struct GoldMine {
 };
 
 
+#define defStructIO_(name) inline std::istream& operator>>(std::istream& in, name& t) { in >> t.v; return in; }\
+                           inline std::ostream& operator<<(std::ostream& out, const name& t) { out << t.v; return out; }
+
+struct Mx64 { long long v = -4001557155715570000; Mx64 operator+(const Mx64& b) const { return { std::max(v, b.v) }; }
+    Mx64& operator+=(const Mx64& b) { if(v < b.v) { v = b.v; } return *this; }
+    bool operator<(const Mx64& b) const { return v < b.v; } explicit operator long long() const { return v; }
+}; defStructIO_(Mx64)
+struct Mn64 { long long v = 4001557155715570000; Mn64 operator+(const Mn64& b) const { return { std::min(v, b.v) }; }
+    Mn64& operator+=(const Mn64& b) { if(v > b.v) { v = b.v; } return *this; }
+    bool operator<(const Mn64& b) const { return v < b.v; } explicit operator long long() const { return v; }
+}; defStructIO_(Mn64)
+struct Mx32 { signed v = -2147481557; Mx32 operator+(const Mx32& b) const { return { std::max(v, b.v) }; }
+    Mx32& operator+=(const Mx32& b) { if(v < b.v) { v = b.v; } return *this; }
+    bool operator<(const Mx32& b) const { return v < b.v; } explicit operator signed() const { return v; }
+}; defStructIO_(Mx32)
+struct Mn32 { signed v = 2147481557; Mn32 operator+(const Mn32& b) const { return { std::min(v, b.v) }; }
+    Mn32& operator+=(const Mn32& b) { if(v > b.v) { v = b.v; } return *this; }
+    bool operator<(const Mn32& b) const { return v < b.v; } explicit operator signed() const { return v; }
+}; defStructIO_(Mn32)
+

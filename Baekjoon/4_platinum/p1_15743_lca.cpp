@@ -9,7 +9,7 @@
 
 #pragma region C+++
 //@formatter:off
-#define CPPP 250405
+#define CPPP 250331
 #pragma region settings
 
 #pragma clang diagnostic push
@@ -55,7 +55,7 @@ using std::stringstream, std::istringstream, std::ostringstream;
 using std::array, std::list, std::tuple, std::get, std::tie, std::initializer_list, std::bitset, std::ssize, std::span;
 /// math
 using std::complex, std::polar, std::popcount;
-using std::max, std::min, std::gcd, std::lcm, std::swap, std::abs, std::sin, std::cos, std::tan, std::asin;
+using std::max, std::min, std::gcd, std::lcm, std::pow, std::swap, std::abs, std::sin, std::cos, std::tan, std::asin;
 using std::acos, std::atan, std::floor, std::ceil, std::round, std::sinh, std::cosh, std::tanh, std::atan2, std::sqrt;
 using std::less, std::greater, std::less_equal, std::greater_equal;
 /// algorithms
@@ -188,8 +188,6 @@ template <typename T> T modInv(T a, const T& m, bool chkGcd = true) { // by @kuh
     u %= m; if (u < 0) {u += m;} return u;
 }
 inline long long pow(long long a, long long b, long long mod) {return pow_(b < 0 ? modInv(a, mod) : a, std::abs(b), mod);}
-inline long long pow(long long a, long long b) { long long ans=1;while(b){if(b&1)ans=ans*a;b>>=1;a=a*a;} return ans; }
-template <typename T> inline T pow(T a, T b) { T ans=1;while(b){if(b&1)ans=ans*a;b>>=1;a=a*a;} return ans; }
 
 template <typename T> inline T gcd_(T a, T b) { if(a < b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 template <typename T> inline T max(const std::vector<T>& v_) { T ret = v_.empty() ? std::numeric_limits<T>::min() : v_[0]; for(const T &t_ : v_) { ret = std::max(ret, t_); } return ret; }
@@ -415,8 +413,6 @@ template <typename T, typename T2, typename... T3> requires (sizeof...(T3) > 0)
 inline void setMax(T& tar, const T2 &val, const T3&... arr) { setMax(tar, val); setMax(tar, arr...); }
 
 inline void setAbs(auto& v) { if(v < 0) v *= -1; }
-inline void do_nothing_() { }
-#define do_nothing do_nothing_()
 
 #define yn yn_
 str yn_[] = {"NO", "YES"};
@@ -665,10 +661,49 @@ vi prime_list(int n) {
 //@formatter:on
 #pragma endregion
 
+i64 l2n, cnt = 0; vl root, dep; v2l par;
+vec<lll> dia; // {a, b, dist}
+
+i64 lca(i64 a, i64 b) {
+    if(dep[a] < dep[b]) swap(a, b);
+    i64 d = dep[a] - dep[b];
+    while(d) a = par[a][lmb(d)], d ^= 1LL << lmb(d);
+    if(a == b) return a;
+    forr(i, l2n, 0) if(par[a][i] != par[b][i]) a = par[a][i], b = par[b][i];
+    return par[a][0];
+}
+
+i64 dist(i64 a, i64 b) {
+    return dep[a] + dep[b] - 2 * dep[lca(a, b)];
+}
 
 i32 main() {
-    forf(i, 1, 20) {
-        auto k = pow(4, i);
-        println(i, k);
+    in64(q);
+    l2n = log2(q) + 1;
+    root = vl(q+1, -1);
+    dep = vl(q+1, 0);
+    par = v2l(q+1, vl(l2n+1));
+    dia = vec<lll>(q+1);
+    rep(q) {
+        char c; i64 t; input(c, t);
+        if(c == 'B') {
+            cnt++;
+            if(t == -1) {
+                root[cnt] = cnt;
+                par[cnt].fill(cnt);
+                dia[cnt] = {cnt, cnt, 0};
+            } else {
+                root[cnt] = root[t];
+                dep[cnt] = dep[t] + 1;
+                par[cnt][0] = t;
+                forf(i, 1, l2n) par[cnt][i] = par[par[cnt][i-1]][i-1];
+                i64 d1 = dist(dia[root[cnt]][0], cnt),
+                d2 = dist(dia[root[cnt]][1], cnt);
+                if(dia[root[cnt]][2] < d1) dia[root[cnt]] = {dia[root[cnt]][0], cnt, d1};
+                if(dia[root[cnt]][2] < d2) dia[root[cnt]] = {dia[root[cnt]][1], cnt, d2};
+            }
+        } else {
+            println(max(dist(dia[root[t]][0], t), dist(dia[root[t]][1], t)));
+        }
     }
 }

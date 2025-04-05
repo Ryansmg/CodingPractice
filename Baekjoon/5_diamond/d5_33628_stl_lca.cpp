@@ -2,6 +2,7 @@
 #define USE_O3 0
 #define USE_OFAST 0
 #define USE_TARGET 0
+#define USE_MMAP 0
 #define LOCAL_FASTIO 1
 #define LOCAL_INLINE 0
 #define DISABLE_LOCAL 0
@@ -9,7 +10,7 @@
 
 #pragma region C+++
 //@formatter:off
-#define CPPP 250405
+#define CPPP 250331
 #pragma region settings
 
 #pragma clang diagnostic push
@@ -44,6 +45,44 @@
 #include <ext/pb_ds/tree_policy.hpp>
 #include <ext/rope>
 #pragma endregion
+#pragma region MMAP
+#if USE_MMAP && !LOCAL_DEFINED
+#include <sys/stat.h>
+#include <sys/mman.h>
+#define cin mmi_
+namespace std {
+    class MmapInput_ {
+        struct stat st{}; char* data = nullptr;
+        inline void skipBlank() { while(data && (*data == ' ' || *data == '\n')) data++; }
+    public:
+        MmapInput_() {
+            fstat(0, &st);
+            data = (char*) mmap(nullptr, st.st_size, PROT_READ, MAP_SHARED, 0, 0);
+            assert(data != MAP_FAILED);
+        }
+        inline char get() { return *(data++); }
+        inline MmapInput_& operator>>(char& v) { skipBlank(); v = *(data++); return *this; }
+        MmapInput_& operator>>(long long& v) {
+            long long sign = 1; v = 0; skipBlank(); if(*data == '-') sign = -1, data++;
+            while('0' <= *data && *data <= '9') v = v * 10 + *data - '0', data++;
+            v *= sign; return *this;
+        }
+        MmapInput_& operator>>(__int128& v) {
+            long long sign = 1; v = 0; skipBlank(); if(*data == '-') sign = -1, data++;
+            while('0' <= *data && *data <= '9') v = v * 10 + *data - '0', data++;
+            v *= sign; return *this;
+        }
+        inline MmapInput_& operator>>(bool& v) { long long tmp; operator>>(tmp); v = tmp; return *this; }
+        inline MmapInput_& operator>>(signed& v) { long long t; *this >> t; v = static_cast<signed>(t); return *this; }
+        MmapInput_& operator>>(std::string& v) { skipBlank(); v.clear();
+            while(*data != ' ' && *data != '\n') v.push_back(*(data++));
+            return *this;
+        }
+        inline void tie(void*) {}
+    } mmi_;
+}
+#endif // USE_MMAP
+#pragma endregion
 #pragma region keywords
 #define elif else if
 #define strcc_(a, b) a##b
@@ -55,7 +94,7 @@ using std::stringstream, std::istringstream, std::ostringstream;
 using std::array, std::list, std::tuple, std::get, std::tie, std::initializer_list, std::bitset, std::ssize, std::span;
 /// math
 using std::complex, std::polar, std::popcount;
-using std::max, std::min, std::gcd, std::lcm, std::swap, std::abs, std::sin, std::cos, std::tan, std::asin;
+using std::max, std::min, std::gcd, std::lcm, std::pow, std::swap, std::abs, std::sin, std::cos, std::tan, std::asin;
 using std::acos, std::atan, std::floor, std::ceil, std::round, std::sinh, std::cosh, std::tanh, std::atan2, std::sqrt;
 using std::less, std::greater, std::less_equal, std::greater_equal;
 /// algorithms
@@ -116,15 +155,19 @@ using ii = std::array<signed, 2>; using iii = std::array<signed, 3>;
 #pragma region constants
 constexpr long long
         i64max = 9223372036854775807,    /// lim<i64>::max()
-        i64min = -9223372036854775807-1, /// lim<i64>::min()
-        INFIN  = 4001557155715570000,    /// INFIN * 2 < i64max
-        INF    = 1000000000000000000,    /// INF * 9 < i64max
-        inf    = 3000000000,             /// inf * inf < i64max
-        i32max = 2147483647,             /// lim<i32>::max()
-        i32min = -2147483648,            /// lim<i32>::min()
-        mod1   = 1000000007,
+i64min = -9223372036854775807-1, /// lim<i64>::min()
+lmax   = 9221557155715571557,    /// lmax + inf < i64max
+INFIN  = 4001557155715570000,    /// INFIN * 2 < i64max
+INF    = 1000000000000000000,    /// INF * 9 < i64max
+inf    = 3000000000,             /// inf * inf < i64max
+i32max = 2147483647,             /// lim<i32>::max()
+i32min = -2147483648,            /// lim<i32>::min()
+imax   = 2147481557,             /// imax + 1000 < i32max
+iinf   = 2000000000,             /// iinf + 1e8 < i32max
+mod1   = 1000000007,
         mod9   = 998244353;
-constexpr long double PI = 3.141592653589793238462643383279502884L;
+constexpr long double
+        PI = 3.141592653589793238462643383279502884L;
 #pragma endregion
 #pragma region control_statements
 #define forn(name_, val_) for(long long name_ = 0; name_ < (val_); name_++)
@@ -176,6 +219,9 @@ template <typename T> inline void autoCompress0(T &v_) { auto comp_ = compressed
 template <typename T> inline T autoCompressed(T v_) { autoCompress(v_); return v_; }
 template <typename T> inline T autoCompressed0(T v_) { autoCompress0(v_); return v_; }
 
+/// sorted(arr)[i]를 반환. arr의 값들의 순서는 변경된다.
+template <typename T, typename Cmp> inline T& nth_element(std::vector<T>& arr, long long i, const Cmp& cmp = std::less<>()) { std::nth_element(arr.begin(), arr.begin() + i, arr.end(), cmp); return arr[i]; }
+
 template <typename T> inline std::vector<T> merge(const std::vector<T>&a, const std::vector<T>&b) {
     std::vector<T> ret(a.size()+b.size()); std::merge(a.begin(), a.end(), b.begin(), b.end(), ret.begin()); return ret;
 }
@@ -188,8 +234,6 @@ template <typename T> T modInv(T a, const T& m, bool chkGcd = true) { // by @kuh
     u %= m; if (u < 0) {u += m;} return u;
 }
 inline long long pow(long long a, long long b, long long mod) {return pow_(b < 0 ? modInv(a, mod) : a, std::abs(b), mod);}
-inline long long pow(long long a, long long b) { long long ans=1;while(b){if(b&1)ans=ans*a;b>>=1;a=a*a;} return ans; }
-template <typename T> inline T pow(T a, T b) { T ans=1;while(b){if(b&1)ans=ans*a;b>>=1;a=a*a;} return ans; }
 
 template <typename T> inline T gcd_(T a, T b) { if(a < b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 template <typename T> inline T max(const std::vector<T>& v_) { T ret = v_.empty() ? std::numeric_limits<T>::min() : v_[0]; for(const T &t_ : v_) { ret = std::max(ret, t_); } return ret; }
@@ -415,11 +459,9 @@ template <typename T, typename T2, typename... T3> requires (sizeof...(T3) > 0)
 inline void setMax(T& tar, const T2 &val, const T3&... arr) { setMax(tar, val); setMax(tar, arr...); }
 
 inline void setAbs(auto& v) { if(v < 0) v *= -1; }
-inline void do_nothing_() { }
-#define do_nothing do_nothing_()
 
 #define yn yn_
-str yn_[] = {"NO", "YES"};
+str yn_[] = {"No", "Yes"};
 #pragma endregion
 #pragma region custom_types
 
@@ -544,12 +586,15 @@ template <typename T = long long> inline vec<T> inVec(long long sz) {
     for(long long i = 0; i<sz; i++) { T t; std::cin >> t; a.push_back(t); }
     return a;
 }
+
 template <typename T = long long> inline void inVec(vec<T> &arr, long long sz, bool clear = false) {
     if(clear) arr.clear();
     for(long long i = 0; i < sz; i++) { T t; std::cin >> t; arr.push_back(t); }
 }
 template <typename T = long long> inline vec<T> inVec() { return inVec<T>(input()); }
 #define inArr inVec
+
+template <typename T2, typename T1> inline vec<T2> castVec(const vec<T1>& arr) { vec<T2> ret; for(const auto& t : arr) { ret.emplace_back(t); } return ret; }
 #endif
 #pragma endregion
 
@@ -619,7 +664,7 @@ struct ModInt {
     long long v = 0;
     ModInt() = default;
     inline ModInt(long long val) : v((val % mod + mod) % mod) {} // NOLINT(*-explicit-constructor)
-    template <typename T> inline explicit operator T() requires std::is_integral_v<T> { return v; }
+    inline explicit operator long long() { return v; }
     inline ModInt& operator=(const ModInt& b) = default;
     inline ModInt& operator++() { v = (v + 1) % mod; return *this; }
     inline ModInt operator++(signed) { ModInt ret = *this; v = (v + 1) % mod; return ret; }
@@ -665,10 +710,47 @@ vi prime_list(int n) {
 //@formatter:on
 #pragma endregion
 
+vl group, grpmn, sz, dep;
+v2l par; v2l adj; i64 l2n;
+
+void upd_par(i64 v, i64 p) {
+    if(p != -1) dep[v] = dep[p] + 1, par[v][0] = p;
+    forf(i, 1, l2n+2) par[v][i] = par[par[v][i-1]][i-1];
+    for(ci64 i : adj[v]) if(i != p) upd_par(i, v);
+}
+
+i64 find(i64 a) {
+    if(group[a] == a) return a;
+    return group[a] = find(group[a]);
+}
+
+void merge(i64 a, i64 b) {
+    i64 pa = find(a), pb = find(b);
+    if(sz[pa] < sz[pb]) swap(pa, pb), swap(a, b);
+    group[pb] = pa;
+    setMin(grpmn[pa], grpmn[pb]);
+    sz[pa] += sz[pb];
+    adj[a].pb(b), adj[b].pb(a);
+    upd_par(b, a);
+}
+
+i64 lca(i64 a, i64 b) {
+    if(dep[a] < dep[b]) swap(a, b);
+    i64 d = dep[a] - dep[b];
+    while(d) a = par[a][lmb(d)], d ^= 1LL << lmb(d);
+    if(a == b) return a;
+    forr(i, l2n+2, 0) if(par[a][i] != par[b][i]) a = par[a][i], b = par[b][i];
+    return par[a][0];
+}
+
+i64 lca(i64 a, i64 b, i64 r) {
+    i64 z = lca(a, b), x = lca(b, r), c = lca(r, a);
+    if(dep[z] == max({dep[z], dep[x], dep[c]})) return z;
+    if(dep[x] == max({dep[z], dep[x], dep[c]})) return x;
+    if(dep[c] == max({dep[z], dep[x], dep[c]})) return c;
+    panic();
+}
 
 i32 main() {
-    forf(i, 1, 20) {
-        auto k = pow(4, i);
-        println(i, k);
-    }
+
 }

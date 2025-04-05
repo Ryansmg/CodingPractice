@@ -268,9 +268,14 @@ template <typename T> inline void setAbs(T& v) { if(v < 0) v *= -1; }
 
 
 i32 main() {
-    stack<char, vec<char>> st;
-    str s; cin >> s;
-    forn(i, Size(s)) {
-        
+    vec<i64> st;
+    in64(n);
+    i64 ans = -1, ans2 = -1;
+    forn(i, n) {
+        in64(x);
+        while(!st.empty() && st.back() <= x) st.pop_back();
+        if(ans2 < Size(st)) ans2 = Size(st), ans = i+1;
+        st.pb(x);
     }
+    println(ans, " ", ans2);
 }
