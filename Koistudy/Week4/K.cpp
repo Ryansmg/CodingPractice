@@ -278,10 +278,7 @@ vl mergeLeft(const vl& a) {
     while(Size(ans) < 4) ans.pb(0);
     return ans;
 }
-vl mergeRight(vl a) {
-    reverse(all(a)); auto ans = mergeLeft(a);
-    reverse(all(ans)); return ans;
-}
+vl mergeRight(vl a) { reverse(all(a)); auto ans = mergeLeft(a); reverse(all(ans)); return ans; }
 void setRow(i64 i, const vl& a) { board[i] = a; }
 vl getRow(i64 i) { return board[i]; }
 void setColumn(i64 i, const vl& a) { forn(j, 4) board[j][i] = a[j]; }

@@ -9,7 +9,7 @@
 
 #pragma region C+++
 //@formatter:off
-#define CPPP 250406
+#define CPPP 250409
 #pragma region settings
 
 #pragma clang diagnostic push
@@ -20,6 +20,9 @@
 #pragma ide diagnostic ignored "UnreachableCallsOfFunction"
 #pragma ide diagnostic ignored "UnusedLocalVariable"
 #pragma ide diagnostic ignored "UnusedValue"
+#if DISABLE_LOCAL
+#undef LOCAL
+#endif
 #ifdef LOCAL
 #define LOCAL_DEFINED 1
 #else
@@ -27,9 +30,6 @@
 #if USE_TARGET
 #pragma GCC target("avx2,bmi,bmi2,lzcnt,popcnt")
 #endif
-#endif
-#if DISABLE_LOCAL
-#undef LOCAL
 #endif
 #if USE_OFAST
 #pragma GCC optimize("Ofast,unroll-loops")
@@ -204,6 +204,18 @@ template <typename T> inline T gcd(const std::initializer_list<T>& l_) { auto it
 template <typename T> inline T lcm(const std::initializer_list<T>& l_) { auto iter = l_.begin(); T ret = *iter / gcd(l_); long long sz_ = l_.size();
     for(long long i_ = 1; i_ <= sz_-1; i_++) { ret *= *(++iter); } return ret; }
 
+namespace itnl {
+    template <typename T> inline T pw_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)ans=ans*a%mod;b>>=1;a=a*a%mod;} return ans; }
+    std::vector<long long>base={2,3,5,7,11,13,17,19,23,29,31,37,41};std::mt19937 gen=std::mt19937(std::random_device()());std::uniform_int_distribution<long long>dis;
+    bool _isPrime(long long n,long long a){if(a%n==0){return true;}long long d=n-1;while(true){long long t=itnl::pw_(a,d,n);if(t==n-1){return true;}
+            if(d%2==1){return(t==1||t==n-1);}d/= 2;}}
+}
+bool isPrime(long long n){if(n<=1)return false;for(const long long&a:itnl::base){if(!itnl::_isPrime(n, a))return false;}return true;}
+long long factorize(long long n){assert(n>=2);if(n%2==0){return 2;}if(isPrime(n)){return n;}long long x=itnl::dis(itnl::gen)%(n-2)+2,y=x,
+            c=itnl::dis(itnl::gen)%10+1,g=1;while(g==1){x=(x*x%n+c)%n;y=(y*y%n+c)%n;y=(y*y%n+c)%n;g=std::gcd(x-y>0?x-y:y-x,n);
+        if(g==n)return factorize(n);}if(isPrime(g)){return g;}else return factorize(g);}
+std::vector<long long> getPrimes(long long n) { std::vector<long long> r; while(n != 1) { long long p = factorize(n); r.emplace_back(p); n /= p; } return r; }
+
 inline signed popcount(long long v) { return std::popcount((unsigned long long) v); }
 inline auto clz(long long v) { return __builtin_clzll(v); } /// count leading zeros (000010 => 4)
 inline signed lmb(long long v) { return 63 - clz(v); } /// left most bit (000100 => 2)
@@ -215,8 +227,17 @@ inline long long randl() { return uni3i64_(m1gn_); }
 inline long long rand_(long long l_, long long r_) { return randl() % (r_ - l_ + 1) + l_; } /// inclusive
 constexpr signed dx4[4] = { 0, 1, 0, -1 }; constexpr signed dy4[4] = { -1, 0, 1, 0 };
 #pragma endregion
+#pragma region custom_types_1
+struct ll {
+    long long first = 0, second = 0;
+    inline auto operator<=>(const ll& b) const { return first == b.first ? second <=> b.second : first <=> b.first; }
+    inline bool operator==(const ll&) const = default;
+    inline long long& operator[](signed i) { return i ? second : first; }
+    inline const long long& operator[](signed i) const { return i ? second : first; }
+};
+#pragma endregion
 #pragma region I/O
-// settings
+#pragma region iosets
 #ifdef LOCAL
 #define fileio filein; fileout
 #define filein freopen(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\z.etcBJ\input.txt)", "r", stdin)
@@ -238,8 +259,8 @@ struct enable_fastio_ {
     enable_fastio_() { std::ios_base::sync_with_stdio(false); std::cin.tie(nullptr); std::cout.tie(nullptr); }
 } efio_;
 #endif
-
-// input
+#pragma endregion
+#pragma region input
 template <typename T = long long> inline T input() { T t; std::cin >> t; return t; }
 template <typename ...T> inline void input(T&... a_) { (std::cin >> ... >> a_); }
 #define in64(...) long long __VA_ARGS__; input(__VA_ARGS__)
@@ -276,7 +297,8 @@ inline long long QIN_H_() { long long t; std::cin >> t; return t; } // qin() sup
 #define QIN_H8_(n) QIN_H7_(n), qin_h_(7, n)
 #define qin(n) EXPAND_(QIN_H##n##_(n))
 
-// output
+#pragma endregion
+#pragma region output
 
 template <typename... Args> void cprintf(const Args&... args) { printf(args...); }
 
@@ -301,10 +323,12 @@ struct Printf {
     template <typename ...T> requires (sizeof...(T) > 0) inline void operator()(const T&... v_) {
 #ifdef LOCAL
         pr_(v_...);
+        if(exit) std::exit(0);
         if(flush) cout.flush();
 #else
         if(!local) {
             pr_(v_...);
+            if(exit) std::exit(0);
             if(flush) cout.flush();
         }
 #endif
@@ -319,16 +343,17 @@ private:
         if(prec != -1) std::cout.precision(prec);
         if(width != -1) std::cout << std::setw(width) << std::setfill(fill);
     }
-    template <typename T> void pr_(const T& v_) const { preset_(); std::cout << v_ << end; if(exit) std::exit(0); }
+    void pr_(const ll& v_) const {
+        preset_(); std::cout << v_.first << sep;
+        preset_(); std::cout << v_.second << end;
+    }
+    template <typename T> void pr_(const T& v_) const { preset_(); std::cout << v_ << end; }
     template <isVector1_ T> void pr_(const T& v_) const { long long len_ = Size(v_);
         for(long long i = 0; i < len_ - 1; i++) { preset_(); std::cout << v_[i] << sep; }
         if(len_) preset_(), std::cout << v_[len_-1] << end;
-        if(exit) std::exit(0);
     }
     template <isVector2_ T> void pr_(const T& arr) {
-        bool pExit = exit; exit = false;
         for(const auto& v_ : arr) pr_(v_);
-        exit = pExit; if(exit) std::exit(0);
     }
     template <typename T1, typename ...T2> void pr_(const T1& _, const T2&... b_) const {
         preset_(); std::cout << _ << sep; pr_(b_...);
@@ -336,8 +361,8 @@ private:
     template <isVector1_ T1, typename ...T2> void pr_(const T1& _, const T2&... b_) const {
         for(const auto& v_ : _) { preset_(); std::cout << v_ << sep; } pr_(b_...);
     }
-    template <isVector2_ T1, typename ... T2> void pr_(const T1& arr, const T2&... b_) {
-        bool pExit = exit; exit = false; pr_(arr); exit = pExit; pr_(b_...);
+    template <isVector2_ T1, typename ... T2> void pr_(const T1& arr, const T2&... b_) const {
+        pr_(arr); pr_(b_...);
     }
 } PrfDef_print_, PrfDef_println_(" ", "\n"), PrfDef_rprint_("", ""), PrfDef_rprintln_("", "\n"), PrfDef_printes_(" ", " ");
 #define printf(...) Printf({__VA_ARGS__})
@@ -380,7 +405,11 @@ template <typename... Args> void lprintvar_(const std::string& names_, Args... a
 #else
 #define lprintvar(...) do_nothing_()
 #endif // LOCAL
-
+#if __cplusplus >= 202300
+#define fprint(...) (std::cout << std::format(__VA_ARGS__))
+#define fprintln(...) (std::cout << std::format(__VA_ARGS__) << "\n")
+#endif
+#pragma endregion
 #pragma endregion
 #pragma region qol
 template <typename T> inline std::string tostr(const T &t) { return std::to_string(t); }
@@ -419,7 +448,7 @@ inline void setAbs(auto& v) { if(v < 0) v *= -1; }
 
 str Yn[] = {"No", "Yes"}, YN[] = {"NO", "YES"};
 #pragma endregion
-#pragma region custom_types
+#pragma region custom_types_2
 
 #pragma region data_structures
 
@@ -604,14 +633,6 @@ struct segtree {
 #pragma endregion // data_structures
 
 #pragma region modified_integers
-struct ll {
-    long long first = 0, second = 0;
-    inline auto operator<=>(const ll& b) const { return first == b.first ? second <=> b.second : first <=> b.first; }
-    inline bool operator==(const ll&) const = default;
-    inline long long& operator[](signed i) { return i ? second : first; }
-    inline const long long& operator[](signed i) const { return i ? second : first; }
-};
-
 template <long long mod = 1000000007>
 struct ModInt {
     long long v = 0;
@@ -665,8 +686,5 @@ vi prime_list(int n) {
 
 
 i32 main() {
-    forf(i, 1, 20) {
-        auto k = pow(4, i);
-        println(i, k);
-    }
+
 }

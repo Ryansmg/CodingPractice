@@ -1,7 +1,8 @@
-/* Update : 2025-02-04 */
+/* Update : 2025-04-09 */
 
 #include <bits/stdc++.h>
 
+// replace __int128 with long long to use in Codeforces
 namespace PollardRho {
     namespace itnl {
         template <typename T> inline T pw_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)ans=ans*a%mod;b>>=1;a=a*a%mod;} return ans; }
