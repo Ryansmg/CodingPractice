@@ -4,7 +4,7 @@ using i64 = long long;
 
 int main() {
     i64 n, m, k; cin >> n >> m >> k;
-    queue<i64> q; // 노드가 들어갈 수 있는 자리를 저장하는 큐
+    queue<i64> q; // 노드가 들어갈 수 있는 자리의 높이를 저장하는 큐
     if(k != n + 1) { cout << "impossible."; return 0; }
     if(n == 0) { cout << m; return 0; }
     i64 ans = 0;
