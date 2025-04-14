@@ -1,36 +1,201 @@
 #include <bits/stdc++.h>
-using namespace std;
 
-int dr[] = { -1, -1, -1, 0, 1, 1, 1, 0 };
-int dc[] = { -1, 0, 1, 1, 1, 0, -1, -1 };
-int main() {
-    int h, w, ans = 0; cin >> h >> w;
-    vector<vector<int>> shore(h+2, vector<int>()),
-        cnt(h+2, vector<int>(w+2, 0));
-
-    for(int i = 1; i <= h; i++) {
-        shore[i].push_back(0);
-        string s; cin >> s;
-        for(int j = 0; j < w; j++) {
-            shore[i].push_back(s[j] == '.' ? 0 : s[j] - '0');
-            if (s[j] == '.') for(int k = 0; k < 8; k++) cnt[i + dr[k]][j + 1 + dc[k]]++;
+class DLX {
+    struct node {
+        signed row;
+        node *u, *d, *l, *r;
+        union {
+            node* h;
+            signed size;
+        };
+        void cover() {
+            this->r->l = this->l; this->l->r = this->r;
+            for(node* i = this->d; i != this; i = i->d) {
+                for(node* j = i->r; j != i; j = j->r) {
+                    j->d->u = j->u; j->u->d = j->d;
+                    j->h->size--;
+                }
+            }
+        }
+        void uncover() {
+            for(node* i = this->u; i != this; i = i->u) {
+                for(node* j = i->l; j != i; j = j->l) {
+                    j->d->u = j; j->u->d = j;
+                    j->h->size++;
+                }
+            }
+            this->r->l = this; this->l->r = this;
+        }
+        bool search(DLX& dlx) {
+            if(r == this) {
+                if(dlx.all) {
+                    if(dlx.sol) dlx.all_solutions.push_back(dlx.solution);
+                    else dlx.solution_count++;
+                }
+                return true;
+            }
+            node* ptr = nullptr;
+            signed low = 2147483647;
+            for(node* i = r; i != this; i = i->r) {
+                if(i->size < low) {
+                    if(!(i->size)) return false;
+                    low = i->size; ptr = i;
+                }
+            }
+            assert(ptr);
+            ptr->cover();
+            for(node* i = ptr->d; i != ptr; i = i->d) {
+                dlx.solution.push_back(i->row);
+                for(node* j = i->r; j != i; j = j->r) j->h->cover();
+                if(search(dlx) && !dlx.all) return true;
+                else {
+                    dlx.solution.pop_back();
+                    for(node* j = i->l; j != i; j = j->l) j->h->uncover();
+                }
+            }
+            ptr->uncover();
+            return false;
+        }
+    };
+    bool all = false, sol = false;
+    std::vector<node> nodes, heads; node hd{};
+public:
+    enum { SINGLE, ALL, COUNT };
+    std::vector<signed> solution;
+    std::vector<std::vector<signed>> all_solutions;
+    std::size_t solution_count = 0;
+    [[maybe_unused]] bool possible = false;
+    DLX() = default;
+    explicit DLX(const std::vector<std::vector<bool>>& matrix, int mode = SINGLE) {
+        all = mode == ALL || mode == COUNT;
+        sol = mode == SINGLE || mode == ALL;
+        auto n = static_cast<signed>(matrix[0].size()),
+                m = static_cast<signed>(matrix.size());
+        heads.resize(n, {});
+        hd.r = &heads[0]; hd.l = &heads[n-1];
+        for(signed i = 0; i < n; i++) {
+            heads[i].size = 0;
+            heads[i].u = heads[i].d = &heads[i];
+            heads[i].l = (i ? &heads[i-1] : &hd);
+            heads[i].r = (i < n-1 ? &heads[i+1] : &hd);
+        }
+        signed vsz = 0, cnt = 0;
+        for(signed i = 0; i < m; i++) for(signed j = 0; j < n; j++) vsz += matrix[i][j];
+        nodes.resize(vsz);
+        for(signed i = 0; i < m; i++) {
+            node* prv = nullptr;
+            for(signed j = 0; j < n; j++) {
+                if(!matrix[i][j]) continue;
+                node& cur = nodes[cnt++];
+                cur.row = i; cur.u = heads[j].u;
+                cur.h = cur.d = &heads[j];
+                if(prv) cur.l = prv, cur.r = prv->r, prv->r->l = &cur, prv->r = &cur;
+                else cur.l = cur.r = &cur;
+                heads[j].u->d = &cur; heads[j].u = &cur;
+                heads[j].size++;
+                prv = &cur;
+            }
+        }
+        possible = hd.search(*this);
+        if(mode == SINGLE) {
+            solution_count = possible;
+        }
+        if(mode == ALL) {
+            possible = !all_solutions.empty();
+            solution_count = all_solutions.size();
+            if(possible) solution = all_solutions[0];
+        }
+        if(mode == COUNT) {
+            possible = solution_count;
         }
     }
-    queue<pair<int, int>> cur, nxt;
-    for(int r = 1; r <= h; r++) for(int c = 1; c <= w; c++) {
-        if(shore[r][c] && shore[r][c] <= cnt[r][c]) shore[r][c] = 0, nxt.emplace(r, c);
+};
+
+class DLXHelper {
+    std::map<std::string, signed> condition; signed oc = 0;
+    std::map<std::string, signed> selection; signed ac = 0;
+    std::vector<std::string> selectionName;
+    std::vector<std::vector<signed>> s2c;
+public:
+    void addCond(const std::vector<std::string>& conds) {
+        for(const std::string& s : conds) if(!condition.contains(s)) condition.insert({s, oc++});
     }
-    while(!nxt.empty()) {
-        ans++; cur = nxt; nxt = queue<pair<int, int>>();
-        while(!cur.empty()) {
-            int r = cur.front().first, c = cur.front().second;
-            cur.pop();
-            for(int j = 0; j < 8; j++) {
-                int nxr = r + dr[j], nxc = c + dc[j];
-                if (shore[nxr][nxc] && shore[nxr][nxc] <= ++cnt[nxr][nxc])
-                    shore[nxr][nxc] = 0, nxt.emplace(nxr, nxc);
+    void addCond(const std::string& cond) { addCond(std::vector{cond}); }
+    void add(const std::string& sele, const std::vector<std::string>& conds) {
+        signed s;
+        if(auto iter = selection.find(sele); iter == selection.end()) {
+            s = ac;
+            selectionName.push_back(sele);
+            selection.insert({sele, ac++});
+            s2c.emplace_back();
+        }
+        else s = iter->second;
+
+        for(const std::string& cond : conds) {
+            signed c;
+            if(auto iter = condition.find(cond); iter == condition.end())
+                c = oc, condition.insert({cond, oc++});
+            else
+                c = iter->second;
+            s2c[s].push_back(c);
+        }
+    }
+    void add(const std::string& sele, const std::string& cond) { add(sele, std::vector{cond}); }
+
+    std::string seleName(signed sele) { return selectionName[sele]; }
+
+    DLX run(int mode = DLX::SINGLE) const {
+        std::vector matrix(ac, std::vector<bool>(oc));
+        for(signed i = 0; i < static_cast<signed>(s2c.size()); i++)
+            for(const signed& j : s2c[i]) matrix[i][j] = true;
+        return DLX(matrix, mode);
+    }
+
+    std::vector<std::string> toName(const std::vector<signed>& solution) const {
+        std::vector<std::string> ret(solution.size());
+        for(size_t i = 0; i < solution.size(); i++) ret[i] = selectionName[solution[i]];
+        return ret;
+    }
+};
+
+int main() {
+    using namespace std;
+    ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr);
+
+    map<string, vector<pair<int, int>>> pieces;
+    pieces.insert({{"F00"}, {}});
+    vector<string> names;
+
+    vector board(16, vector<char>(16, '-'));
+    DLXHelper dlx;
+    dlx.add("p", "0"); // precondition, "0" 조건은 "p" 선택만 만족하는 조건으로, 이미 놓아져 있는 숫자들에 대한 선택을 강제하기 위해서 추가
+    for(int r = 0; r < 16; r++) {
+        for(int c = 0; c < 16; c++) {
+            int squareN = r / 4 * 4 + c / 4;
+            cin >> board[r][c];
+            if(board[r][c] != '-') {
+                dlx.add("p", format("row{}{}", r, board[r][c])); // 각 행에 모든 수가 있는가?
+                dlx.add("p", format("col{}{}", c, board[r][c])); // 각 열에 모든 수가 있는가?
+                dlx.add("p", format("sq{}{}", squareN, board[r][c])); // 각 3x3에 모든 수가 있는가?
+                dlx.add("p", format("ex{}_{}", r, c)); // (r, c) 자리에 수가 있는가?
+            } else {
+                for(char i = 'A'; i <= 'P'; i++) {
+                    string name = format("{:02}_{:02}_{}", r, c, i); // (r, c) 자리에 수 i를 놓는 선택
+                    dlx.add(name, format("row{}{}", r, i));
+                    dlx.add(name, format("col{}{}", c, i));
+                    dlx.add(name, format("sq{}{}", squareN, i));
+                    dlx.add(name, format("ex{}_{}", r, c));
+                }
             }
         }
     }
-    cout << ans;
+    for(const auto &name: dlx.toName(dlx.run().solution)) {
+        if(name == "p") continue;
+        board[(name[0] - '0') * 10 + (name[1] - '0')][(name[3] - '0') * 10 + (name[4] - '0')] = name[6];
+    }
+    for(const auto &l: board) {
+        for(const char &i: l) cout << i;
+        cout << "\n";
+    }
 }
+

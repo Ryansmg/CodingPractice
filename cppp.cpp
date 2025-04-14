@@ -234,6 +234,7 @@ struct ll {
     inline bool operator==(const ll&) const = default;
     inline long long& operator[](signed i) { return i ? second : first; }
     inline const long long& operator[](signed i) const { return i ? second : first; }
+    friend istream& operator>>(istream& in, ll& t) { in >> t.first >> t.second; return in; }
 };
 #pragma endregion
 #pragma region I/O
@@ -686,5 +687,20 @@ vi prime_list(int n) {
 
 
 i32 main() {
-
+    std::priority_queue
+    in64(n);
+    vec arr(n, cin);
+    autoCompress(arr);
+    vl ans1(n), ans2(n);
+    {
+        segtree seg(0, n+1);
+        forn(i, n) ans1[i] = seg.query(0, arr[i]-1), seg.add(arr[i], 1);
+    }
+    {
+        segtree seg(0, n+1);
+        forr(i, n-1, 0) ans2[i] = seg.query(0, arr[i]-1), seg.add(arr[i], 1);
+    }
+    i64 ans = 0;
+    forn(i, n) ans += ans1[i] * ans2[i];
+    println(ans);
 }
