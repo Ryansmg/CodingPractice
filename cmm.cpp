@@ -61,9 +61,15 @@ template <typename T> void swap(T& a, T& b) {
 template <typename T> T abs(const T& v) { return v < 0 ? -v : v; }
 template <typename T> T max(const T& a, const T& b) { return a < b ? b : a; }
 template <typename T> T min(const T& a, const T& b) { return a < b ? a : b; }
+long long max(long long a, long long b) { return a < b ? b : a; }
+long long min(long long a, long long b) { return a < b ? a : b; }
 
 template <typename T> inline T gcd(T a, T b) { if(a < b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 
+template <typename T> inline bool less(const T& a, const T& b) { return a < b; }
+template <typename T> inline bool greater(const T& a, const T& b) { return a > b; }
+template <typename T> inline bool less_equal(const T& a, const T& b) { return a <= b; }
+template <typename T> inline bool greater_equal(const T& a, const T& b) { return a >= b; }
 
 template <typename T = long long> class vec {
     T* data_begin = nullptr;
@@ -74,12 +80,12 @@ public:
     }
     explicit vec(long long len) {
         data_begin = new T[len+1]();
-        capacity = len;
+        length = capacity = len;
     }
     explicit vec(long long len, const T& val) {
         data_begin = new T[len+1]();
         for(long long i = 0; i < len; i++) *(data_begin + i) = val;
-        capacity = len;
+        length = capacity = len;
     }
     vec(const vec& other) : length(other.length), capacity(other.capacity) {
         data_begin = new T[capacity + 1]();
@@ -261,6 +267,77 @@ public:
     long long size() const { return size_; }
     bool empty() const { return !size_; }
 };
+
+template <typename T = long long> class queue : public list<T> {
+public:
+    void push(const T& v) { this->push_back(v); }
+    T pop() { return this->pop_front(); }
+};
+
+template <typename T1 = long long, typename T2 = long long>
+class pair {
+public:
+    T1 first; T2 second;
+    pair() : first(), second() {}
+    pair(const T1& a, const T2& b) : first(a), second(b) {}
+    T1& operator[](int i) requires is_same<T1, T2> {
+        return i ? second : first;
+    }
+    T1& operator[](int i) const requires is_same<T1, T2> {
+        return i ? second : first;
+    }
+};
+
+#pragma region Algorithm
+
+template <typename T, typename Compare> void merge(const T* s1, const T* e1, const T* s2, const T* e2, T* out, Compare cmp = less<T>) {
+    while(s1 != e1 && s2 != e2) {
+        if(cmp(*s1, *s2)) *(out++) = *(s1++);
+        else *(out++) = *(s2++);
+    }
+    while(s1 != e1) *(out++) = *(s1++);
+    while(s2 != e2) *(out++) = *(s2++);
+}
+
+template <typename T, typename Compare> void merge(const vec<T>& a, const vec<T>& b, vec<T>& out, Compare cmp = less<T>) {
+    merge(a.begin(), a.end(), b.begin(), b.end(), out.begin(), cmp);
+}
+
+template <typename T, typename Compare> void naive_sort(T* s, T* e, Compare cmp = less<T>) {
+    for(T* i = s; i != e; i++)
+        for(T* j = i + 1; j != e; j++)
+            if(!cmp(*i, *j)) swap(*i, *j);
+}
+
+template <typename T, typename Compare> void sort_(T* s, T* e, T* buf, Compare cmp) {
+    long long dist = e - s;
+    if(dist <= 5) {
+        naive_sort(s, e, cmp);
+        return;
+    }
+    sort_(s, s + dist / 2 + 1, buf, cmp);
+    sort_(s + dist / 2 + 1, e, buf, cmp);
+    merge(s, s + dist / 2 + 1, s + dist / 2 + 1, e, buf, cmp);
+    for(long long i = 0; i < dist; i++) *(s + i) = *(buf + i);
+}
+
+template <typename T, typename Compare> void sort(T* s, T* e, Compare cmp = less<T>) {
+    T* buffer = new T[e - s]();
+    sort_(s, e, buffer, cmp);
+    delete[] buffer;
+}
+
+template <typename T, typename Compare> void sort(vec<T>& v, Compare cmp = less<T>) { sort(v.begin(), v.end(), cmp); }
+
+template <typename T> void reverse(T* s, T* e) {
+    if(s == e--) return;
+    while(s != e) swap(*s, *e), s++, e--;
+}
+template <typename T> void reverse(vec<T>& v) { reverse(v.begin(), v.end()); }
+
+#pragma endregion
+
+
 #pragma endregion
 
 #pragma region Stdio
@@ -396,32 +473,55 @@ using i64 = long long; using i32 = int; using i128 = __int128;
 
 #pragma endregion
 
-#pragma endregion
 
-int dx[] = {-1, 1, 0, 0};
-int dy[] = {0, 0, 1, -1};
-
-int main() {
-    vec<str> board;
-    board.push("xxkkkxx");
-    board.push("xxkkkxx");
-    board.push("kkkkkkk");
-    board.push("kkkkkkk");
-    board.push("kkkkkkk");
-    board.push("xxkkkxx");
-    board.push("xxkkkxx");
-    for(auto& a : board) for(char &c : a) if(c == 'k') c = get<char>();
-
-    int ans = 0;
-    for(int i = 0; i < 7; i++) {
-        for(int j = 0; j < 7; j++) {
-            if(board[i][j] != 'o') continue;
-            for(int k = 0; k < 4; k++) {
-                int mi = i + dy[k], mj = j + dx[k], ni = i + 2 * dy[k], nj = j + 2 * dx[k];
-                if(ni < 0 || nj < 0 || ni >= 7 || nj >= 7) continue;
-                ans += board[mi][mj] == 'o' && board[ni][nj] == '.';
+template <typename T = long long, typename AddType = T> struct segtree {
+    vec<T> tree; signed n = -1; signed offset = 1;
+    explicit segtree(const vec<T> &arr) {
+        n = signed(arr.size()); tree = vec<T>(2 * n, T());
+        for(signed i = n, j = 0; i < 2 * n; i++, j++) tree[i] = arr[j];
+        for(signed i = n - 1; i > 0; i--) tree[i] = tree[i << 1] + tree[i << 1 | 1];
+    }
+    segtree() = default;
+    explicit segtree(signed i) { tree = vec<T>(i * 2, T()); n = i; }
+    segtree(signed lBound, signed rBound) {
+        n = rBound - lBound + 1; offset = lBound;
+        tree = vec<T>(n * 2, T());
+    }
+    void add(signed tar, const AddType& val) { tar -= offset;
+        tree[n + tar] += val;
+        for(signed i = (n + tar) >> 1; i; i >>= 1) tree[i] = tree[i << 1] + tree[i << 1 | 1];
+    }
+    void set(signed tar, const T &val) { tar -= offset;
+        tree[n + tar] = val;
+        for(signed i = (n + tar) >> 1; i; i >>= 1) tree[i] = tree[i << 1] + tree[i << 1 | 1];
+    }
+    inline void set(signed tar, const auto& val) { set(tar, T(val)); }
+    template <typename T2, typename... T3> requires (sizeof...(T3) > 0)
+    inline void set(signed tar, const T2& val, const T3&... arr) { set(tar, T(val, arr...)); }
+    T query(signed left, signed right) { left -= offset; right -= offset;
+        signed l = n + left, r = n + right + 1;
+        T ansL, ansR;
+        bool lSet = false, rSet = false;
+        for(; l < r; l >>= 1, r >>= 1) {
+            if(l & 1) {
+                if(!lSet) lSet = true, ansL = tree[l++];
+                else ansL = ansL + tree[l++];
+            }
+            if(r & 1) {
+                if(!rSet) rSet = true, ansR = tree[--r];
+                else ansR = tree[--r] + ansR;
             }
         }
+        if(!lSet) return ansR;
+        if(!rSet) return ansL;
+        return ansL + ansR;
     }
-    ln(ans);
+    inline T query(signed tar) { return tree[n + tar - offset]; }
+};
+
+#pragma endregion
+
+
+int main() {
+    
 }

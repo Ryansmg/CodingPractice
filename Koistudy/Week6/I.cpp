@@ -1,6 +1,5 @@
 #include <bits/stdc++.h>
 using namespace std;
-using i64 = long long;
 
 const int mod = 9901;
 
@@ -17,7 +16,7 @@ int main() {
                 for(int d = 1; d < i-1; d++)
                     dp[i][j] = (dp[i][j] + dp[i-1][k] * dp[d][j - k - 1] % mod) % mod;
             }
-            //왼쪽 깊이가 <i-1이고 오른쪽 깊이가 i-1인 경우 : 2배
+            //왼쪽 깊이가 <i-1이고 오른쪽 깊이가 i-1인 경우 : 위와 같음
             dp[i][j] <<= 1;
             // 왼쪽 깊이가 i-1이고 오른쪽 깊이도 i-1인 경우
             // 왼쪽 트리 노드 수가 k개, 오른쪽 트리 노드 수는 j - k - 1개

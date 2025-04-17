@@ -687,20 +687,27 @@ vi prime_list(int n) {
 
 
 i32 main() {
-    std::priority_queue
-    in64(n);
-    vec arr(n, cin);
-    autoCompress(arr);
-    vl ans1(n), ans2(n);
-    {
-        segtree seg(0, n+1);
-        forn(i, n) ans1[i] = seg.query(0, arr[i]-1), seg.add(arr[i], 1);
+    in64(n, k);
+    f128 a, b, c, d;
+    cin >> a >> b >> c >> d;
+    v2l arr(4);
+    forn(i, n) {
+        char ch; i64 u;
+        input(ch, u);
+        arr[ch-'A'].pb(u);
     }
-    {
-        segtree seg(0, n+1);
-        forr(i, n-1, 0) ans2[i] = seg.query(0, arr[i]-1), seg.add(arr[i], 1);
+    for(auto& ar : arr) ar.sort();
+    rep(k) {
+        vec<array<f128, 2>> t;
+        if(!arr[0].empty()) t.pb({b * c * d * arr[0].back(), 0});
+        if(!arr[1].empty()) t.pb({a * c * d * arr[1].back(), 1});
+        if(!arr[2].empty()) t.pb({b * a * d * arr[2].back(), 2});
+        if(!arr[3].empty()) t.pb({b * c * a * arr[3].back(), 3});
+        sort(t);
+        if(t.back()[1] == 0) a += arr[t.back()[1]].back();
+        if(t.back()[1] == 1) b += arr[t.back()[1]].back();
+        if(t.back()[1] == 2) c += arr[t.back()[1]].back();
+        if(t.back()[1] == 3) d += arr[t.back()[1]].back();
+        println(char('A' + t.back()[1]), arr[t.back()[1]].pop());
     }
-    i64 ans = 0;
-    forn(i, n) ans += ans1[i] * ans2[i];
-    println(ans);
 }
