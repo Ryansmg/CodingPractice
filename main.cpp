@@ -1,38 +1,62 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-int n;
-int dx[] = {-1, 1, 0, 0};
-int dy[] = {0, 0, -1, 1};
-vector<vector<bool>> arr, vis;
-vector<int> ans;
+const int MAX = 100001;
+vector<long long> tree(MAX * 4);
+vector<long long> arr(MAX);
+
+void init(int node, int start, int end) {
+    if(start == end) {
+        tree[node] = arr[start];
+        return;
+    }
+    int mid = (start + end) / 2;
+    init(node * 2, start, mid);
+    init(node * 2 + 1, mid + 1, end);
+    tree[node] = tree[node * 2] + tree[node * 2 + 1];
+}
+
+void update(int node, int start, int end, int idx, long long diff) {
+    if(idx < start || idx > end) return;
+    tree[node] += diff;
+    if(start != end) {
+        int mid = (start + end) / 2;
+        update(node * 2, start, mid, idx, diff);
+        update(node * 2 + 1, mid + 1, end, idx, diff);
+    }
+}
+
+long long query(int node, int start, int end, int left, int right) {
+    if(left > end || right < start) return 0;
+    if(left <= start && end <= right) return tree[node];
+    int mid = (start + end) / 2;
+    return query(node * 2, start, mid, left, right) +
+           query(node * 2 + 1, mid + 1, end, left, right);
+}
 
 int main() {
-    cin >> n;
-    arr = vis = vector<vector<bool>>(n, vector<bool>(n));
-    char c;
-    for(int i = 0; i < n; i++) for(int j = 0; j < n; j++) {
-        cin >> c;
-        arr[i][j] = c == '1';
-    }
-    for(int i = 0; i < n; i++) for(int j = 0; j < n; j++) {
-        if(vis[i][j] || !arr[i][j]) continue;
-        queue<array<int, 2>> q;
-        q.push({i, j}); vis[i][j] = true;
-        int cans = 1;
-        while(!q.empty()) {
-            int ci = q.front()[0], cj = q.front()[1];
-            q.pop();
-            for(int k = 0; k < 4; k++) {
-                int ni = ci + dx[k], nj = cj + dy[k];
-                if(ni < 0 || nj < 0 || ni >= n || nj >= n || !arr[ni][nj] || vis[ni][nj]) continue;
-                cans++; vis[ni][nj] = true;
-                q.push({ni, nj});
-            }
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n, m, k;
+    cin >> n >> m >> k;
+
+    for(int i = 0; i < n; i++)
+        cin >> arr[i];
+
+    init(1, 0, n - 1);
+
+    for(int i = 0; i < m + k; i++) {
+        int a, b;
+        long long c;
+        cin >> a >> b >> c;
+
+        if(a == 1) {
+            long long diff = c - arr[b - 1];
+            arr[b - 1] = c;
+            update(1, 0, n - 1, b - 1, diff);
+        } else {
+            cout << query(1, 0, n - 1, b - 1, c - 1) << '\n';
         }
-        ans.push_back(cans);
     }
-    sort(ans.begin(), ans.end());
-    cout << ans.size() << '\n';
-    for(int i : ans) cout << i << '\n';
 }

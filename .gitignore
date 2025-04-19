@@ -8,3 +8,4 @@
 /.gitignored
 /CMakeLists.txt
 /RustCoding/target
+/.autocp

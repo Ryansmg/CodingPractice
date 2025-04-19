@@ -9,7 +9,7 @@
 
 #pragma region C+++
 //@formatter:off
-#define CPPP 250419
+#define CPPP 250409
 #pragma region settings
 
 #pragma clang diagnostic push
@@ -118,13 +118,13 @@ inline void do_nothing_() { }
 #pragma region constants
 constexpr long long
         i64max = 9223372036854775807,    /// lim<i64>::max()
-        i64min = -9223372036854775807-1, /// lim<i64>::min()
-        INFIN  = 4001557155715570000,    /// INFIN * 2 < i64max
-        INF    = 1000000000000000000,    /// INF * 9 < i64max
-        inf    = 3000000000,             /// inf * inf < i64max
-        i32max = 2147483647,             /// lim<i32>::max()
-        i32min = -2147483648,            /// lim<i32>::min()
-        mod1   = 1000000007,
+i64min = -9223372036854775807-1, /// lim<i64>::min()
+INFIN  = 4001557155715570000,    /// INFIN * 2 < i64max
+INF    = 1000000000000000000,    /// INF * 9 < i64max
+inf    = 3000000000,             /// inf * inf < i64max
+i32max = 2147483647,             /// lim<i32>::max()
+i32min = -2147483648,            /// lim<i32>::min()
+mod1   = 1000000007,
         mod9   = 998244353;
 constexpr long double PI = 3.141592653589793238462643383279502884L;
 #pragma endregion
@@ -264,10 +264,6 @@ struct enable_fastio_ {
 #pragma region input
 template <typename T = long long> inline T input() { T t; std::cin >> t; return t; }
 template <typename ...T> inline void input(T&... a_) { (std::cin >> ... >> a_); }
-
-template <typename T = long long> inline T get() { T t; std::cin >> t; return t; }
-template <typename ...T> inline void get(T&... a_) { (std::cin >> ... >> a_); }
-
 #define in64(...) long long __VA_ARGS__; input(__VA_ARGS__)
 #define in32(...) signed __VA_ARGS__; input<signed>(__VA_ARGS__)
 #define instr(...) std::string __VA_ARGS__; input<std::string>(__VA_ARGS__)
@@ -376,9 +372,7 @@ private:
 #define printExit(...) printfln().setExit()(__VA_ARGS__)
 #define print(...) PrfDef_print_(__VA_ARGS__)
 #define println(...) PrfDef_println_(__VA_ARGS__)
-#define ln(...) println(__VA_ARGS__)
 #define rprint(...) PrfDef_rprint_(__VA_ARGS__)
-#define put(...) rprint(__VA_ARGS__)
 #define rprintln(...) PrfDef_rprintln_(__VA_ARGS__)
 #define printes(...) PrfDef_printes_(__VA_ARGS__)
 #define flprintln(...) printfln().setFlush()(__VA_ARGS__)
@@ -509,7 +503,7 @@ public:
         return std::lower_bound(this->begin(), this->end(), v, cmp);
     }
     inline auto lb(const T& v) const { return lb(v, std::less<T>()); }
-    template <typename Cmp> inline auto lower_bound(const T& v, const Cmp& cmp) const { return lb(v, cmp); }
+    template <typename Cmp> inline auto lower_bound(const T& v, const Cmp& cmp) { return lb(v, cmp); }
     inline auto lower_bound(const T& v) const { return lb(v); }
     template <typename Cmp> inline auto ub(const T& v, const Cmp& cmp) const {
         return std::upper_bound(this->begin(), this->end(), v, cmp);
@@ -517,21 +511,6 @@ public:
     inline auto ub(const T& v) const { return ub(v, std::less<T>()); }
     template <typename Cmp> inline auto upper_bound(const T& v, const Cmp& cmp) const { return ub(v, cmp); }
     inline auto upper_bound(const T& v) const { return ub(v); }
-
-
-    template <typename Cmp> inline auto lb(const T& v, const Cmp& cmp) {
-        return std::lower_bound(this->begin(), this->end(), v, cmp);
-    }
-    inline auto lb(const T& v) { return lb(v, std::less<T>()); }
-    template <typename Cmp> inline auto lower_bound(const T& v, const Cmp& cmp) { return lb(v, cmp); }
-    inline auto lower_bound(const T& v) { return lb(v); }
-    template <typename Cmp> inline auto ub(const T& v, const Cmp& cmp) {
-        return std::upper_bound(this->begin(), this->end(), v, cmp);
-    }
-    inline auto ub(const T& v) { return ub(v, std::less<T>()); }
-    template <typename Cmp> inline auto upper_bound(const T& v, const Cmp& cmp) { return ub(v, cmp); }
-    inline auto upper_bound(const T& v) { return ub(v); }
-
     inline signed idx(const T& v) const { return lb(v) - this->begin(); }
     template <typename Cmp> inline signed idx(const T& v, const Cmp& cmp) const { return lb(v, cmp) - this->begin(); }
     inline long long sz() const { return this->size(); }
@@ -706,19 +685,62 @@ vi prime_list(int n) {
 //@formatter:on
 #pragma endregion
 
+vec<vec<ll>> adj, par;
+vl dep;
+
+int n, h;
+
+void dfs(int c, int p = -1) {
+    for(const auto& [i, w] : adj[c]) {
+        if(i == p) continue;
+        par[i][0] = {c, w};
+        dep[i] = dep[c] + 1;
+        dfs(i, c);
+    }
+}
+
+ll lca(int a, int b) {
+    if(dep[a] < dep[b]) swap(a, b);
+    i64 d = dep[a] - dep[b], ans = 0;
+    while(d) ans += par[a][lmb(d)][1], a = par[a][lmb(d)][0], d ^= (1LL << lmb(d));
+    if(a == b) return {a, ans};
+    forr(i, h, 0) {
+        if(par[a][i][0] == par[b][i][0]) continue;
+        ans += par[a][i][1] + par[b][i][1];
+        a = par[a][i][0];
+        b = par[b][i][0];
+    }
+    return {par[a][0][0], ans + par[a][0][1] + par[b][0][1]};
+}
+
+i64 get_par(int a, int d) {
+    while(d) a = par[a][lmb(d)][0], d ^= (1LL << lmb(d));
+    return a;
+}
+
+i64 q2(int u, int v, int k) {
+    int l = lca(u, v)[0];
+    if(dep[u] - dep[l] + 1 >= k) return get_par(u, k - 1);
+    return get_par(v, dep[v] - dep[l] + 1 - (k - (dep[u] - dep[l])));
+}
 
 i32 main() {
-    in64(n);
-    vl fidx(n+1);
-    forf(i, 1, n) fidx[input()] = i;
-    vl arr(n);
-    forn(i, n) arr[i] = fidx[input()];
-    vl lcs(n, inf);
-    i64 ans = 0;
-    forn(i, n) {
-        auto it = lcs.lb(arr[i]);
-        setMax(ans, it - lcs.begin() + 1);
-        *it = arr[i];
+    input(n);
+    h = log2(n) + 1;
+    adj = vec<vec<ll>>(n+1);
+    par = vec(n+1, vec<ll>(h+1));
+    dep = vl(n+1);
+    rep(n-1) {
+        in64(a, b, w);
+        adj[a].eb(b, w);
+        adj[b].eb(a, w);
     }
-    ln(ans);
+    dfs(1);
+    forf(i, 1, h) forf(j, 1, n)
+        par[j][i] = { par[par[j][i-1][0]][i-1][0], par[j][i-1][1] + par[par[j][i-1][0]][i-1][1] };
+
+    tcRep() {
+        if(input() == 1) println(lca(qin(2))[1]);
+        else println(q2(qin(3)));
+    }
 }

@@ -33,6 +33,7 @@ int main() {
         ans.push_back(cans);
     }
     sort(ans.begin(), ans.end());
+
     cout << ans.size() << '\n';
     for(int i : ans) cout << i << '\n';
 }
