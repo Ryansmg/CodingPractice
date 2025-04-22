@@ -709,16 +709,16 @@ vi prime_list(int n) {
 
 i32 main() {
     in64(n);
-    vl fidx(n+1);
-    forf(i, 1, n) fidx[input()] = i;
-    vl arr(n);
-    forn(i, n) arr[i] = fidx[input()];
-    vl lcs(n, inf);
+    vec<ll> arr(n, cin);
+    arr.sort();
+    vl arr2(n);
+    forn(i, n) arr2[i] = arr[i][1];
+    autoCompress(arr2);
+    segtree seg(0, n+1);
     i64 ans = 0;
     forn(i, n) {
-        auto it = lcs.lb(arr[i]);
-        setMax(ans, it - lcs.begin() + 1);
-        *it = arr[i];
+        ans += seg.query(arr2[i]+1, n+1);
+        seg.add(arr2[i], 1);
     }
-    ln(ans);
+    println(ans);
 }
