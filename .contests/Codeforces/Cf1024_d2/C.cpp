@@ -712,5 +712,22 @@ vi prime_list(int n) {
 
 
 i32 main() {
-    
+    tcRep() {
+        in64(n);
+        v2l arr(n, vl(n));
+        i64 r = (n-1)/2, c = (n-1)/2;
+        i64 k = 0, step = 1;
+        auto U = [&]() { rep(step) arr[r--][c] = k++; };
+        auto D = [&]() { rep(step) arr[r++][c] = k++; };
+        auto L = [&]() { rep(step) arr[r][c--] = k++; };
+        auto R = [&]() { rep(step) arr[r][c++] = k++; };
+#define a if(k >= n*n) break
+        while(k < n*n) {
+            R(); a; D(); a;
+            step++;
+            L(); a; U(); a;
+            step++;
+        }
+        printfln(.sep = " ")(arr);
+    }
 }

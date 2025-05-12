@@ -2,7 +2,6 @@
 #define USE_O3 0
 #define USE_OFAST 0
 #define USE_TARGET 0
-#define USE_MMAP 0
 #define LOCAL_FASTIO 1
 #define LOCAL_INLINE 0
 #define DISABLE_LOCAL 0
@@ -10,7 +9,7 @@
 
 #pragma region C+++
 //@formatter:off
-#define CPPP 250309
+#define CPPP 250511
 #pragma region settings
 
 #pragma clang diagnostic push
@@ -21,6 +20,9 @@
 #pragma ide diagnostic ignored "UnreachableCallsOfFunction"
 #pragma ide diagnostic ignored "UnusedLocalVariable"
 #pragma ide diagnostic ignored "UnusedValue"
+#if DISABLE_LOCAL
+#undef LOCAL
+#endif
 #ifdef LOCAL
 #define LOCAL_DEFINED 1
 #else
@@ -29,9 +31,6 @@
 #pragma GCC target("avx2,bmi,bmi2,lzcnt,popcnt")
 #endif
 #endif
-#if DISABLE_LOCAL
-#undef LOCAL
-#endif
 #if USE_OFAST
 #pragma GCC optimize("Ofast,unroll-loops")
 #elif USE_O3
@@ -39,85 +38,11 @@
 #endif
 #pragma endregion
 #pragma region headers
-#include <cassert>
-#include <climits>
-#include <cstdarg>
-#include <cstddef>
-#include <cstdlib>
-#include <cstdint>
-#include <algorithm>
-#include <bitset>
-#include <functional>
-#include <limits>
-#include <memory>
-#include <new>
-#include <numeric>
-#include <utility>
-#include <array>
-#include <initializer_list>
-#include <tuple>
-#include <bit>
-#include <concepts>
-#include <ranges>
-#include <complex>
-#include <deque>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <list>
-#include <map>
-#include <queue>
-#include <set>
-#include <sstream>
-#include <stack>
-#include <span>
-#include <string>
-#include <vector>
-#include <random>
-#include <unordered_map>
-#include <unordered_set>
-#include <valarray>
+#include <x86intrin.h>
+#include <bits/stdc++.h>
 #include <ext/pb_ds/assoc_container.hpp>
 #include <ext/pb_ds/tree_policy.hpp>
 #include <ext/rope>
-#pragma endregion
-#pragma region MMAP
-#if USE_MMAP && !LOCAL_DEFINED
-#include <sys/stat.h>
-#include <sys/mman.h>
-#define cin mmi_
-namespace std {
-    class MmapInput_ {
-        struct stat st{}; char* data = nullptr;
-        inline void skipBlank() { while(data && (*data == ' ' || *data == '\n')) data++; }
-    public:
-        MmapInput_() {
-            fstat(0, &st);
-            data = (char*) mmap(nullptr, st.st_size, PROT_READ, MAP_SHARED, 0, 0);
-            assert(data != MAP_FAILED);
-        }
-        inline char get() { return *(data++); }
-        inline MmapInput_& operator>>(char& v) { skipBlank(); v = *(data++); return *this; }
-        MmapInput_& operator>>(long long& v) {
-            long long sign = 1; v = 0; skipBlank(); if(*data == '-') sign = -1, data++;
-            while('0' <= *data && *data <= '9') v = v * 10 + *data - '0', data++;
-            v *= sign; return *this;
-        }
-        MmapInput_& operator>>(__int128& v) {
-            long long sign = 1; v = 0; skipBlank(); if(*data == '-') sign = -1, data++;
-            while('0' <= *data && *data <= '9') v = v * 10 + *data - '0', data++;
-            v *= sign; return *this;
-        }
-        inline MmapInput_& operator>>(bool& v) { long long tmp; operator>>(tmp); v = tmp; return *this; }
-        inline MmapInput_& operator>>(signed& v) { long long t; *this >> t; v = static_cast<signed>(t); return *this; }
-        MmapInput_& operator>>(std::string& v) { skipBlank(); v.clear();
-            while(*data != ' ' && *data != '\n') v.push_back(*(data++));
-            return *this;
-        }
-        inline void tie(void*) {}
-    } mmi_;
-}
-#endif // USE_MMAP
 #pragma endregion
 #pragma region keywords
 #define elif else if
@@ -130,7 +55,7 @@ using std::stringstream, std::istringstream, std::ostringstream;
 using std::array, std::list, std::tuple, std::get, std::tie, std::initializer_list, std::bitset, std::ssize, std::span;
 /// math
 using std::complex, std::polar, std::popcount;
-using std::max, std::min, std::gcd, std::lcm, std::pow, std::swap, std::abs, std::sin, std::cos, std::tan, std::asin;
+using std::max, std::min, std::gcd, std::lcm, std::swap, std::abs, std::sin, std::cos, std::tan, std::asin;
 using std::acos, std::atan, std::floor, std::ceil, std::round, std::sinh, std::cosh, std::tanh, std::atan2, std::sqrt;
 using std::less, std::greater, std::less_equal, std::greater_equal;
 /// algorithms
@@ -165,7 +90,8 @@ template <typename T = long long> using umset = std::unordered_multiset<T>;
 template <typename T = long long> using ordered_set = __gnu_pbds::tree<T, __gnu_pbds::null_type, less<>, __gnu_pbds::rb_tree_tag, __gnu_pbds::tree_order_statistics_node_update>;
 template <typename T = long long> using ordered_multiset = __gnu_pbds::tree<T, __gnu_pbds::null_type, less_equal<>, __gnu_pbds::rb_tree_tag, __gnu_pbds::tree_order_statistics_node_update>;
 template <typename T = long long> using vector = std::vector<T>;
-using ll = std::array<long long, 2>; using lll = std::array<long long, 3>; using ii = std::array<signed, 2>; using iii = std::array<signed, 3>;
+using lll = std::array<long long, 3>;
+using ii = std::array<signed, 2>; using iii = std::array<signed, 3>;
 /// miscellaneous
 #define ci64 const i64 &
 #define ci32 const i32 &
@@ -177,30 +103,30 @@ using ll = std::array<long long, 2>; using lll = std::array<long long, 3>; using
 #define Tpl64 template <typename T = long long>
 #ifdef LOCAL
 #define lassert assert
-
 #if (!LOCAL_INLINE)
 #define inline // preventing debugging issue
 #endif
 #else
 #define lassert(...)
 #endif
+
+#define panic() (cerr << "panicked at line " << __LINE__ << "\n", exit(1683))
+inline void do_nothing_() { }
+#define do_nothing do_nothing_()
+
 #pragma endregion
 #pragma region constants
 constexpr long long
         i64max = 9223372036854775807,    /// lim<i64>::max()
-i64min = -9223372036854775807-1, /// lim<i64>::min()
-lmax   = 9221557155715571557,    /// lmax + inf < i64max
-INFIN  = 4001557155715570000,    /// INFIN * 2 < i64max
-INF    = 1000000000000000000,    /// INF * 9 < i64max
-inf    = 3000000000,             /// inf * inf < i64max
-i32max = 2147483647,             /// lim<i32>::max()
-i32min = -2147483648,            /// lim<i32>::min()
-imax   = 2147481557,             /// imax + 1000 < i32max
-iinf   = 2000000000,             /// iinf + 1e8 < i32max
-mod1   = 1000000007,
+        i64min = -9223372036854775807-1, /// lim<i64>::min()
+        INFIN  = 4001557155715570000,    /// INFIN * 2 < i64max
+        INF    = 1000000000000000000,    /// INF * 9 < i64max
+        inf    = 3000000000,             /// inf * inf < i64max
+        i32max = 2147483647,             /// lim<i32>::max()
+        i32min = -2147483648,            /// lim<i32>::min()
+        mod1   = 1000000007,
         mod9   = 998244353;
-constexpr long double
-        PI = 3.141592653589793238462643383279502884L;
+constexpr long double PI = 3.141592653589793238462643383279502884L;
 #pragma endregion
 #pragma region control_statements
 #define forn(name_, val_) for(long long name_ = 0; name_ < (val_); name_++)
@@ -208,9 +134,12 @@ constexpr long double
 #define forr(name_, start_, end_) for(long long name_ = (start_); name_ >= (end_); name_--)
 /// foreach reverse
 #define forer(...) for(__VA_ARGS__ | std::views::reverse)
-#define rep(n_) forn(rep_mac_name_1_, n_)
-#define rep2(n_) forn(rep_mac_name_2_, n_)
-#define rep3(n_) forn(rep_mac_name_3_, n_)
+
+#define CONCAT_INNER_(x, y) x##y
+#define CONCAT_(x, y) CONCAT_INNER_(x, y)
+#define repeat_(n, i) for(long long i = 0; i < n; i++)
+#define rep(n) repeat_(n, CONCAT_(rep_var_, __COUNTER__))
+
 #define loop while(true)
 
 long long iR_v_, iR_v2_, iR_v5_;
@@ -252,9 +181,6 @@ template <typename T> inline void autoCompress0(T &v_) { auto comp_ = compressed
 template <typename T> inline T autoCompressed(T v_) { autoCompress(v_); return v_; }
 template <typename T> inline T autoCompressed0(T v_) { autoCompress0(v_); return v_; }
 
-/// sorted(arr)[i]를 반환. arr의 값들의 순서는 변경된다.
-template <typename T, typename Cmp> inline T& nth_element(std::vector<T>& arr, long long i, const Cmp& cmp = std::less<>()) { std::nth_element(arr.begin(), arr.begin() + i, arr.end(), cmp); return arr[i]; }
-
 template <typename T> inline std::vector<T> merge(const std::vector<T>&a, const std::vector<T>&b) {
     std::vector<T> ret(a.size()+b.size()); std::merge(a.begin(), a.end(), b.begin(), b.end(), ret.begin()); return ret;
 }
@@ -267,6 +193,8 @@ template <typename T> T modInv(T a, const T& m, bool chkGcd = true) { // by @kuh
     u %= m; if (u < 0) {u += m;} return u;
 }
 inline long long pow(long long a, long long b, long long mod) {return pow_(b < 0 ? modInv(a, mod) : a, std::abs(b), mod);}
+inline long long pow(long long a, long long b) { long long ans=1;while(b){if(b&1)ans=ans*a;b>>=1;a=a*a;} return ans; }
+template <typename T> inline T pow(T a, T b) { T ans=1;while(b){if(b&1)ans=ans*a;b>>=1;a=a*a;} return ans; }
 
 template <typename T> inline T gcd_(T a, T b) { if(a < b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
 template <typename T> inline T max(const std::vector<T>& v_) { T ret = v_.empty() ? std::numeric_limits<T>::min() : v_[0]; for(const T &t_ : v_) { ret = std::max(ret, t_); } return ret; }
@@ -279,19 +207,42 @@ template <typename T> inline T gcd(const std::initializer_list<T>& l_) { auto it
 template <typename T> inline T lcm(const std::initializer_list<T>& l_) { auto iter = l_.begin(); T ret = *iter / gcd(l_); long long sz_ = l_.size();
     for(long long i_ = 1; i_ <= sz_-1; i_++) { ret *= *(++iter); } return ret; }
 
+namespace pRho {
+    template <typename T> inline T pw_(T a, T b, T mod) { a%=mod;T ans=1;while(b){if(b&1)ans=ans*a%mod;b>>=1;a=a*a%mod;} return ans; }
+    std::vector<__int128>base={2,3,5,7,11,13,17,19,23,29,31,37,41};std::mt19937 gen=std::mt19937(std::random_device()());std::uniform_int_distribution<long long>dis;
+    bool _isPrime(__int128 n,__int128 a){if(a%n==0){return true;}__int128 d=n-1;while(true){__int128 t=pRho::pw_(a,d,n);if(t==n-1){return true;}
+            if(d%2==1){return(t==1||t==n-1);}d/= 2;}}
+    template <typename T> inline T gcd(T a,T b){if(a<b)swap(a,b);while(b){T r=a%b;a=b;b=r;}return a;}
+}
+bool isPrime(long long n){if(n<=1)return false;for(const __int128&a:pRho::base){if(!pRho::_isPrime(n, a))return false;}return true;}
+long long factorize(long long n){assert(n>=2);if(n%2==0){return 2;}if(isPrime(n)){return n;}__int128 x=pRho::dis(pRho::gen)%(n-2)+2,y=x,
+            c=pRho::dis(pRho::gen)%10+1,g=1;while(g==1){x=(x*x%n+c)%n;y=(y*y%n+c)%n;y=(y*y%n+c)%n;g=pRho::gcd(x-y>0?x-y:y-x,(__int128)n);
+        if(g==n)return factorize(n);}if(isPrime(g)){return g;}else return factorize(g);}
+std::vector<long long> getPrimes(long long n) { std::vector<long long> r; while(n != 1) { long long p = factorize(n); r.emplace_back(p); n /= p; } return r; }
+
 inline signed popcount(long long v) { return std::popcount((unsigned long long) v); }
 inline auto clz(long long v) { return __builtin_clzll(v); } /// count leading zeros (000010 => 4)
 inline signed lmb(long long v) { return 63 - clz(v); } /// left most bit (000100 => 2)
 
 std::random_device mrdvce_; std::mt19937 m1gn_(mrdvce_());
-std::uniform_int_distribution<signed> uni3i32_(0, 2147483647); std::uniform_int_distribution<long long> uni3i64_(0, 9223372036854775807);
-#define rand rand_
-inline signed randi() { return uni3i32_(m1gn_); } inline long long randl() { return uni3i64_(m1gn_); }
+std::uniform_int_distribution<long long> uni3i64_(0, 9223372036854775807);
+// #define rand rand_
+inline long long randl() { return uni3i64_(m1gn_); }
 inline long long rand_(long long l_, long long r_) { return randl() % (r_ - l_ + 1) + l_; } /// inclusive
 constexpr signed dx4[4] = { 0, 1, 0, -1 }; constexpr signed dy4[4] = { -1, 0, 1, 0 };
 #pragma endregion
+#pragma region custom_types_1
+struct ll {
+    long long first = 0, second = 0;
+    inline auto operator<=>(const ll& b) const { return first == b.first ? second <=> b.second : first <=> b.first; }
+    inline bool operator==(const ll&) const = default;
+    inline long long& operator[](signed i) { return i ? second : first; }
+    inline const long long& operator[](signed i) const { return i ? second : first; }
+    friend istream& operator>>(istream& in, ll& t) { in >> t.first >> t.second; return in; }
+};
+#pragma endregion
 #pragma region I/O
-// settings
+#pragma region iosets
 #ifdef LOCAL
 #define fileio filein; fileout
 #define filein freopen(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\z.etcBJ\input.txt)", "r", stdin)
@@ -300,12 +251,12 @@ constexpr signed dx4[4] = { 0, 1, 0, -1 }; constexpr signed dy4[4] = { -1, 0, 1,
 #define outputin freopen(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\z.etcBJ\output.txt)", "r", stdin)
 #define ansout freopen(R"(C:\Users\ryans\OneDrive\Desktop\Coding\Baekjoon\z.etcBJ\ans.txt)", "w", stdout)
 #else
-#define fileio print()
-#define filein print()
-#define fileout print()
-#define inputout print()
-#define outputin print()
-#define ansout print()
+#define fileio do_nothing
+#define filein do_nothing
+#define fileout do_nothing
+#define inputout do_nothing
+#define outputin do_nothing
+#define ansout do_nothing
 #endif // LOCAL
 
 #if (!LOCAL_DEFINED) || LOCAL_FASTIO
@@ -313,10 +264,14 @@ struct enable_fastio_ {
     enable_fastio_() { std::ios_base::sync_with_stdio(false); std::cin.tie(nullptr); std::cout.tie(nullptr); }
 } efio_;
 #endif
-
-// input
+#pragma endregion
+#pragma region input
 template <typename T = long long> inline T input() { T t; std::cin >> t; return t; }
 template <typename ...T> inline void input(T&... a_) { (std::cin >> ... >> a_); }
+
+template <typename T = long long> inline T get() { T t; std::cin >> t; return t; }
+template <typename ...T> inline void get(T&... a_) { (std::cin >> ... >> a_); }
+
 #define in64(...) long long __VA_ARGS__; input(__VA_ARGS__)
 #define in32(...) signed __VA_ARGS__; input<signed>(__VA_ARGS__)
 #define instr(...) std::string __VA_ARGS__; input<std::string>(__VA_ARGS__)
@@ -351,7 +306,8 @@ inline long long QIN_H_() { long long t; std::cin >> t; return t; } // qin() sup
 #define QIN_H8_(n) QIN_H7_(n), qin_h_(7, n)
 #define qin(n) EXPAND_(QIN_H##n##_(n))
 
-// output
+#pragma endregion
+#pragma region output
 
 template <typename... Args> void cprintf(const Args&... args) { printf(args...); }
 
@@ -364,40 +320,49 @@ template <typename T> concept isVector1_ = (isVector_<T> && !isVector2_<T>) || i
 std::string tostr(const __int128&);
 
 struct Printf {
-    std::string sep = " ", end; signed prec = -1, width = -1; char fill = ' '; bool exit = false, local = false;
+    std::string sep = " ", end; signed prec = -1, width = -1; char fill = ' '; bool exit = false, local = false, flush = false;
     inline void operator()() const {
 #ifndef LOCAL
         if(local) return;
 #endif
         std::cout << end;
         if(exit) std::exit(0);
+        if(flush) cout.flush();
     }
     template <typename ...T> requires (sizeof...(T) > 0) inline void operator()(const T&... v_) {
 #ifdef LOCAL
         pr_(v_...);
+        if(exit) std::exit(0);
+        if(flush) cout.flush();
 #else
-        if(!local) pr_(v_...);
+        if(!local) {
+            pr_(v_...);
+            if(exit) std::exit(0);
+            if(flush) cout.flush();
+        }
 #endif
     }
     Printf& appendEnd(const std::string& end_) { end += end_; return *this; }
     Printf& setExit() { exit = true; return *this; }
     Printf& setLocal() { local = true; return *this; }
+    Printf& setFlush() { flush = true; return *this; }
 private:
     inline void preset_() const {
         std::cout << std::fixed;
         if(prec != -1) std::cout.precision(prec);
         if(width != -1) std::cout << std::setw(width) << std::setfill(fill);
     }
-    template <typename T> void pr_(const T& v_) const { preset_(); std::cout << v_ << end; if(exit) std::exit(0); }
+    void pr_(const ll& v_) const {
+        preset_(); std::cout << v_.first << sep;
+        preset_(); std::cout << v_.second << end;
+    }
+    template <typename T> void pr_(const T& v_) const { preset_(); std::cout << v_ << end; }
     template <isVector1_ T> void pr_(const T& v_) const { long long len_ = Size(v_);
         for(long long i = 0; i < len_ - 1; i++) { preset_(); std::cout << v_[i] << sep; }
         if(len_) preset_(), std::cout << v_[len_-1] << end;
-        if(exit) std::exit(0);
     }
     template <isVector2_ T> void pr_(const T& arr) {
-        bool pExit = exit; exit = false;
         for(const auto& v_ : arr) pr_(v_);
-        exit = pExit; if(exit) std::exit(0);
     }
     template <typename T1, typename ...T2> void pr_(const T1& _, const T2&... b_) const {
         preset_(); std::cout << _ << sep; pr_(b_...);
@@ -405,24 +370,36 @@ private:
     template <isVector1_ T1, typename ...T2> void pr_(const T1& _, const T2&... b_) const {
         for(const auto& v_ : _) { preset_(); std::cout << v_ << sep; } pr_(b_...);
     }
-    template <isVector2_ T1, typename ... T2> void pr_(const T1& arr, const T2&... b_) {
-        bool pExit = exit; exit = false; pr_(arr); exit = pExit; pr_(b_...);
+    template <isVector2_ T1, typename ... T2> void pr_(const T1& arr, const T2&... b_) const {
+        pr_(arr); pr_(b_...);
     }
-} PrfDef_print_, PrfDef_println_(" ", "\n"), PrfDef_rprint_(""), PrfDef_rprintln_("", "\n"), PrfDef_printes_(" ", " ");
+} PrfDef_print_, PrfDef_println_(" ", "\n"), PrfDef_rprint_("", ""), PrfDef_rprintln_("", "\n"), PrfDef_printes_(" ", " ");
 #define printf(...) Printf({__VA_ARGS__})
-#define lprintf(...) Printf({__VA_ARGS__}).setLocal()
 #define printfln(...) printf(__VA_ARGS__).appendEnd("\n")
-#define lprintfln(...) printfln(__VA_ARGS__).setLocal()
 #define printfExit(...) printfln(__VA_ARGS__).setExit()
 #define printExit(...) printfln().setExit()(__VA_ARGS__)
 #define print(...) PrfDef_print_(__VA_ARGS__)
 #define println(...) PrfDef_println_(__VA_ARGS__)
-#define lprint(...) printf().setLocal()(__VA_ARGS__)
-#define lprintln(...) printfln().setLocal()(__VA_ARGS__)
+#define ln(...) println(__VA_ARGS__)
 #define rprint(...) PrfDef_rprint_(__VA_ARGS__)
+#define put(...) rprint(__VA_ARGS__)
 #define rprintln(...) PrfDef_rprintln_(__VA_ARGS__)
 #define printes(...) PrfDef_printes_(__VA_ARGS__)
+#define flprintln(...) printfln().setFlush()(__VA_ARGS__)
+
+#ifdef LOCAL
+#define lprintf(...) Printf({__VA_ARGS__}).setLocal()
+#define lprintfln(...) printfln(__VA_ARGS__).setLocal()
+#define lprint(...) printf().setLocal()(__VA_ARGS__)
+#define lprintln(...) printfln().setLocal()(__VA_ARGS__)
 #define lprintes(...) printf().setLocal().appendEnd(" ")(__VA_ARGS__)
+#else
+#define lprintf(...) do_nothing_
+#define lprintfln(...) do_nothing_
+#define lprint(...) do_nothing_()
+#define lprintln(...) do_nothing_()
+#define lprintes(...) do_nothing_()
+#endif
 
 #ifdef LOCAL
 #define lprintvar(...) lprintvar_(#__VA_ARGS__, __VA_ARGS__)
@@ -437,9 +414,13 @@ template <typename... Args> void lprintvar_(const std::string& names_, Args... a
     (print_each(args), ...);
 }
 #else
-#define lprintvar(...) print()
+#define lprintvar(...) do_nothing_()
 #endif // LOCAL
-
+#if __cplusplus >= 202300
+#define fprint(...) (std::cout << std::format(__VA_ARGS__))
+#define fprintln(...) (std::cout << std::format(__VA_ARGS__) << "\n")
+#endif
+#pragma endregion
 #pragma endregion
 #pragma region qol
 template <typename T> inline std::string tostr(const T &t) { return std::to_string(t); }
@@ -475,8 +456,10 @@ template <typename T, typename T2, typename... T3> requires (sizeof...(T3) > 0)
 inline void setMax(T& tar, const T2 &val, const T3&... arr) { setMax(tar, val); setMax(tar, arr...); }
 
 inline void setAbs(auto& v) { if(v < 0) v *= -1; }
+
+str Yn[] = {"No", "Yes"}, YN[] = {"NO", "YES"};
 #pragma endregion
-#pragma region custom_types
+#pragma region custom_types_2
 
 #pragma region data_structures
 
@@ -495,20 +478,25 @@ public:
 
     inline T& operator[](long long idx) { return this->at(idx); }
     inline const T& operator[](long long idx) const { return this->at(idx); }
-    void init() {
+    vec& init() {
 #ifdef CPPP
         if constexpr(isVector_<T>) {
             for(auto& a : *this) a.init();
         } else
 #endif
         { for(auto& a : *this) std::cin >> a; }
+        return *this;
     }
-    inline void fill(const T& v) { forn(i, sz()) operator[](i) = v; }
+    inline T operator()(long long idx, const T& ifError = T()) const {
+        if(idx < 0 || idx >= sz()) return ifError;
+        return this->at(idx);
+    }
+    inline vec& fill(const T& v) { forn(i, sz()) operator[](i) = v; return *this; }
     template <typename Cmp> inline void sort(const Cmp& cmp) { std::sort(this->begin(), this->end(), cmp); }
-    inline void sort() { sort(std::less<T>()); }
+    inline vec& sort() { sort(std::less<T>()); return *this; }
     template <typename Cmp> inline vec sorted(const Cmp& cmp) const { vec r = *this; r.sort(cmp); return r; }
     inline vec sorted() const { return sorted(std::less<T>()); }
-    inline void reverse() { std::reverse(this->begin(), this->end()); }
+    inline vec& reverse() { std::reverse(this->begin(), this->end()); return *this; }
     inline vec reversed() const { vec r = *this; r.reverse(); return r; }
     inline T pop() {
         if(mt()) [[unlikely]] {
@@ -516,16 +504,16 @@ public:
         }
         T r = this->back(); this->pop_back(); return r;
     }
-    inline void unique() { this->erase(std::unique(this->begin(), this->end()), this->end()); }
-    template <typename Cmp> inline void compress(const Cmp& cmp) { sort(cmp); unique(); }
-    inline void compress() { compress(std::less<T>()); }
+    inline vec& unique() { this->erase(std::unique(this->begin(), this->end()), this->end()); return *this; }
+    template <typename Cmp> inline vec& compress(const Cmp& cmp) { sort(cmp); return unique(); }
+    inline vec& compress() { return compress(std::less<T>()); }
     template <typename Cmp> inline vec compressed(const Cmp& cmp) const { vec r = *this; r.compress(cmp); return r; }
     inline vec compressed() const { return compressed(std::less<T>()); }
     template <typename Cmp> inline auto lb(const T& v, const Cmp& cmp) const {
         return std::lower_bound(this->begin(), this->end(), v, cmp);
     }
     inline auto lb(const T& v) const { return lb(v, std::less<T>()); }
-    template <typename Cmp> inline auto lower_bound(const T& v, const Cmp& cmp) { return lb(v, cmp); }
+    template <typename Cmp> inline auto lower_bound(const T& v, const Cmp& cmp) const { return lb(v, cmp); }
     inline auto lower_bound(const T& v) const { return lb(v); }
     template <typename Cmp> inline auto ub(const T& v, const Cmp& cmp) const {
         return std::upper_bound(this->begin(), this->end(), v, cmp);
@@ -533,10 +521,26 @@ public:
     inline auto ub(const T& v) const { return ub(v, std::less<T>()); }
     template <typename Cmp> inline auto upper_bound(const T& v, const Cmp& cmp) const { return ub(v, cmp); }
     inline auto upper_bound(const T& v) const { return ub(v); }
+
+
+    template <typename Cmp> inline auto lb(const T& v, const Cmp& cmp) {
+        return std::lower_bound(this->begin(), this->end(), v, cmp);
+    }
+    inline auto lb(const T& v) { return lb(v, std::less<T>()); }
+    template <typename Cmp> inline auto lower_bound(const T& v, const Cmp& cmp) { return lb(v, cmp); }
+    inline auto lower_bound(const T& v) { return lb(v); }
+    template <typename Cmp> inline auto ub(const T& v, const Cmp& cmp) {
+        return std::upper_bound(this->begin(), this->end(), v, cmp);
+    }
+    inline auto ub(const T& v) { return ub(v, std::less<T>()); }
+    template <typename Cmp> inline auto upper_bound(const T& v, const Cmp& cmp) { return ub(v, cmp); }
+    inline auto upper_bound(const T& v) { return ub(v); }
+
     inline signed idx(const T& v) const { return lb(v) - this->begin(); }
     template <typename Cmp> inline signed idx(const T& v, const Cmp& cmp) const { return lb(v, cmp) - this->begin(); }
     inline long long sz() const { return this->size(); }
     inline bool mt() const { return this->empty(); }
+    inline bool contains(const T& v) const { auto it = lb(v); return it != this->end() && *it == v; }
     template <typename T2> vec<T2> to() {
         vec<T2> ret; for(const auto& t : *this) ret.emplace_back(t);
         return ret;
@@ -545,9 +549,9 @@ public:
         vec<T> ret(size); for(long long i = 0; i < size; i++) ret[i] = offset + i;
         return ret;
     }
-    void concat(const std::vector<T>& v) { for(const T& t : v) this->push_back(t); }
-    void accumulate() { for(long long i = 1; i < sz(); i++) this->operator[](i) += this->operator[](i-1); }
-    void revAccumulate() { for(long long i = sz()-2; i >= 0; i--) this->operator[](i) += this->operator[](i+1); }
+    vec& concat(const std::vector<T>& v) { for(const T& t : v) this->push_back(t); return *this; }
+    vec& accumulate() { for(long long i = 1; i < sz(); i++) this->operator[](i) += this->operator[](i-1); return *this; }
+    vec& revAccumulate() { for(long long i = sz()-2; i >= 0; i--) this->operator[](i) += this->operator[](i+1); return *this; }
 };
 template<> class vec<bool> : public std::vector<bool> {
 public:
@@ -593,18 +597,14 @@ template <typename T = long long> inline vec<T> inVec(long long sz) {
     for(long long i = 0; i<sz; i++) { T t; std::cin >> t; a.push_back(t); }
     return a;
 }
-
 template <typename T = long long> inline void inVec(vec<T> &arr, long long sz, bool clear = false) {
     if(clear) arr.clear();
     for(long long i = 0; i < sz; i++) { T t; std::cin >> t; arr.push_back(t); }
 }
 template <typename T = long long> inline vec<T> inVec() { return inVec<T>(input()); }
 #define inArr inVec
-
-template <typename T2, typename T1> inline vec<T2> castVec(const vec<T1>& arr) { vec<T2> ret; for(const auto& t : arr) { ret.emplace_back(t); } return ret; }
 #endif
 #pragma endregion
-
 
 /// requirements: (T + T), add -> (T += AddType)
 /// 1-based index (for default)
@@ -652,6 +652,7 @@ struct segtree {
         if(!rSet) return ansL;
         return ansL + ansR;
     }
+    inline T queryAll() { return query(offset, offset + n - 1); }
     inline T query(signed tar) { return tree[n + tar - offset]; }
     std::span<T> getLeafs() { return std::span<T>(tree.begin() + n, tree.begin() + 2 * n); }
 };
@@ -663,234 +664,85 @@ template <long long mod = 1000000007>
 struct ModInt {
     long long v = 0;
     ModInt() = default;
-    ModInt(long long val) : v((val % mod + mod) % mod) {} // NOLINT(*-explicit-constructor)
-    explicit operator long long() { return v; }
-    ModInt& operator=(const ModInt& b) = default;
-    ModInt& operator++() { v = (v + 1) % mod; return *this; }
-    ModInt operator++(signed) { ModInt ret = *this; v = (v + 1) % mod; return ret; }
-    ModInt& operator--() { v = (v - 1 + mod) % mod; return *this; }
-    ModInt operator--(signed) { ModInt ret = *this; v = (v - 1 + mod) % mod; return ret; }
-    ModInt operator+(const ModInt& b) const { return {(v + b.v) % mod}; }
-    ModInt operator-(const ModInt& b) const { return {(v - b.v + mod) % mod}; }
-    ModInt operator*(const ModInt& b) const { return {(v * b.v) % mod}; }
-    ModInt& operator+=(const ModInt& b) { v = (v + b.v) % mod; return *this; }
-    ModInt& operator-=(const ModInt& b) { v = (v - b.v + mod) % mod; return *this; }
-    ModInt& operator*=(const ModInt& b) { v = (v * b.v) % mod; return *this; }
-    friend std::istream& operator>>(std::istream& in, ModInt& t) { in >> t.v; return in; }
-    friend std::ostream& operator<<(std::ostream& out, const ModInt& t) { out << t.v; return out; }
-    friend ModInt operator+(long long a, const ModInt& b) { a = (a % mod + mod) % mod; return {(b.v + a) % mod}; }
-    friend ModInt operator-(long long a, const ModInt& b) { a = (a % mod + mod) % mod; return {(b.v - a + mod) % mod}; }
-    friend ModInt operator*(long long a, const ModInt& b) { a = (a % mod + mod) % mod; return {(b.v * a) % mod}; }
+    inline ModInt(long long val) : v((val % mod + mod) % mod) {} // NOLINT(*-explicit-constructor)
+    template <typename T> inline explicit operator T() requires std::is_integral_v<T> { return v; }
+    inline ModInt& operator=(const ModInt& b) = default;
+    inline ModInt& operator++() { v = (v + 1) % mod; return *this; }
+    inline ModInt operator++(signed) { ModInt ret = *this; v = (v + 1) % mod; return ret; }
+    inline ModInt& operator--() { v = (v - 1 + mod) % mod; return *this; }
+    inline ModInt operator--(signed) { ModInt ret = *this; v = (v - 1 + mod) % mod; return ret; }
+    inline ModInt operator+(const ModInt& b) const { return {(v + b.v) % mod}; }
+    inline ModInt operator-(const ModInt& b) const { return {(v - b.v + mod) % mod}; }
+    inline ModInt operator*(const ModInt& b) const { return {(v * b.v) % mod}; }
+    inline ModInt& operator+=(const ModInt& b) { v = (v + b.v) % mod; return *this; }
+    inline ModInt& operator-=(const ModInt& b) { v = (v - b.v + mod) % mod; return *this; }
+    inline ModInt& operator*=(const ModInt& b) { v = (v * b.v) % mod; return *this; }
+    inline friend std::istream& operator>>(std::istream& in, ModInt& t) { in >> t.v; return in; }
+    inline friend std::ostream& operator<<(std::ostream& out, const ModInt& t) { out << t.v; return out; }
+    inline friend ModInt operator+(long long a, const ModInt& b) { a = (a % mod + mod) % mod; return {(b.v + a) % mod}; }
+    inline friend ModInt operator-(long long a, const ModInt& b) { a = (a % mod + mod) % mod; return {(b.v - a + mod) % mod}; }
+    inline friend ModInt operator*(long long a, const ModInt& b) { a = (a % mod + mod) % mod; return {(b.v * a) % mod}; }
 };
 
-#define defStructIO_(name) inline std::istream& operator>>(std::istream& in, name& t) { in >> t.v; return in; }\
-                           inline std::ostream& operator<<(std::ostream& out, const name& t) { out << t.v; return out; }
-
-struct Mx64 { long long v = -4001557155715570000; Mx64 operator+(const Mx64& b) const { return { std::max(v, b.v) }; }
-    Mx64& operator+=(const Mx64& b) { if(v < b.v) { v = b.v; } return *this; }
-    bool operator<(const Mx64& b) const { return v < b.v; }explicit operator long long() const { return v; }
-}; defStructIO_(Mx64)
-struct Mn64 { long long v = 4001557155715570000; Mn64 operator+(const Mn64& b) const { return { std::min(v, b.v) }; }
-    Mn64& operator+=(const Mn64& b) { if(v > b.v) { v = b.v; } return *this; }
-    bool operator<(const Mn64& b) const { return v < b.v; } explicit operator long long() const { return v; }
-}; defStructIO_(Mn64)
-struct Mx32 { signed v = -2147481557; Mx32 operator+(const Mx32& b) const { return { std::max(v, b.v) }; }
-    Mx32& operator+=(const Mx32& b) { if(v < b.v) { v = b.v; } return *this; }
-    bool operator<(const Mx32& b) const { return v < b.v; } explicit operator signed() const { return v; }
-}; defStructIO_(Mx32)
-struct Mn32 { signed v = 2147481557; Mn32 operator+(const Mn32& b) const { return { std::min(v, b.v) }; }
-    Mn32& operator+=(const Mn32& b) { if(v > b.v) { v = b.v; } return *this; }
-    bool operator<(const Mn32& b) const { return v < b.v; } explicit operator signed() const { return v; }
-}; defStructIO_(Mn32)
-
 #pragma endregion // modified_integers
+
+#pragma endregion
+#pragma region ext
+
+v2l adj_list(int n, int m) {
+    v2l adj(n+1);
+    rep(m) { in64(u, v); adj[u].pb(v); adj[v].pb(u); }
+    return adj;
+}
+
+vb sieve(int n) {
+    vb r(n+1, true); r[0] = r[1] = false;
+    forf(i, 2, n) if(r[i]) for(i64 j = i+i; j<=n; j+=i) r[j] = false;
+    return r;
+}
+
+vi prime_list(int n) {
+    vb s = sieve(n); vi ret; forf(i, 2, n) if(s[i]) ret.push_back(i);
+    return ret;
+}
 
 #pragma endregion
 #pragma clang diagnostic pop
 //@formatter:on
 #pragma endregion
 
-/// 1/0 == infinity, -1/0 == -infinity (only comparisons are available)
-class Frac {
-    inline void reduction() { long long g = std::gcd(numerator, denominator); numerator /= g; denominator /= g; }
-    inline void checkDivZ() const { if(denominator == 0) { std::cerr << "Cannot divide by zero!\n"; exit(1); } }
-    inline void checkDivZ(const Frac& a) const { checkDivZ(); a.checkDivZ(); }
-public:
-    long long numerator = 0; // 분자
-    long long denominator = 1; // 분모 (항상 >= 0, 0인 경우 abs(분자) == 1)
-    Frac() = default;
-    explicit Frac(long long i) : numerator(i), denominator(1) {}
-    Frac(long long Numerator, long long Denominator) : numerator(Numerator), denominator(Denominator) {
-        if(denominator < 0) numerator *= -1, denominator *= -1;
-        reduction();
-    }
-    template <typename T> explicit operator T() { return static_cast<T>(numerator) / static_cast<T>(denominator); }
-    inline Frac& operator+=(const Frac& b) { checkDivZ(b);
-        long long l = std::lcm(denominator, b.denominator);
-        numerator *= l / denominator; numerator += b.numerator * (l / b.denominator);
-        denominator = l; reduction(); return *this;
-    }
-    inline Frac& operator+=(const long long& i) { checkDivZ(); numerator += i * denominator; return *this; }
-    inline Frac operator+(const Frac& b) const { checkDivZ(b); Frac ret = *this; ret += b; return ret; }
-    inline Frac operator+(const long long& i) const { checkDivZ(); Frac ret = *this; ret += i; return ret; }
-    inline Frac& operator-=(const Frac& b) {checkDivZ(b);
-        long long l = std::lcm(denominator, b.denominator);
-        numerator *= l / denominator; numerator -= b.numerator * (l / b.denominator);
-        denominator = l; reduction(); return *this;
-    }
-    inline Frac& operator-=(const long long& i) { checkDivZ(); numerator -= i * denominator; return *this; }
-    inline Frac operator-(const Frac& b) const { checkDivZ(b);  Frac ret = *this; ret -= b; return ret; }
-    inline Frac operator-(const long long& i) const { checkDivZ(); Frac ret = *this; ret -= i; return ret; }
-    inline Frac& operator*=(const Frac& b) { checkDivZ(b);
-        numerator *= b.numerator; denominator *= b.denominator;
-        reduction(); return *this;
-    }
-    inline Frac& operator*=(const long long& i) { checkDivZ(); numerator *= i; reduction(); return *this; }
-    inline Frac operator*(const Frac& b) const { checkDivZ(b); Frac ret = *this; ret *= b; return ret; }
-    inline Frac operator*(const long long& i) const { checkDivZ(); Frac ret = *this; ret *= i; return ret; }
-    inline Frac& operator/=(const Frac& b) { checkDivZ(b);
-        assert(b.numerator); // cannot divide by 0
-        numerator *= b.denominator; denominator *= b.numerator;
-        reduction(); return *this;
-    }
-    inline Frac& operator/=(const long long& i) { checkDivZ();
-        assert(i); // cannot divide by 0
-        denominator *= i; reduction(); return *this;
-    }
-    inline Frac operator/(const Frac& b) const { checkDivZ(b); Frac ret = *this; ret /= b; return ret; }
-    inline Frac operator/(const long long& i) const { checkDivZ(); Frac ret = *this; ret /= i; return ret; }
-    inline bool operator==(const Frac& b) const { return numerator == b.numerator && denominator == b.denominator; }
-    inline bool operator!=(const Frac& b) const { return numerator != b.numerator || denominator != b.denominator; }
-    inline bool operator<(const Frac& b) const {
-        if(!denominator && !b.denominator) return numerator < b.numerator;
-        return numerator * b.denominator < b.numerator * denominator;
-    }
-    inline bool operator<=(const Frac& b) const {
-        if(!denominator && !b.denominator) return numerator <= b.numerator;
-        return numerator * b.denominator <= b.numerator * denominator;
-    }
-    inline bool operator>(const Frac& b) const {
-        if(!denominator && !b.denominator) return numerator > b.numerator;
-        return numerator * b.denominator > b.numerator * denominator;
-    }
-    inline bool operator>=(const Frac& b) const {
-        if(!denominator && !b.denominator) return numerator >= b.numerator;
-        return numerator * b.denominator >= b.numerator * denominator;
-    }
-
-    inline bool operator==(const long long& b) const { return numerator == b && denominator == 1; }
-    inline bool operator!=(const long long& b) const { return numerator != b || denominator != 1; }
-    inline bool operator<(const long long& b) const { return !denominator ? numerator < 0 : numerator < b * denominator; }
-    inline bool operator<=(const long long& b) const { return denominator && numerator <= b * denominator; }
-    inline bool operator>(const long long& b) const { return !denominator ? numerator > 0 : numerator > b * denominator; }
-    inline bool operator>=(const long long& b) const { return denominator && numerator >= b * denominator; }
-    friend inline Frac operator+(const long long& a, const Frac& b) { Frac ret(a); ret += b; return ret; }
-    friend inline Frac operator-(const long long& a, const Frac& b) { Frac ret(a); ret -= b; return ret; }
-    friend inline Frac operator*(const long long& a, const Frac& b) { Frac ret(a); ret *= b; return ret; }
-    friend inline Frac operator/(const long long& a, const Frac& b) { Frac ret(a); ret /= b; return ret; }
-    friend inline bool operator==(const long long &a, const Frac& b) { return b.numerator == a && b.denominator == 1; }
-    friend inline bool operator!=(const long long &a, const Frac& b) { return b.numerator != a || b.denominator != 1; }
-    friend inline bool operator<(const long long &a, const Frac& b) { return !b.denominator ? 0 < b.numerator : a * b.denominator < b.numerator; }
-    friend inline bool operator<=(const long long &a, const Frac& b) { return b.denominator && a * b.denominator <= b.numerator; }
-    friend inline bool operator>(const long long &a, const Frac& b) { return !b.denominator ? 0 > b.numerator : a * b.denominator > b.numerator; }
-    friend inline bool operator>=(const long long &a, const Frac& b) { return b.denominator && a * b.denominator >= b.numerator; }
-};
-
-
-
-long double Gprecision = 1e-6;
-bool Geq(const long double& a, const long double& b) { return abs(a-b) <= Gprecision; }
-
-template <typename T = long long> class GPoint {
-public:
-    T x = T(), y = T(), w = T();
-    std::tuple<T, T> toTuple() { return {x, y}; }
-    template <typename T2> explicit operator GPoint<T2>() const { return GPoint<T2>(static_cast<T2>(x), static_cast<T2>(y)); }
-    T distSq(const GPoint& b) const { return sq_(x-b.x)+sq_(y-b.y); }
-    long double dist(const GPoint& b) const { return sqrt(static_cast<long double>(distSq(b))); }
-    bool operator<(const GPoint& b) const { return x == b.x ? y < b.y : x < b.x; }
-    bool operator==(const GPoint& b) const {
-        if constexpr(std::is_integral_v<T>) return x == b.x && y == b.y;
-        else return Geq(static_cast<long double>(x), static_cast<long double>(b.x)) && Geq(static_cast<long double>(y), static_cast<long double>(b.y));
-    }
-    template <typename T2> requires (!std::is_same_v<T, T2>) bool operator==(const GPoint<T2>& b) const {
-        return Geq(static_cast<long double>(x), static_cast<long double>(b.x)) && Geq(static_cast<long double>(y), static_cast<long double>(b.y));
-    }
-};
-template <typename T> __int128 product(const GPoint<T>& p1, const GPoint<T>& p2, const GPoint<T>& p3) { return __int128(p2.x-p1.x) * (p3.y-p1.y) - __int128(p3.x-p1.x) * (p2.y-p1.y); }
-
-struct GoldMine {
-    i64 l, r, v, s;
-    GoldMine() : l(0), r(0), v(-INF), s(0) {}
-    explicit GoldMine(i64 i) : l(i), r(i), v(i), s(i) {}
-    GoldMine(i64 a, i64 b, i64 c, i64 d) : l(a), r(b), v(c), s(d) {}
-    GoldMine operator+(const GoldMine& b) const {
-        return {max(l, s + b.l), max(b.r, r+b.s), max({v, b.v, r + b.l}), s + b.s};
-    }
-};
-
 i32 main() {
-    in64(n);
-    vec<GPoint<i64>> points;
-    rep(n) points.eb(qin(3));
-    sort(points);
-    vec<tuple<Frac, i64, i64>> lines;
-    forn(i, n) forf(j, i+1, n-1) lines.eb(Frac(points[j].y-points[i].y, points[j].x - points[i].x), i, j);
-    sort(lines);
-    vec<GoldMine> gm(n);
-    vec pos(n);
-    forn(i, n) {
-        pos[i] = i;
-        gm[i] = GoldMine(points[i].w);
-    }
-    segtree<GoldMine> seg(gm);
-    i64 ans = 0;
-    for(i64 i = 0, j = 0; i < Size(lines); i = j) {
-        vb vis(n, false), vis2(n);
-        while(j < Size(lines) && get<0>(lines[i]) == get<0>(lines[j])) j++;
-        forf(k, i, j-1) {
-            i64 a = get<1>(lines[k]), b = get<2>(lines[k]);
-            swap(pos[a], pos[b]); swap(points[pos[a]], points[pos[b]]);
-            auto temp = seg.query(pos[a]+1);
-            seg.set(pos[a]+1, seg.query(pos[b]+1));
-            seg.set(pos[b]+1, temp);
-            vis[a] = vis[b] = true;
-//            if(pos[a] > pos[b]) swap(a, b);
-//            if(pos[a] > 0) {
-//                setMin(mn, abs(product(points[pos[a]], points[pos[b]], points[pos[a]-1])));
-//                setMax(mx, abs(product(points[pos[a]], points[pos[b]], points[0])));
-//            }
-//            if(pos[b] < n - 1) {
-//                setMin(mn, abs(product(points[pos[a]], points[pos[b]], points[pos[b]+1])));
-//                setMax(mx, abs(product(points[pos[a]], points[pos[b]], points[n - 1])));
-//            }
-        }
-        for(auto w : seg.getLeafs()) lprintes(w.l);
-        lprintln();
-        GoldMine t; bool flag = true;
-        forn(k, n) vis2[pos[k]] = vis[k];
-        forn(k, n) {
-            if(vis2[k]) {
-                i64 l = k;
-                GoldMine cans(points[k].w);
-                i64 ts = points[k].w;
-                while(k < n-1 && vis2[k+1]) ts += points[++k].w, cans = cans + GoldMine(points[k].w);
-                setMax(ans, cans.v);
-                lprintln("1:", l, k, ts, ts, ts, ts);
-                if(flag) t = GoldMine(ts), flag = false;
-                else t = t + GoldMine(ts);
-                if(l == 0 && k == n-1) setMax(ans, cans.v);
-            } else {
-                i64 l = k, r = k;
-                while(k < n-1 && !vis2[k+1]) r = ++k;
-                auto q = seg.query(l+1, r+1);
-                lprintln("2:", l, r, q.l, q.r, q.v, q.s);
-                if(flag) t = q, flag = false;
-                else t = t + q;
+    tcRep() {
+        in64(n);
+        vl arr(n, cin);
+        i64 ans = 0;
+        for(i64 l = 1, r = n; l <= r;) {
+            i64 m = (l + r) / 2;
+            i64 llIdx, lis = 0;
+            i64 rlIdx, ris = 0;
+#define ok { l = m + 1; setMax(ans, ris - lis); goto end; }
+#define fail { r = m - 1; goto end; }
+            set<i64> left, right;
+            forf(i, 1, m) left.insert(i), right.insert(i);
+            forn(i, n) {
+                if(left.empty()) break;
+                auto it = left.upper_bound(arr[i]);
+                if(it == left.begin()) continue;
+                lis += i; llIdx = i;
+                left.erase(prev(it));
             }
+            forr(i, n-1, 0) {
+                if(right.empty()) break;
+                auto it = right.upper_bound(arr[i]);
+                if(it == right.begin()) continue;
+                ris += i; rlIdx = i;
+                right.erase(prev(it));
+            }
+            if(!left.empty() || !right.empty() || llIdx > rlIdx) fail
+            else ok
+            end:
+            {}
         }
-        lprintln(t.v);
-        setMax(ans, t.v);
+        println(ans);
     }
-    println(ans);
 }

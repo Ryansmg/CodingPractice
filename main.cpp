@@ -1,62 +1,114 @@
 #include <bits/stdc++.h>
 using namespace std;
+using i64 = long long;
+using f64 = long double;
 
-const int MAX = 100001;
-vector<long long> tree(MAX * 4);
-vector<long long> arr(MAX);
+i64 partyCnt, voteCnt;
+const i64 N = 300; // 의원정수 (지역구 253 + 비례대표 47)
+i64 R = 253; // 의석할당정당이 아닌 정당의 지역구 당선인 수 총합
+i64 pVoteCnt = 0; // 의석할당정당의 득표수의 합계
+i64 si1Sum = 0; // 연동 배분 의석 수의 합
 
-void init(int node, int start, int end) {
-    if(start == end) {
-        tree[node] = arr[start];
-        return;
+struct party {
+    string name; // 정당명
+    i64 regionalSeats = 0; // 지역구 의석 수
+    i64 votes = 0; // 비례대표국회의원선거 득표수
+    bool proportionalSeats = false;
+    f64 voteRatio = 0; // 비례대표국회의원선거 득표비율
+    i64 seats1 = 0; // 연동 배분 의석 수
+    i64 seats = 0; // 비례대표 의석 수
+
+    friend istream& operator>>(istream& in, party& p) {
+        in >> p.name >> p.regionalSeats >> p.votes;
+        return in;
     }
-    int mid = (start + end) / 2;
-    init(node * 2, start, mid);
-    init(node * 2 + 1, mid + 1, end);
-    tree[node] = tree[node * 2] + tree[node * 2 + 1];
-}
-
-void update(int node, int start, int end, int idx, long long diff) {
-    if(idx < start || idx > end) return;
-    tree[node] += diff;
-    if(start != end) {
-        int mid = (start + end) / 2;
-        update(node * 2, start, mid, idx, diff);
-        update(node * 2 + 1, mid + 1, end, idx, diff);
-    }
-}
-
-long long query(int node, int start, int end, int left, int right) {
-    if(left > end || right < start) return 0;
-    if(left <= start && end <= right) return tree[node];
-    int mid = (start + end) / 2;
-    return query(node * 2, start, mid, left, right) +
-           query(node * 2 + 1, mid + 1, end, left, right);
-}
+};
 
 int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL);
-
-    int n, m, k;
-    cin >> n >> m >> k;
-
-    for(int i = 0; i < n; i++)
-        cin >> arr[i];
-
-    init(1, 0, n - 1);
-
-    for(int i = 0; i < m + k; i++) {
-        int a, b;
-        long long c;
-        cin >> a >> b >> c;
-
-        if(a == 1) {
-            long long diff = c - arr[b - 1];
-            arr[b - 1] = c;
-            update(1, 0, n - 1, b - 1, diff);
-        } else {
-            cout << query(1, 0, n - 1, b - 1, c - 1) << '\n';
+    ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr);
+    cin >> partyCnt >> voteCnt;
+    vector<party> parties(partyCnt);
+    map<string, party*> pm;
+    for(auto& p : parties) cin >> p;
+    voteCnt = 0;
+    for(auto& p : parties) voteCnt += p.votes;
+    for(auto& p : parties) {
+        p.proportionalSeats = p.votes * 100 >= voteCnt * 3 || p.regionalSeats >= 5;
+        if(p.proportionalSeats) pVoteCnt += p.votes, R -= p.regionalSeats;
+    }
+    for(auto& p : parties) {
+        pm.emplace(p.name, &p);
+        if(!p.proportionalSeats) continue;
+        p.voteRatio = p.votes / (f64) pVoteCnt;
+        f64 i = ( (N - R) * p.voteRatio - p.regionalSeats ) / 2;
+        p.seats1 = i < 1 ? 0 : round(i);
+        si1Sum += p.seats1;
+        if(si1Sum * 2 >= N - R) break;
+    }
+    if(si1Sum < 30) {
+        vector<pair<f64, string>> arr;
+        i64 ds = 0;
+        for(auto& p : parties) {
+            if(!p.proportionalSeats) continue;
+            f64 d = (30 - si1Sum) * p.voteRatio;
+            p.seats = p.seats1 + i64(d); ds += i64(d);
+            arr.emplace_back(d - i64(d), p.name);
         }
+        si1Sum += ds;
+        sort(arr.begin(), arr.end(), [](const pair<f64, string>& a, const pair<f64, string>& b) {
+            if(a.first != b.first) return a > b;
+            return a.second < b.second;
+        });
+        i64 idx = 0;
+        while(si1Sum < 30) {
+            pm[arr[idx].second]->seats++;
+            idx++; si1Sum++;
+        }
+    }
+    else if(si1Sum > 30) {
+        vector<pair<f64, string>> arr;
+        i64 sSum = 0;
+        for(auto& p : parties) {
+            if(!p.proportionalSeats) continue;
+            f64 d = (30 * p.seats1) / (f64) si1Sum;
+            p.seats = i64(d); sSum += i64(d);
+            arr.emplace_back(d - i64(d), p.name);
+        }
+        sort(arr.begin(), arr.end(), [](const pair<f64, string>& a, const pair<f64, string>& b) {
+            if(a.first != b.first) return a > b;
+            return a.second < b.second;
+        });
+        i64 idx = 0;
+        while(sSum < 30) {
+            pm[arr[idx].second]->seats++;
+            idx++; sSum++;
+        }
+    }
+    i64 s3 = 0;
+    vector<pair<f64, string>> arr;
+    for(auto& p : parties) {
+        if(!p.proportionalSeats) continue;
+        f64 d = 17 * p.voteRatio;
+        p.seats += i64(d); s3 += i64(d);
+        arr.emplace_back(d - i64(d), p.name);
+    }
+    sort(arr.begin(), arr.end(), [](const pair<f64, string>& a, const pair<f64, string>& b) {
+        if(a.first != b.first) return a > b;
+        return a.second < b.second;
+    });
+    i64 idx = 0;
+    while(s3 < 17) {
+        pm[arr[idx].second]->seats++;
+        idx++; s3++;
+    }
+
+    vector<pair<string, i64>> ans;
+    for(auto& p : parties) ans.emplace_back(p.name, p.regionalSeats + p.seats);
+    sort(ans.begin(), ans.end(), [](const pair<string, i64>& a, const pair<string, i64>& b) {
+        if(a.second != b.second) return a.second > b.second;
+        return a.first < b.first;
+    });
+    for(auto& [a, b] : ans) {
+        cout << a << " " << b << "\n";
     }
 }

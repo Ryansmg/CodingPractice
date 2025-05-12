@@ -652,6 +652,7 @@ struct segtree {
         if(!rSet) return ansL;
         return ansL + ansR;
     }
+    inline T queryAll() { return query(offset, offset + n - 1); }
     inline T query(signed tar) { return tree[n + tar - offset]; }
     std::span<T> getLeafs() { return std::span<T>(tree.begin() + n, tree.begin() + 2 * n); }
 };
@@ -709,7 +710,6 @@ vi prime_list(int n) {
 #pragma clang diagnostic pop
 //@formatter:on
 #pragma endregion
-
 
 i32 main() {
     

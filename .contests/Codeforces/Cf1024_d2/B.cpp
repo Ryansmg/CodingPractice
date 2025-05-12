@@ -712,5 +712,21 @@ vi prime_list(int n) {
 
 
 i32 main() {
-    
+    tcRep() {
+        in64(n, m);
+        vl arr(n-1, cin);
+        setAbs(m);
+        i64 grt = 0;
+        for(ci64 i : arr)
+            if(abs(i) >= m) grt++;
+        if(grt >= n/2) {
+            println("YES");
+            continue;
+        }
+        if(n%2 == 0 && grt == n/2 - 1) {
+            println("YES");
+            continue;
+        }
+        println("NO");
+    }
 }

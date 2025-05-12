@@ -1,5 +1,5 @@
-#define READ_BUF_SZ 50000
-#define WRITE_BUF_SZ 50000
+#define READ_BUF_SZ 100000
+#define WRITE_BUF_SZ 100000
 
 #pragma region €
 
@@ -54,6 +54,31 @@ template <typename T> using unsigned_type = unsigned_type_<T>::type;
 
 bool isdigit(char c) { return '0' <= c && c <= '9'; }
 bool isblank(char c) { return c == ' ' || c == '\n' || c == '\r'; }
+
+namespace random {
+    __int128 next = 1;
+    struct init_random_ {
+        init_random_() {
+            int* i = new int(0);
+            next = reinterpret_cast<long long>(i);
+            delete i;
+        }
+    } i_r_;
+}
+
+long long rand() {
+    return random::next = (random::next * 998244353998244353 + 155715571557) % 9223372036854775807;
+}
+
+// [0..bound)
+long long rand(long long bound) { return rand() % bound; }
+
+// [l..r]
+long long rand(long long l, long long r) {
+    return rand() % (r - l + 1) + l;
+}
+
+void srand(__int128 seed) { random::next = seed; }
 
 template <typename T> void swap(T& a, T& b) {
     T tmp = a; a = b; b = tmp;
@@ -349,26 +374,26 @@ extern "C" long write(int fd, const void *buf, unsigned long count);
 char rBuf[READ_BUF_SZ], wBuf[WRITE_BUF_SZ];
 int rBufIdx = -1, rBufLen = -1, wBufLen = 0;
 
-void initRBuf_() {
+inline void initRBuf_() {
     if(rBufIdx == -1 || rBufIdx == rBufLen) {
         rBufLen = read(0, rBuf, READ_BUF_SZ - 1);
         rBufIdx = 0;
     }
 }
 
-char peekc() {
+inline char peekc() {
     initRBuf_();
     if(!rBufLen) return 0;
     return rBuf[rBufIdx];
 }
 
-char getc() {
+inline char getc() {
     initRBuf_();
     if(!rBufLen) return 0;
     return rBuf[rBufIdx++];
 }
 
-bool eof() { return !peekc(); }
+inline bool eof() { return !peekc(); }
 
 void get(char& c) { c = getc(); while(isblank(c)) c = getc(); }
 
@@ -408,7 +433,7 @@ void get(str& s) {
     while(!isblank(c)) s.push(c), c = getc();
 }
 
-template <typename T = long long> T get() { T t; get(t); return t; }
+template <typename T = long long> inline T get() { T t; get(t); return t; }
 
 template <typename T1, typename... T2> void get(T1& a, T2&... b) { get(a); get(b...); }
 
@@ -446,7 +471,7 @@ template <typename T1, typename... T2> void put(const T1& a, const T2&... b) { p
 template <typename... T> void ln(const T&... a) { put(a...); put('\n'); }
 void ln() { put('\n'); }
 
-[[maybe_unused]] struct auto_flush_ { ~auto_flush_() { flush(); } } f;
+[[maybe_unused]] struct auto_flush_ { ~auto_flush_() { flush(); } } a_f_;
 
 #pragma endregion
 
@@ -467,10 +492,29 @@ template <typename T> inline T pow(T a, T b) { T ans=1;while(b){if(b&1)ans=ans*a
 
 #pragma endregion
 
+#pragma region Kotlin
+
+#define CONCAT_INNER_(x, y) x##y
+#define CONCAT_(x, y) CONCAT_INNER_(x, y)
+#define repeat_(n, i) for(long long i = 0; i < n; i++)
+#define repeat(n) repeat_(n, CONCAT_(rep_var_, __COUNTER__))
+
+#pragma endregion
+
+#pragma region Rust
+
+#define loop while(true)
+
+#pragma endregion
+
 #pragma region Custom Keywords
 /////////////////////// Custom Keywords ///////////////////////
 using i64 = long long; using i32 = int; using i128 = __int128;
-
+#ifdef LOCAL
+const bool is_local = true;
+#else
+const bool is_local = false;
+#endif
 #pragma endregion
 
 

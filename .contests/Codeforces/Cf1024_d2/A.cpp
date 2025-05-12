@@ -712,5 +712,9 @@ vi prime_list(int n) {
 
 
 i32 main() {
-    
+    tcRep() {
+        in64(n, m, p, q);
+        if(n % p == 0) println(YN[n/p * q == m]);
+        else println("YES");
+    }
 }
