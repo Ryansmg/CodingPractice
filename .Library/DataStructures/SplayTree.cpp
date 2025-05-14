@@ -1,7 +1,9 @@
-#include <bits/stdc++.h>
-using namespace std;
-using i64 = long long;
-using f64 = long double;
+// 최신 버전은 cmm.cpp 참고
+
+#include <vector>
+#include <cassert>
+#include <cmath>
+using std::max, std::swap, std::vector;
 
 template <typename T> concept hasUpdFunc = requires(T& a, const T* l, const T* r) { a.update(l, r); };
 template <typename T> concept hasPushFunc = requires(T& a, T* l, T* r) { a.push(l, r); };
@@ -80,16 +82,18 @@ public:
         splay(pos);
     }
     void insertPrev(Node* pos, const T& val) {
+        pos->push();
         if(pos->l) {
-            pos = pos->l;
-            while(pos->r) pos = pos->r;
+            pos = pos->l, pos->push();
+            while(pos->r) pos = pos->r, pos->push();
             insert(pos, false, val);
         } else insert(pos, true, val);
     }
     void insertNext(Node* pos, const T& val) {
+        pos->push();
         if(pos->r) {
-            pos = pos->r;
-            while(pos->l) pos = pos->l;
+            pos = pos->r, pos->push();
+            while(pos->l) pos = pos->l, pos->push();
             insert(pos, true, val);
         } else insert(pos, false, val);
     }
@@ -246,7 +250,7 @@ public:
 };
 
 struct GoldMine {
-    long long v = 0, mx = 0, l = 0, r = 0, s = 0, id = 0;
+    long long v = 0, mx = 0, l = 0, r = 0, s = 0;
     bool flip = false;
     void merge(const GoldMine& b) {
         mx = max(max(mx, b.mx), r + b.l);
@@ -259,30 +263,19 @@ struct GoldMine {
 void update(Splay<GoldMine>::Node& a) {
     a.v.mx = a.v.l = a.v.r = max(0LL, a.v.v);
     a.v.s = a.v.v;
-
     if(a.l) {
         GoldMine t = a.l->v;
         t.merge(a.v);
         long long v = a.v.v;
-        long long id = a.v.id;
         a.v = t; a.v.v = v;
-        a.v.id = id;
     }
-    if(a.r) {
-        a.v.merge(a.r->v);
-    }
+    if(a.r) a.v.merge(a.r->v);
 }
 
-void push(Splay<GoldMine>::Node& a) {
-    if(!a.v.flip) return;
-    swap(a.l, a.r);
-    swap(a.v.l, a.v.r);
-    if(a.l) a.l->v.flip ^= 1;
-    if(a.r) a.r->v.flip ^= 1;
-    a.v.flip = false;
-}
 
+// BOJ 17607. 수열과 쿼리 31
 #include <iostream>
+using namespace std;
 
 int main() {
     ios_base::sync_with_stdio(false);
@@ -291,22 +284,15 @@ int main() {
     vector<GoldMine> arr(n + 2);
     for(int i = 1; i <= n; i++) {
         int t; cin >> t;
-        if(t)  arr[i] = {1, 1, 1, 1, 1};
+        if(t) arr[i] = {1, 1, 1, 1, 1};
         else arr[i] = {-15571557, -15571557, -15571557, -15571557, -15571557};
-        arr[i].id = i;
     }
-    Splay<GoldMine> splay(arr);
-    splay.addPushFun(push);
-    splay.addUpdFun(update);
+    Splay<GoldMine> splay(arr, update, Splay<GoldMine>::push_flip);
 
     int m; cin >> m;
     while(m--) {
         long long op, a, b; cin >> op >> a >> b;
-        if(op == 1) {
-            auto x = splay.gather(a, b);
-            auto v = x->v;
-            splay.set(x, {v.v, v.mx, v.l, v.r, v.s, v.id, !v.flip});
-        }
+        if(op == 1) splay.flip(a, b);
         else cout << splay(a, b).mx << '\n';
     }
 }

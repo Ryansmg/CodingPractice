@@ -5,11 +5,9 @@ using f64 = long double;
 
 template <typename T> concept hasUpdFunc = requires(T& a, const T* l, const T* r) { a.update(l, r); };
 template <typename T> concept hasPushFunc = requires(T& a, T* l, T* r) { a.push(l, r); };
-template <typename T> concept hasFlip = requires(T a) { a.flip; };
 
 /// can detect: void T.update(const T*, const T*)
-///             void T.push(T*, T*)
-///             bool T.flip
+/// and: void T.push(T*, T*)
 /// 추가 기능을 구현하려면 내려갈 때 push 함수를 잘 호출해줘야 함
 /// 0-based index
 template <typename T> class Splay {
@@ -29,20 +27,19 @@ public:
             if(l) l->push();
             if(r) r->push();
             if constexpr (hasUpdFunc<T>) v.update(l ? &l->v : nullptr, r ? &r->v : nullptr);
-            for(auto f : sp->updFunctions) f(*this);
+            if(sp->updFun) sp->updFun(*this);
             cnt = 1 + (l ? l->cnt : 0) + (r ? r->cnt : 0);
         }
         inline void push() {
             if constexpr(hasPushFunc<T>) v.push(l ? &l->v : nullptr, r ? &r->v : nullptr);
-            for(auto f : sp->pushFunctions) f(*this);
+            if(sp->pushFun) sp->pushFun(*this);
         }
     };
 protected:
-    vector<void(*)(Node&)> updFunctions;
-    vector<void(*)(Node&)> pushFunctions;
+    void (*updFun)(Node&) = nullptr;
+    void (*pushFun)(Node&) = nullptr;
 
     int sz = 0;
-    int size() const { return sz; }
     Node* tree = nullptr;
     void rotate(Node *x) {
         Node *p = x->p, *b;
@@ -70,28 +67,12 @@ public:
             assert(pos->l == nullptr);
             pos->l = new Node(val, this);
             pos->l->p = pos;
-            pos = pos->l;
         } else {
             assert(pos->r == nullptr);
             pos->r = new Node(val, this);
             pos->r->p = pos;
-            pos = pos->r;
         }
         splay(pos);
-    }
-    void insertPrev(Node* pos, const T& val) {
-        if(pos->l) {
-            pos = pos->l;
-            while(pos->r) pos = pos->r;
-            insert(pos, false, val);
-        } else insert(pos, true, val);
-    }
-    void insertNext(Node* pos, const T& val) {
-        if(pos->r) {
-            pos = pos->r;
-            while(pos->l) pos = pos->l;
-            insert(pos, true, val);
-        } else insert(pos, false, val);
     }
     void erase(Node* p) {
         sz--;
@@ -124,9 +105,7 @@ public:
     }
     ~Splay() { delete tree; }
     Splay() = default;
-    explicit Splay(int length, void (*updateFunc)(Node&) = nullptr, void (*pushFunc)(Node&) = nullptr) : sz(length) {
-        if(updateFunc) updFunctions.push_back(updateFunc);
-        if(pushFunc) pushFunctions.push_back(pushFunc);
+    explicit Splay(int length, void (*updateFunc)(Node&) = nullptr, void (*pushFunc)(Node&) = nullptr) : sz(length), updFun(updateFunc), pushFun(pushFunc) {
         if(!length) return;
         Node* x = tree = new Node(this);
         for(long long i = 1; i < length; i++) {
@@ -136,11 +115,9 @@ public:
         }
         while(x) x->upd(), x = x->p;
     }
-    explicit Splay(const std::vector<T>& arr, void (*updateFunc)(Node&) = nullptr, void (*pushFunc)(Node&) = nullptr) {
+    explicit Splay(const std::vector<T>& arr, void (*updateFunc)(Node&) = nullptr, void (*pushFunc)(Node&) = nullptr) : updFun(updateFunc), pushFun(pushFunc){
         long long length = static_cast<long long>(arr.size());
         sz = length;
-        if(updateFunc) updFunctions.push_back(updateFunc);
-        if(pushFunc) pushFunctions.push_back(pushFunc);
         if(!length) return;
         Node* x = tree = new Node(arr[0], this);
         for(long long i = 1; i < length; i++) {
@@ -151,8 +128,8 @@ public:
         while(x) x->upd(), x = x->p;
     }
 
-    void addUpdFun(void (*updateFunc)(Node&)) { updFunctions.push_back(updateFunc); }
-    void addPushFun(void (*pushFunc)(Node&)) { pushFunctions.push_back(pushFunc); }
+    void setUpdFun(void (*updateFunc)(Node&)) { updFun = updateFunc; }
+    void setPushFun(void (*pushFunc)(Node&)) { pushFun = pushFunc; }
 
     const Node* root() const { return tree; }
     Node* root() { return tree; }
@@ -173,7 +150,7 @@ public:
     }
 
     // k >= 0
-    inline T operator[](int k) { return kth(k)->v; }
+    inline T operator[](int k) { return *kth(k); }
 
     // 0-based index, s > 0, e < sz - 1
     Node* gather(int s, int e) {
@@ -181,6 +158,7 @@ public:
         auto tmp = tree;
         kth(s - 1);
         splay(tmp, tree);
+        tree->push(); tree->r->push(); tree->r->l->push();
         return tree->r->l;
     }
 
@@ -188,10 +166,15 @@ public:
     void set(int k, const T& val) {
         kth(k);
         tree->v = val;
+        tree->push();
+        tree->upd();
     }
 
     void set(Node* x, const T& val) {
         x->v = val;
+        x->push();
+        x->upd();
+        splay(x);
     }
 
     inline T operator()(int s, int e) { return gather(s, e)->v; }
@@ -217,96 +200,67 @@ public:
 
     template <typename Callable>
     inline void preorder(const Callable& f) { preorder(tree, f); }
-
-    static void push_flip(Splay<T>::Node& a) requires hasFlip<T> {
-        if(!a.v.flip) return;
-        swap(a.l, a.r);
-        if(a.l) a.l->v.flip ^= 1;
-        if(a.r) a.r->v.flip ^= 1;
-        a.v.flip = false;
-    }
-
-    /// 1 <= l <= r <= size - 2
-    void flip(int l, int r) requires hasFlip<T> {
-        auto x = gather(l, r);
-        T t = x->v; t.flip = true;
-        set(x, t);
-    }
-
-    /// 1 <= s <= e <= size - 2
-    void shift(int s, int e, int k) requires hasFlip<T> {
-        if(k >= 0) {
-            k %= e - s + 1; if(!k) return;
-            flip(s, e); flip(s, s+k-1); flip(s+k, e);
-        } else {
-            k *= -1; k %= e - s + 1; if(!k) return;
-            flip(s, e); flip(s, e-k); flip(e-k+1, e);
-        }
-    }
 };
 
-struct GoldMine {
-    long long v = 0, mx = 0, l = 0, r = 0, s = 0, id = 0;
+
+struct T {
+    int v = -1, mn = 0, sz = 0;
     bool flip = false;
-    void merge(const GoldMine& b) {
-        mx = max(max(mx, b.mx), r + b.l);
-        l = max(l, s + b.l);
-        r = max(b.r, r + b.s);
-        s += b.s;
-    }
 };
 
-void update(Splay<GoldMine>::Node& a) {
-    a.v.mx = a.v.l = a.v.r = max(0LL, a.v.v);
-    a.v.s = a.v.v;
-
-    if(a.l) {
-        GoldMine t = a.l->v;
-        t.merge(a.v);
-        long long v = a.v.v;
-        long long id = a.v.id;
-        a.v = t; a.v.v = v;
-        a.v.id = id;
-    }
-    if(a.r) {
-        a.v.merge(a.r->v);
-    }
+void update(Splay<T>::Node& a) {
+    a.v.mn = a.v.v;
+    a.v.sz = a.v.v != -1;
+    if(a.l) a.v.mn = min(a.v.mn, a.l->v.mn), a.v.sz += a.l->v.sz;
+    if(a.r) a.v.mn = min(a.v.mn, a.r->v.mn), a.v.sz += a.r->v.sz;
 }
 
-void push(Splay<GoldMine>::Node& a) {
+void push(Splay<T>::Node& a) {
     if(!a.v.flip) return;
     swap(a.l, a.r);
-    swap(a.v.l, a.v.r);
     if(a.l) a.l->v.flip ^= 1;
     if(a.r) a.r->v.flip ^= 1;
     a.v.flip = false;
 }
 
-#include <iostream>
-
 int main() {
     ios_base::sync_with_stdio(false);
     cin.tie(nullptr); cout.tie(nullptr);
-    int n; cin >> n;
-    vector<GoldMine> arr(n + 2);
-    for(int i = 1; i <= n; i++) {
-        int t; cin >> t;
-        if(t)  arr[i] = {1, 1, 1, 1, 1};
-        else arr[i] = {-15571557, -15571557, -15571557, -15571557, -15571557};
-        arr[i].id = i;
-    }
-    Splay<GoldMine> splay(arr);
-    splay.addPushFun(push);
-    splay.addUpdFun(update);
-
-    int m; cin >> m;
-    while(m--) {
-        long long op, a, b; cin >> op >> a >> b;
-        if(op == 1) {
-            auto x = splay.gather(a, b);
-            auto v = x->v;
-            splay.set(x, {v.v, v.mx, v.l, v.r, v.s, v.id, !v.flip});
+    while(true) {
+        int n; cin >> n;
+        if(!n) break;
+        vector<T> arr(n + 2); vector<int> in(n);
+        for(int i = 1; i <= n; i++) cin >> in[i-1];
+        vector<int> in2 = in;
+        sort(in2.begin(), in2.end());
+        for(int &i : in) i = lower_bound(in2.begin(), in2.end(), i) - in2.begin() + 1;
+        map<int, int> m;
+        for(int &i : in) {
+            if(!m[i]) m[i] = i;
+            else i = ++m[i];
         }
-        else cout << splay(a, b).mx << '\n';
+
+        for(int i = 0; i < n; i++) arr[i+1] = { in[i], in[i], 1 };
+
+        Splay<T> splay(arr, update, push);
+
+        for(int i = 1; i <= n; i++) {
+            auto x = splay.gather(i, n);
+            assert(x->v.mn == i);
+            int idx = i;
+            while(true) {
+                x->push(); x->upd();
+                if(x->v.v == i) {
+                    idx += (x->l ? x->l->v.sz : 0);
+                    break;
+                }
+                if(x->l && x->l->v.mn == i) x = x->l;
+                else idx += (x->l ? x->l->v.sz : 0) + 1, x = x->r;
+            }
+            x = splay.gather(i, idx);
+            splay.set(x, {x->v.v, x->v.mn, x->v.sz, true});
+            cout << idx << " ";
+        }
+        cout << '\n';
     }
 }

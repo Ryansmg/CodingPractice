@@ -712,5 +712,28 @@ vi prime_list(int n) {
 
 
 i32 main() {
-    
+    in64(n, q);
+    vec arr(n, cin);
+    rep(q) {
+        in64(op);
+        if(op == 1) {
+            in64(a, b, x);
+            forf(i, a-1, b-1) arr[i] = x;
+        }
+        if(op == 2) {
+            in64(a, b, x);
+            a--; b--;
+            forf(i, a, b) arr[i] += (i - a + 1) * x;
+        }
+        if(op == 3) {
+            in64(c, x); c--;
+            arr.insert(arr.begin() + c, x);
+        }
+        if(op == 4) {
+            in64(a, b); a--; b--;
+            i64 ans = 0;
+            forf(i, a, b) ans += arr[i];
+            println(ans);
+        }
+    }
 }
