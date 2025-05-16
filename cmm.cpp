@@ -456,7 +456,7 @@ public:
             rotate(x);
         }
     }
-    void insert(Node* pos, bool left, const T& val) {
+    Node* insert(Node* pos, bool left, const T& val) {
         sz++;
         if(left) {
             assert(pos->l == nullptr);
@@ -470,22 +470,23 @@ public:
             pos = pos->r;
         }
         splay(pos);
+        return pos;
     }
-    void insertPrev(Node* pos, const T& val) {
+    Node* insertPrev(Node* pos, const T& val) {
         pos->push();
         if(pos->l) {
             pos = pos->l, pos->push();
             while(pos->r) pos = pos->r, pos->push();
-            insert(pos, false, val);
-        } else insert(pos, true, val);
+            return insert(pos, false, val);
+        } else return insert(pos, true, val);
     }
-    void insertNext(Node* pos, const T& val) {
+    Node* insertNext(Node* pos, const T& val) {
         pos->push();
         if(pos->r) {
             pos = pos->r, pos->push();
             while(pos->l) pos = pos->l, pos->push();
-            insert(pos, true, val);
-        } else insert(pos, false, val);
+            return insert(pos, true, val);
+        } else return insert(pos, false, val);
     }
     void erase(Node* p) {
         sz--;
@@ -636,6 +637,27 @@ public:
             k *= -1; k %= e - s + 1; if(!k) return;
             flip(s, e); flip(s, e-k); flip(e-k+1, e);
         }
+    }
+
+    int idxOf(Node* tar) {
+        Node* p = tar;
+        int idx = 0; bool addLS = true;
+        while(p) {
+            if(addLS && p->l) idx += p->l->cnt;
+            if(p->p && p->p->r == p) addLS = true, idx++;
+            else addLS = false;
+            p = p->p;
+        }
+        p = kth(idx);
+        assert(p == tar);
+        return idx;
+    }
+
+    vector<Node*> ptrArr() {
+        vector<Node*> ret;
+        auto x = [&](Node& p) { ret.push_back(&p); };
+        forEach(x);
+        return ret;
     }
 };
 

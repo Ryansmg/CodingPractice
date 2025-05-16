@@ -1,9 +1,7 @@
-// Update: 2025-05-15
-
-#include <vector>
-#include <cassert>
-#include <cmath>
-using std::max, std::swap, std::vector;
+#include <bits/stdc++.h>
+using namespace std;
+using i64 = long long;
+using f64 = long double;
 
 template <typename T> concept hasUpdFunc = requires(T& a, const T* l, const T* r) { a.update(l, r); };
 template <typename T> concept hasPushFunc = requires(T& a, T* l, T* r) { a.push(l, r); };
@@ -180,22 +178,10 @@ public:
     // k >= 0
     inline T operator[](int k) { return kth(k)->v; }
 
-    // 0-based index, s >= 0, e <= sz - 1
+    // 0-based index, s > 0, e < sz - 1
     Node* gather(int s, int e) {
-        if(s == 0 && e == sz - 1) { kth(0); return tree; }
-        if(s == 0) {
-            auto tmp = kth(0);
-            kth(e + 1);
-            splay(tmp, tree);
-            return tree->l;
-        }
-        if(e == sz - 1) {
-            auto tmp = kth(sz - 1);
-            kth(s - 1);
-            splay(tmp, tree);
-            return tree->r;
-        }
-        auto tmp = kth(e + 1);
+        kth(e + 1);
+        auto tmp = tree;
         kth(s - 1);
         splay(tmp, tree);
         return tree->r->l;
@@ -205,6 +191,10 @@ public:
     void set(int k, const T& val) {
         kth(k);
         tree->v = val;
+    }
+
+    void set(Node* x, const T& val) {
+        x->v = val;
     }
 
     inline T operator()(int s, int e) { return gather(s, e)->v; }
@@ -241,7 +231,9 @@ public:
 
     /// 1 <= l <= r <= size - 2
     void flip(int l, int r) requires hasFlip<T> {
-        gather(l, r)->v.flip = true;
+        auto x = gather(l, r);
+        T t = x->v; t.flip = true;
+        set(x, t);
     }
 
     /// 1 <= s <= e <= size - 2
@@ -277,59 +269,24 @@ public:
     }
 };
 
-struct GoldMine {
-    long long v = 0, mx = 0, l = 0, r = 0, s = 0;
-    bool flip = false;
-    void merge(const GoldMine& b) {
-        mx = max(max(mx, b.mx), r + b.l);
-        l = max(l, s + b.l);
-        r = max(b.r, r + b.s);
-        s += b.s;
-    }
-};
-
-void update(Splay<GoldMine>::Node& a) {
-    a.v.mx = a.v.l = a.v.r = max(0LL, a.v.v);
-    a.v.s = a.v.v;
-    if(a.l) {
-        GoldMine t = a.l->v;
-        t.merge(a.v);
-        long long v = a.v.v;
-        a.v = t; a.v.v = v;
-    }
-    if(a.r) a.v.merge(a.r->v);
+void pr(Splay<int>::Node& i) {
+    cout << i.v << " ";
 }
-
-void push(Splay<GoldMine>::Node& a) {
-    if(a.v.flip) swap(a.v.l, a.v.r);
-}
-
-
-// BOJ 17607. 수열과 쿼리 31
-#include <iostream>
-using namespace std;
 
 int main() {
     ios_base::sync_with_stdio(false);
     cin.tie(nullptr); cout.tie(nullptr);
-    int n; cin >> n;
-    vector<GoldMine> arr(n);
-    for(int i = 0; i < n; i++) {
-        int t; cin >> t;
-        if(t) arr[i] = {1, 1, 1, 1, 1};
-        else arr[i] = {-15571557, -15571557, -15571557, -15571557, -15571557};
+    int n, q; cin >> n >> q;
+    vector<int> arr(n);
+    for(int i = 0; i < n; i++) arr[i] = i + 1;
+    Splay splay(arr);
+    auto ptrs = splay.ptrArr();
+    for(int i = 0; i < q; i++) {
+        int a, b; cin >> a >> b;
+        int ans = splay.idxOf(ptrs[b-1]) - splay.idxOf(ptrs[a-1]);
+        cout << (ans < 0 ? ans + 1 : ans) << '\n';
+        splay.erase(ptrs[a-1]);
+        ptrs[a-1] = splay.insertNext(ptrs[b-1], a);
     }
-    Splay<GoldMine> splay(arr, update, push);
-    splay.addPushFun(Splay<GoldMine>::push_flip);
-
-    int m; cin >> m;
-    while(m--) {
-        long long op, a, b; cin >> op >> a >> b;
-        a--; b--;
-        if(op == 1) splay.flip(a, b);
-        else {
-            auto x = splay.gather(a, b);
-            cout << x->v.mx << '\n';
-        }
-    }
+    splay.forEach(pr);
 }
