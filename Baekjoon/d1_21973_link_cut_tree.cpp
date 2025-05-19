@@ -1,5 +1,3 @@
-// Update : 2025-05-19
-
 #include <bits/stdc++.h>
 using namespace std;
 
@@ -25,8 +23,6 @@ public:
                 flip = false;
             }
         }
-        T& operator*() { return val; }
-        const T& operator*() const { return val; }
         void upd() {
             if(l) l->push();
             if(r) r->push();
@@ -60,8 +56,10 @@ public:
         if(pushFunc) pushFunctions.push_back(pushFunc);
     }
 
+
     void addUpdFun(void (*updateFunc)(Node*)) { updFunctions.push_back(updateFunc); }
     void addPushFun(void (*pushFunc)(Node*)) { pushFunctions.push_back(pushFunc); }
+
 
     void splay(Node* x) {
         while(!x->isRoot()) {
@@ -109,13 +107,13 @@ public:
         x->l = nullptr;
     }
 
-    Node* root(Node* x) {
+    Node* getRoot(Node* x) {
         access(x); while(x->l) x = x->l;
         splay(x); return x;
     }
 
     /// 트리에서의 부모
-    Node* par(Node* x) {
+    Node* getPar(Node* x) {
         access(x);
         if(!x->l) return nullptr;
         x = x->l; while(x->r) x = x->r;
@@ -128,7 +126,7 @@ public:
     }
 
     /// 트리에서의 부모까지 거리
-    int depth(Node* x) {
+    int getDepth(Node* x) {
         access(x); return x->l ? x->l->sz : 0;
     }
 
@@ -153,27 +151,48 @@ public:
     }
 };
 
-// BOJ 13539. 트리와 쿼리 11
+struct T {
+    long long val, sum;
+};
+using LCT = LinkCutTree<T>;
+using Nd = LCT::Node*;
+
+void update(Nd a) {
+    a->val.sum = a->val.val + (a->l ? a->l->val.sum : 0) + (a->r ? a->r->val.sum : 0);
+}
+
 int main() {
     ios_base::sync_with_stdio(false);
     cin.tie(nullptr); cout.tie(nullptr);
-    int n, m; cin >> n >> m;
-    LinkCutTree<int> lct;
-    vector<LinkCutTree<int>::Node*> a(n+1);
-    for(int i = 1; i <= n; i++) a[i] = lct.gen(i);
-    for(int i = 0; i < m; i++) {
-        int op, u, v; cin >> op;
-        if(op == 1) {
-            cin >> u >> v;
-            lct.link(a[v], a[u]);
+    int n, q, x, a, b; cin >> n;
+    string s;
+    LCT lct(update);
+    vector<Nd> r(n+1);
+    for(int i = 1; i <= n; i++) {
+        cin >> x;
+        r[i] = lct.gen(x, x);
+    }
+    cin >> q;
+    for(int i = 0; i < q; i++) {
+        cin >> s >> a >> b;
+        if(s == "bridge") {
+            if(lct.getRoot(r[a]) == lct.getRoot(r[b]))
+                cout << "no" << endl;
+            else {
+                cout << "yes" << endl;
+                lct.link(r[a], r[b]);
+            }
         }
-        if(op == 2) {
-            cin >> v;
-            lct.cut(a[v]);
+        if(s == "penguins") {
+            lct.update(r[a], [&](Nd k) {
+                k->val.val = b;
+            });
         }
-        if(op == 3) {
-            cin >> u >> v;
-            cout << **lct.lca(a[u], a[v]) << '\n';
+        if(s == "excursion") {
+            if(lct.getRoot(r[a]) != lct.getRoot(r[b])) cout << "impossible" << endl;
+            else lct.path(r[a], r[b], [](Nd k) {
+                cout << k->val.sum << endl;
+            });
         }
     }
 }

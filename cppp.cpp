@@ -226,9 +226,19 @@ inline signed lmb(long long v) { return 63 - clz(v); } /// left most bit (000100
 
 std::random_device mrdvce_; std::mt19937 m1gn_(mrdvce_());
 std::uniform_int_distribution<long long> uni3i64_(0, 9223372036854775807);
-// #define rand rand_
+#define rand rand_
 inline long long randl() { return uni3i64_(m1gn_); }
 inline long long rand_(long long l_, long long r_) { return randl() % (r_ - l_ + 1) + l_; } /// inclusive
+inline long long rand_(long long n_) { return rand_(0, n_-1); }
+
+template <typename Iter> void shuffle(Iter first, Iter last) {
+    if (first == last) return;
+    for (Iter i = first + 1; i != last; ++i)
+        std::iter_swap(i, first + rand(int(i - first) + 1));
+}
+template <typename T> void shuffle(T& arr) { shuffle(arr.begin(), arr.end()); }
+
+
 constexpr signed dx4[4] = { 0, 1, 0, -1 }; constexpr signed dy4[4] = { -1, 0, 1, 0 };
 #pragma endregion
 #pragma region custom_types_1
@@ -712,28 +722,11 @@ vi prime_list(int n) {
 
 
 i32 main() {
-    in64(n, q);
-    vec arr(n, cin);
-    rep(q) {
-        in64(op);
-        if(op == 1) {
-            in64(a, b, x);
-            forf(i, a-1, b-1) arr[i] = x;
-        }
-        if(op == 2) {
-            in64(a, b, x);
-            a--; b--;
-            forf(i, a, b) arr[i] += (i - a + 1) * x;
-        }
-        if(op == 3) {
-            in64(c, x); c--;
-            arr.insert(arr.begin() + c, x);
-        }
-        if(op == 4) {
-            in64(a, b); a--; b--;
-            i64 ans = 0;
-            forf(i, a, b) ans += arr[i];
-            println(ans);
-        }
+    i64 mn = inf, mx = -inf;
+    inRep() {
+        in64(x, y);
+        setMin(mn, y);
+        setMax(mx, y);
     }
+    println(mx - mn);
 }
