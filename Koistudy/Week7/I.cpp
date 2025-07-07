@@ -2,9 +2,6 @@
 #include <vector>
 using namespace std;
 
-long long fac[300001];
-long long edge_count[300001];
-
 int main() {
     ios_base::sync_with_stdio(false);
     cin.tie(nullptr); cout.tie(nullptr);

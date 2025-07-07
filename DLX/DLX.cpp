@@ -4,6 +4,7 @@ class DLX {
     struct node {
         signed row;
         node *u, *d, *l, *r;
+        bool required;
         union {
             node* h;
             signed size;
@@ -27,22 +28,21 @@ class DLX {
             this->r->l = this; this->l->r = this;
         }
         bool search(DLX& dlx) {
-            if(r == this) {
+            node* ptr = nullptr;
+            signed low = 2147483647;
+            for(node* i = r; i != this; i = i->r) {
+                if(i->size < low && i->required) {
+                    if(!(i->size)) return false;
+                    low = i->size; ptr = i;
+                }
+            }
+            if(ptr == nullptr) {
                 if(dlx.all) {
                     if(dlx.sol) dlx.all_solutions.push_back(dlx.solution);
                     else dlx.solution_count++;
                 }
                 return true;
             }
-            node* ptr = nullptr;
-            signed low = 2147483647;
-            for(node* i = r; i != this; i = i->r) {
-                if(i->size < low) {
-                    if(!(i->size)) return false;
-                    low = i->size; ptr = i;
-                }
-            }
-            assert(ptr);
             ptr->cover();
             for(node* i = ptr->d; i != ptr; i = i->d) {
                 dlx.solution.push_back(i->row);
@@ -59,6 +59,7 @@ class DLX {
     };
     bool all = false, sol = false;
     std::vector<node> nodes, heads; node hd{};
+    std::vector<bool> required;
 public:
     enum { SINGLE, ALL, COUNT };
     std::vector<signed> solution;
@@ -66,15 +67,19 @@ public:
     std::size_t solution_count = 0;
     [[maybe_unused]] bool possible = false;
     DLX() = default;
-    explicit DLX(const std::vector<std::vector<bool>>& matrix, int mode = SINGLE) {
+    explicit DLX(const std::vector<std::vector<bool>>& matrix, int mode = SINGLE)
+        : DLX(matrix, std::vector<bool>(matrix[0].size(), true), mode){}
+    DLX(const std::vector<std::vector<bool>>& matrix, const std::vector<bool>& required, int mode = SINGLE) {
         all = mode == ALL || mode == COUNT;
         sol = mode == SINGLE || mode == ALL;
         auto n = static_cast<signed>(matrix[0].size()),
              m = static_cast<signed>(matrix.size());
+        assert(n == static_cast<signed>(required.size()));
         heads.resize(n, {});
         hd.r = &heads[0]; hd.l = &heads[n-1];
         for(signed i = 0; i < n; i++) {
             heads[i].size = 0;
+            heads[i].required = required[i];
             heads[i].u = heads[i].d = &heads[i];
             heads[i].l = (i ? &heads[i-1] : &hd);
             heads[i].r = (i < n-1 ? &heads[i+1] : &hd);
@@ -116,12 +121,15 @@ class DLXHelper {
     std::map<std::string, signed> selection; signed ac = 0;
     std::vector<std::string> selectionName;
     std::vector<std::vector<signed>> s2c;
+    std::vector<bool> req;
 public:
-    void addCond(const std::vector<std::string>& conds) {
-        for(const std::string& s : conds) if(!condition.contains(s)) condition.insert({s, oc++});
+    void addCond(const std::vector<std::string>& conds, bool required = true) {
+        for(const std::string& s : conds)
+            if(!condition.contains(s))
+                condition.insert({s, oc++}), req.push_back(required);
     }
     void addCond(const std::string& cond) { addCond(std::vector{cond}); }
-    void add(const std::string& sele, const std::vector<std::string>& conds) {
+    void add(const std::string& sele, const std::vector<std::string>& conds, bool required = true) {
         signed s;
         if(auto iter = selection.find(sele); iter == selection.end()) {
             s = ac;
@@ -134,13 +142,22 @@ public:
         for(const std::string& cond : conds) {
             signed c;
             if(auto iter = condition.find(cond); iter == condition.end())
-                c = oc, condition.insert({cond, oc++});
+                c = oc, condition.insert({cond, oc++}), req.push_back(required);
             else
                 c = iter->second;
             s2c[s].push_back(c);
         }
     }
-    void add(const std::string& sele, const std::string& cond) { add(sele, std::vector{cond}); }
+    void add(const std::string& sele, const std::string& cond, bool required = true) { add(sele, std::vector{cond}, required); }
+
+    template <typename T> requires(!std::is_convertible_v<T, std::string> && !std::is_convertible_v<T, const char*>)
+    void add(const T& sele, const std::string& cond, bool required = true) { add(std::to_string(sele), cond, required); }
+
+    template <typename T> requires(!std::is_convertible_v<T, std::string> && !std::is_convertible_v<T, const char*>)
+    void add(const std::string& sele, const T& cond, bool required = true) { add(sele, std::to_string(cond), required); }
+
+    template <typename T1, typename T2> requires(!std::is_convertible_v<T1, std::string> && !std::is_convertible_v<T2, std::string>)
+    void add(const T1& sele, const T2& cond, bool required = true) { add(std::to_string(sele), std::to_string(cond), required); }
 
     std::string seleName(signed sele) { return selectionName[sele]; }
 
@@ -148,7 +165,7 @@ public:
         std::vector matrix(ac, std::vector<bool>(oc));
         for(signed i = 0; i < static_cast<signed>(s2c.size()); i++)
             for(const signed& j : s2c[i]) matrix[i][j] = true;
-        return DLX(matrix, mode);
+        return {matrix, req, mode};
     }
 
     std::vector<std::string> toName(const std::vector<signed>& solution) const {
@@ -158,10 +175,8 @@ public:
     }
 };
 
-int main() {
+void solve3763() {
     using namespace std;
-    ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr);
-
     vector board(16, vector<char>(16, '-'));
     DLXHelper dlx;
     dlx.add("p", "0"); // precondition, "0" 조건은 "p" 선택만 만족하는 조건으로, 이미 놓아져 있는 숫자들에 대한 선택을 강제하기 위해서 추가
@@ -193,4 +208,20 @@ int main() {
         for(const char &i: l) cout << i;
         cout << "\n";
     }
+}
+
+int main() {
+    using namespace std;
+    ios_base::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr);
+    int n; cin >> n;
+    DLXHelper dlx;
+    for(int r = 0; r < n; r++) for(int c = 0; c < n; c++) {
+        dlx.add(r*n+c, format("row{}", r));
+        dlx.add(r*n+c, format("col{}", c));
+        dlx.add(r*n+c, format("rpc{}", r + c), false);
+        dlx.add(r*n+c, format("rmc{}", r - c), false);
+    }
+    vector<int> ans(n);
+    for(const auto& i : dlx.toName(dlx.run(DLX::SINGLE).solution)) ans[stoi(i)/n] = stoi(i) % n + 1;
+    for(int i : ans) cout << i << '\n';
 }

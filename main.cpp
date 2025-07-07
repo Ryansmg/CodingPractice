@@ -1,7 +1,2 @@
-#include <bits/stdc++.h>
-using namespace std;
-
-int main() {
-    int a = 1, b = 2, c = 3;
-    println("{} {} {}", a, b, c);
-}
+#import<iostream>
+main(int n){std::cin>>n;n=1+(1<<n);std::cout<<n*n;}

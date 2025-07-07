@@ -86,7 +86,18 @@ long long rand(long long l, long long r) {
 
 void srand(__int128 seed) { random::next = seed; }
 
-template <typename T> void swap(T& a, T& b) {
+template <typename Iter> void shuffle(Iter first, Iter last) {
+    if (first == last) return;
+    for (Iter i = first + 1; i != last; ++i)
+        iter_swap(i, first + rand(int(i - first) + 1));
+}
+template <typename T> void shuffle(T& arr) { shuffle(arr.begin(), arr.end()); }
+
+template <typename T> inline void iter_swap(T a, T b) {
+    swap(*a, *b);
+}
+
+template <typename T> inline void swap(T& a, T& b) {
     T tmp = a; a = b; b = tmp;
 }
 template <typename T> T abs(const T& v) { return v < 0 ? -v : v; }
@@ -981,74 +992,9 @@ template <typename T = long long, typename AddType = T> struct segtree {
 
 #pragma endregion
 
-// 우선순위 : set 처리 후
-// (왼쪽 서브트리의 크기 + 1) * X + s를 더함
-struct T {
-    i64 value = 0;
-    i64 set = -1; // -1인 경우 연산 없음
-    i64 X = 0, s = 0;
-    i64 sum = 0;
-    void update(const T* l, const T* r) {
-        sum = value + (l ? l->sum : 0) + (r ? r->sum : 0);
-    }
-};
-
-i64 sum(i64 l, i64 r) {
-    return (r - l + 1) * (l + r) / 2;
-}
-
-void push(Splay<T>::Node& a) {
-    i64 lsz = (a.l ? a.l->cnt : 0);
-    i64 rsz = (a.r ? a.r->cnt : 0);
-    if(a.v.set != -1) {
-        a.v.value = a.v.set;
-        a.v.sum = a.v.set * (lsz + rsz + 1);
-        if(a.l) a.l->v.X = a.l->v.s = 0, a.l->v.set = a.v.set;
-        if(a.r) a.r->v.X = a.r->v.s = 0, a.r->v.set = a.v.set;
-        a.v.set = -1;
-    }
-    a.v.value += (lsz + 1) * a.v.X + a.v.s;
-
-    a.v.sum += sum(1, lsz + rsz + 1) * a.v.X;
-    a.v.sum += (lsz + rsz + 1) * a.v.s;
-
-    if(a.l) a.l->v.X += a.v.X, a.l->v.s += a.v.s;
-    if(a.r) a.r->v.X += a.v.X, a.r->v.s += (lsz + 1) * a.v.X + a.v.s;
-    a.v.X = 0, a.v.s = 0;
-}
-
-void pr(Splay<T>::Node &a) {
-    put(a.v.value, " ");
-}
 
 int main() {
-    int n, q; get(n, q);
-    vec<T> arr(n + 2);
-    for(int i : range(1, n)) arr[i].value = get();
-    Splay<T> splay(arr, 0, push);
-    for(int _ : range(q)) {
-        int op = get(), a, b, c, x;
-        if(op == 1) {
-            get(a, b, x);
-            auto t = splay.gather(a, b);
-            T v = t->v; v.set = x;
-            splay.set(t, v);
-        }
-        else if(op == 2) {
-            get(a, b, x);
-            auto t = splay.gather(a, b);
-            T v = t->v; v.X += x;
-            splay.set(t, v);
-        }
-        else if(op == 3) {
-            get(c, x);
-            T v{x};
-            splay.insertPrev(splay.kth(c), v);
-        }
-        else {
-            get(a, b);
-            auto x = splay.gather(a, b);
-            ln(x->v.sum);
-        }
-    }
+    i64 n = get();
+    i64 m = 1 + (1LL << n);
+    ln(m*m);
 }

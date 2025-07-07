@@ -13,12 +13,12 @@ int main() {
     vector<i64> arr(n + 1);
     vector<i64> bucket(sq + 2);
 
-#define push(i) \
-    if(bucket[i/sq]) { \
-        forf(j, i/sq*sq, i/sq*sq + sq - 1) { \
-            arr[j] = bucket[j/sq];\
-        } \
-        bucket[i/sq] = 0; \
+#define push(i)                                \
+    if(bucket[i/sq]) {                         \
+        forf(j, i/sq*sq, i/sq*sq + sq - 1) {   \
+            arr[j] = bucket[j/sq];             \
+        }                                      \
+        bucket[i/sq] = 0;                      \
     }
 
     forn(Q, q) {

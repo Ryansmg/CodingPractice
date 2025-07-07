@@ -5,11 +5,13 @@
 #define LOCAL_FASTIO 1
 #define LOCAL_INLINE 0
 #define DISABLE_LOCAL 0
+#define NO_X86_INTRIN_H 0
+#define NO_EXT_HEADERS 0
 #pragma endregion
 
 #pragma region C+++
 //@formatter:off
-#define CPPP 250511
+#define CPPP 250707
 #pragma region settings
 
 #pragma clang diagnostic push
@@ -38,11 +40,17 @@
 #endif
 #pragma endregion
 #pragma region headers
+#if !NO_X86_INTRIN_H
 #include <x86intrin.h>
+#endif
+
 #include <bits/stdc++.h>
+
+#if !NO_EXT_HEADERS
 #include <ext/pb_ds/assoc_container.hpp>
 #include <ext/pb_ds/tree_policy.hpp>
 #include <ext/rope>
+#endif
 #pragma endregion
 #pragma region keywords
 #define elif else if
@@ -194,6 +202,8 @@ template <typename T> T modInv(T a, const T& m, bool chkGcd = true) { // by @kuh
 }
 inline long long pow(long long a, long long b, long long mod) {return pow_(b < 0 ? modInv(a, mod) : a, std::abs(b), mod);}
 inline long long pow(long long a, long long b) { long long ans=1;while(b){if(b&1)ans=ans*a;b>>=1;a=a*a;} return ans; }
+template <typename T> requires (!is_same_v<T, long long> && !is_convertible_v<T, long long>)
+inline T pow(T a, long long b) { assert(b); b--; T ans=a; while(b){if(b&1)ans=ans*a;b>>=1;a=a*a;} return ans; }
 template <typename T> inline T pow(T a, T b) { T ans=1;while(b){if(b&1)ans=ans*a;b>>=1;a=a*a;} return ans; }
 
 template <typename T> inline T gcd_(T a, T b) { if(a < b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
@@ -217,7 +227,7 @@ namespace pRho {
 bool isPrime(long long n){if(n<=1)return false;for(const __int128&a:pRho::base){if(!pRho::_isPrime(n, a))return false;}return true;}
 long long factorize(long long n){assert(n>=2);if(n%2==0){return 2;}if(isPrime(n)){return n;}__int128 x=pRho::dis(pRho::gen)%(n-2)+2,y=x,
             c=pRho::dis(pRho::gen)%10+1,g=1;while(g==1){x=(x*x%n+c)%n;y=(y*y%n+c)%n;y=(y*y%n+c)%n;g=pRho::gcd(x-y>0?x-y:y-x,(__int128)n);
-        if(g==n)return factorize(n);}if(isPrime(g)){return g;}else return factorize(g);}
+        if(g==n)return factorize(n);}if(isPrime((long long)g)){return (long long)g;} return factorize((long long)g);}
 std::vector<long long> getPrimes(long long n) { std::vector<long long> r; while(n != 1) { long long p = factorize(n); r.emplace_back(p); n /= p; } return r; }
 
 inline signed popcount(long long v) { return std::popcount((unsigned long long) v); }
@@ -299,7 +309,7 @@ inline std::string readline() {
 std::vector<long long> qin_data_;
 short qin_t_ = 0, qin_c_ = 0;
 long long qin_h_(long long idx, long long n) {
-    if(!qin_c_) { qin_t_ = n; qin_data_.resize(n);
+    if(!qin_c_) { qin_t_ = (short) n; qin_data_.resize(n);
         for(long long i = 0; i < n; i++) std::cin >> qin_data_[i]; }
     if(++qin_c_ == qin_t_) qin_t_ = qin_c_ = 0;
     return qin_data_[idx];
@@ -357,6 +367,7 @@ struct Printf {
     Printf& setLocal() { local = true; return *this; }
     Printf& setFlush() { flush = true; return *this; }
 private:
+    // ReSharper disable once CppDFAUnreachableFunctionCall
     inline void preset_() const {
         std::cout << std::fixed;
         if(prec != -1) std::cout.precision(prec);
@@ -390,9 +401,7 @@ private:
 #define printExit(...) printfln().setExit()(__VA_ARGS__)
 #define print(...) PrfDef_print_(__VA_ARGS__)
 #define println(...) PrfDef_println_(__VA_ARGS__)
-#define ln(...) println(__VA_ARGS__)
 #define rprint(...) PrfDef_rprint_(__VA_ARGS__)
-#define put(...) rprint(__VA_ARGS__)
 #define rprintln(...) PrfDef_rprintln_(__VA_ARGS__)
 #define printes(...) PrfDef_printes_(__VA_ARGS__)
 #define flprintln(...) printfln().setFlush()(__VA_ARGS__)
@@ -414,6 +423,7 @@ private:
 #ifdef LOCAL
 #define lprintvar(...) lprintvar_(#__VA_ARGS__, __VA_ARGS__)
 template <typename... Args> void lprintvar_(const std::string& names_, Args... args) {
+    // ReSharper disable once CppDFAUnreadVariable
     size_t pos = 0; std::string delim = ",", name, names = names_;
     auto print_each = [&](auto&& value) {
         pos = names.find(delim); name = (pos == std::string::npos) ? names : names.substr(0, pos);
@@ -577,7 +587,7 @@ public:
     void init() {
         for(long long i = 0; i < ((long long) this->size()); i++) { bool b; std::cin >> b; this->begin()[i] = b; }
     }
-    inline long long sz() const { return this->size(); }
+    inline long long sz() const { return (long long) this->size(); }
     inline bool mt() const { return this->empty(); }
     template <typename T2> vec<T2> to() {
         vec<T2> ret; for(const bool t : *this) ret.emplace_back(t);
@@ -669,22 +679,48 @@ struct segtree {
 #pragma endregion // data_structures
 
 #pragma region modified_integers
-template <long long mod = 1000000007>
+template <const long long mod = 1000000007>
 struct ModInt {
     long long v = 0;
     ModInt() = default;
-    inline ModInt(long long val) : v((val % mod + mod) % mod) {} // NOLINT(*-explicit-constructor)
+    // ReSharper disable once CppNonExplicitConvertingConstructor
+    inline ModInt(long long val) : v(val % mod + mod) { // NOLINT(*-explicit-constructor)
+        if(v >= mod) v -= mod;
+    }
     template <typename T> inline explicit operator T() requires std::is_integral_v<T> { return v; }
     inline ModInt& operator=(const ModInt& b) = default;
     inline ModInt& operator++() { v = (v + 1) % mod; return *this; }
     inline ModInt operator++(signed) { ModInt ret = *this; v = (v + 1) % mod; return ret; }
     inline ModInt& operator--() { v = (v - 1 + mod) % mod; return *this; }
     inline ModInt operator--(signed) { ModInt ret = *this; v = (v - 1 + mod) % mod; return ret; }
-    inline ModInt operator+(const ModInt& b) const { return {(v + b.v) % mod}; }
-    inline ModInt operator-(const ModInt& b) const { return {(v - b.v + mod) % mod}; }
+    inline ModInt operator+(const ModInt& b) const { ModInt ret = *this; ret += b.v; return ret; }
+    inline ModInt operator-(const ModInt& b) const { ModInt ret = *this; ret -= b.v; return ret; }
     inline ModInt operator*(const ModInt& b) const { return {(v * b.v) % mod}; }
-    inline ModInt& operator+=(const ModInt& b) { v = (v + b.v) % mod; return *this; }
-    inline ModInt& operator-=(const ModInt& b) { v = (v - b.v + mod) % mod; return *this; }
+
+    inline ModInt& operator+=(const ModInt& b) {
+        v += b.v;
+        if(v >= mod) v -= mod;
+        return *this;
+    }
+
+    inline ModInt& operator+=(const ModInt&& b) {
+        v += b.v;
+        if(v >= mod) v -= mod;
+        return *this;
+    }
+
+    inline ModInt& operator-=(const ModInt& b) {
+        v -= b.v;
+        if(v < 0) v += mod;
+        return *this;
+    }
+
+    inline ModInt& operator-=(const ModInt&& b) {
+        v -= b.v;
+        if(v < 0) v += mod;
+        return *this;
+    }
+
     inline ModInt& operator*=(const ModInt& b) { v = (v * b.v) % mod; return *this; }
     inline friend std::istream& operator>>(std::istream& in, ModInt& t) { in >> t.v; return in; }
     inline friend std::ostream& operator<<(std::ostream& out, const ModInt& t) { out << t.v; return out; }
@@ -711,7 +747,7 @@ vb sieve(int n) {
 }
 
 vi prime_list(int n) {
-    vb s = sieve(n); vi ret; forf(i, 2, n) if(s[i]) ret.push_back(i);
+    vb s = sieve(n); vi ret; forf(i, 2, n) if(s[i]) ret.push_back((signed)i);
     return ret;
 }
 
@@ -720,13 +756,32 @@ vi prime_list(int n) {
 //@formatter:on
 #pragma endregion
 
+template <typename T = long long>
+struct matrix {
+    signed r = 0, c = 0;
+    std::vector<std::vector<T>> m;
+    matrix(signed row, signed column, T value) : r(row), c(column), m(row, std::vector<T>(column, value)) {}
+    explicit matrix(std::vector<std::vector<T>> arr) : r(arr.size()), c(arr.empty() ? 0 : arr[0].size()), m(std::move(arr)) {}
+    auto& operator[](signed index) { return m[index]; }
+    const auto& operator[](signed index) const { return m[index]; }
+    matrix operator*(const matrix& other) const {
+        assert(c == other.r);
+        matrix ret(r, other.c, T());
+        for(signed lr = 0; lr < r; lr++)
+            // ReSharper disable once CppDFANotInitializedField
+            for(signed rc = 0; rc < other.c; rc++)
+                for(signed i = 0; i < c; i++)
+                    ret[lr][rc] += (*this)[lr][i] * other[i][rc];
+        return ret;
+    }
+    matrix& operator*=(const matrix& other) { return *this = *this * other; }
+};
 
 i32 main() {
-    i64 mn = inf, mx = -inf;
-    inRep() {
-        in64(x, y);
-        setMin(mn, y);
-        setMax(mx, y);
-    }
-    println(mx - mn);
+    matrix<ModInt<1'000'000>> arr1({
+        {0, 1},
+        {1, 1}
+    });
+    matrix<ModInt<1'000'000>> arr2({{0}, {1}});
+    println((pow(arr1, input()) * arr2)[0][0]);
 }

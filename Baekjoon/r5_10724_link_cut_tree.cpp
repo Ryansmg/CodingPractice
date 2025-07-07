@@ -100,6 +100,7 @@ public:
         setRoot(child);
         access(child); access(parent);
         child->l = parent; parent->p = child;
+        splay(parent);
     }
 
     /// cut x and x->p (at lct)
@@ -107,6 +108,7 @@ public:
         access(x);
         x->l->p = nullptr;
         x->l = nullptr;
+        x->upd();
     }
 
     // a - b 간선이 있어야 함
@@ -116,15 +118,16 @@ public:
     }
 
     Node* root(Node* x) {
-        access(x); while(x->l) x = x->l;
+        access(x); x->push();
+        while(x->l) x = x->l, x->push();
         splay(x); return x;
     }
 
     /// 트리에서의 부모
     Node* par(Node* x) {
-        access(x);
+        access(x); x->push();
         if(!x->l) return nullptr;
-        x = x->l; while(x->r) x = x->r;
+        x = x->l, x->push(); while(x->r) x = x->r, x->push();
         splay(x); return x;
     }
 
@@ -135,7 +138,7 @@ public:
 
     /// 트리에서의 부모까지 거리
     int depth(Node* x) {
-        access(x); return x->l ? x->l->sz : 0;
+        access(x); return x->l ? x->l.push(), x->l->sz : 0;
     }
 
     /// @param x must be `void f(Node*)`
@@ -154,32 +157,75 @@ public:
     void path(Node* x, Node* y, const Callable& f) {
         Node* rt = root(x);
         setRoot(x); access(y); splay(x);
-        f(x); splay(x); x->push(); x->upd();
+        f(x); splay(x);
         setRoot(rt);
     }
 };
 
-// BOJ 13539. 트리와 쿼리 11
+struct T;
+using LCT = LinkCutTree<T>;
+using Nd = LCT::Node*;
+using i64 = long long;
+
+struct T {
+    Nd l = nullptr, r = nullptr;
+    i64 c = -1, cmx = -1; Nd mx = nullptr;
+    int id = -1;
+};
+
+void upd(Nd t) {
+    t->val.cmx = t->val.c, t->val.mx = t;
+    if(t->l && t->l->val.cmx > t->val.cmx) t->val.cmx = t->l->val.cmx, t->val.mx = t->l->val.mx;
+    if(t->r && t->r->val.cmx > t->val.cmx) t->val.cmx = t->r->val.cmx, t->val.mx = t->r->val.mx;
+}
+
+
+#define forf(i, a, b) for(i64 i = a; i <= b; i++)
+#define forn(i, n) for(i64 i = 0; i < n; i++)
+
 int main() {
     ios_base::sync_with_stdio(false);
     cin.tie(nullptr); cout.tie(nullptr);
-    int n, m; cin >> n >> m;
-    LinkCutTree<int> lct;
-    vector<LinkCutTree<int>::Node*> a(n+1);
-    for(int i = 1; i <= n; i++) a[i] = lct.gen(i);
-    for(int i = 0; i < m; i++) {
-        int op, u, v; cin >> op;
-        if(op == 1) {
-            cin >> u >> v;
-            lct.link(a[v], a[u]);
+    int t; cin >> t;
+    while(t--) {
+        LCT lct(upd);
+        int n, m; cin >> n >> m;
+        vector<Nd> nds(n), ends;
+        i64 cans = 0, ans = 0;
+        forn(i, n) nds[i] = lct.gen(), nds[i]->val.mx = nds[i], nds[i]->val.id = i;
+        forn(i, n - 1) {
+            i64 a = i + 1, b, c; cin >> b >> c;
+            cans += c;
+            Nd x = lct.gen({nds[a], nds[b], c, c});
+            ends.push_back(x);
+            x->val.mx = x;
+            lct.link(x, nds[a]);
+            lct.link(x, nds[b]);
         }
-        if(op == 2) {
-            cin >> v;
-            lct.cut(a[v]);
+        forn(j, m) {
+            i64 u, v, c; cin >> u >> v >> c;
+            if(u == v) {
+                ans ^= cans; continue;
+            }
+            T pathv;
+            lct.path(nds[u], nds[v], [&](Nd x) {
+                pathv = x->val;
+            });
+            if(pathv.cmx > c) {
+                cans += c - pathv.cmx;
+                lct.cutEdge(pathv.mx, pathv.mx->val.l);
+                lct.cutEdge(pathv.mx, pathv.mx->val.r);
+                pathv.mx->val.c = pathv.mx->val.cmx = c;
+                pathv.mx->val.mx = pathv.mx;
+                lct.link(pathv.mx, nds[u]);
+                lct.link(pathv.mx, nds[v]);
+                pathv.mx->val.l = nds[u];
+                pathv.mx->val.r = nds[v];
+            }
+            ans ^= cans;
         }
-        if(op == 3) {
-            cin >> u >> v;
-            cout << **lct.lca(a[u], a[v]) << '\n';
-        }
+        cout << ans << '\n';
+        for(auto x : nds) delete x;
+        for(auto x : ends) delete x;
     }
 }
