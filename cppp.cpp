@@ -11,9 +11,10 @@
 
 #pragma region C+++
 //@formatter:off
-#define CPPP 250707
+#define CPPP 250708
 #pragma region settings
 
+#ifdef LOCAL
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedMacroInspection"
 #pragma ide diagnostic ignored "OCUnusedTypeAliasInspection"
@@ -22,6 +23,8 @@
 #pragma ide diagnostic ignored "UnreachableCallsOfFunction"
 #pragma ide diagnostic ignored "UnusedLocalVariable"
 #pragma ide diagnostic ignored "UnusedValue"
+#endif
+
 #if DISABLE_LOCAL
 #undef LOCAL
 #endif
@@ -684,18 +687,19 @@ struct ModInt {
     long long v = 0;
     ModInt() = default;
     // ReSharper disable once CppNonExplicitConvertingConstructor
-    inline ModInt(long long val) : v(val % mod + mod) { // NOLINT(*-explicit-constructor)
-        if(v >= mod) v -= mod;
+    inline ModInt(long long val) : v(val % mod) { // NOLINT(*-explicit-constructor)
+        if(v < 0) v += mod;
     }
     template <typename T> inline explicit operator T() requires std::is_integral_v<T> { return v; }
     inline ModInt& operator=(const ModInt& b) = default;
+    inline ModInt operator-() const { return { -v }; }
     inline ModInt& operator++() { v = (v + 1) % mod; return *this; }
     inline ModInt operator++(signed) { ModInt ret = *this; v = (v + 1) % mod; return ret; }
     inline ModInt& operator--() { v = (v - 1 + mod) % mod; return *this; }
     inline ModInt operator--(signed) { ModInt ret = *this; v = (v - 1 + mod) % mod; return ret; }
     inline ModInt operator+(const ModInt& b) const { ModInt ret = *this; ret += b.v; return ret; }
     inline ModInt operator-(const ModInt& b) const { ModInt ret = *this; ret -= b.v; return ret; }
-    inline ModInt operator*(const ModInt& b) const { return {(v * b.v) % mod}; }
+    inline ModInt operator*(const ModInt& b) const { return { v * b.v % mod }; }
 
     inline ModInt& operator+=(const ModInt& b) {
         v += b.v;
@@ -721,8 +725,12 @@ struct ModInt {
         return *this;
     }
 
-    inline ModInt& operator*=(const ModInt& b) { v = (v * b.v) % mod; return *this; }
-    inline friend std::istream& operator>>(std::istream& in, ModInt& t) { in >> t.v; return in; }
+    inline ModInt& operator*=(const ModInt& b) { v = v * b.v % mod; return *this; }
+    inline friend std::istream& operator>>(std::istream& in, ModInt& t) {
+        in >> t.v; t.v = t.v % mod;
+        if(t.v < 0) t.v += mod;
+        return in;
+    }
     inline friend std::ostream& operator<<(std::ostream& out, const ModInt& t) { out << t.v; return out; }
     inline friend ModInt operator+(long long a, const ModInt& b) { a = (a % mod + mod) % mod; return {(b.v + a) % mod}; }
     inline friend ModInt operator-(long long a, const ModInt& b) { a = (a % mod + mod) % mod; return {(b.v - a + mod) % mod}; }
@@ -752,7 +760,9 @@ vi prime_list(int n) {
 }
 
 #pragma endregion
+#ifdef LOCAL
 #pragma clang diagnostic pop
+#endif
 //@formatter:on
 #pragma endregion
 
@@ -760,10 +770,34 @@ template <typename T = long long>
 struct matrix {
     signed r = 0, c = 0;
     std::vector<std::vector<T>> m;
+    matrix() = default;
     matrix(signed row, signed column, T value) : r(row), c(column), m(row, std::vector<T>(column, value)) {}
     explicit matrix(std::vector<std::vector<T>> arr) : r(arr.size()), c(arr.empty() ? 0 : arr[0].size()), m(std::move(arr)) {}
-    auto& operator[](signed index) { return m[index]; }
-    const auto& operator[](signed index) const { return m[index]; }
+    inline auto& operator[](signed index) { return m[index]; }
+    inline const auto& operator[](signed index) const { return m[index]; }
+
+    matrix& operator+=(const matrix& other) {
+        assert(r == other.r && c == other.c);
+        for(signed i = 0; i < r; i++)
+            for(signed j = 0; j < c; j++)
+                m[r][c] += other[r][c];
+        return *this;
+    }
+
+    matrix operator+(const matrix& other) const {
+        matrix ret = *this;
+        ret += other;
+        return ret;
+    }
+
+    matrix operator-() const {
+        matrix ret = *this;
+        for(signed i = 0; i < r; i++)
+            for(signed j = 0; j < c; j++)
+                ret.m[r][c] = -ret.m[r][c];
+        return ret;
+    }
+
     matrix operator*(const matrix& other) const {
         assert(c == other.r);
         matrix ret(r, other.c, T());
@@ -771,17 +805,31 @@ struct matrix {
             // ReSharper disable once CppDFANotInitializedField
             for(signed rc = 0; rc < other.c; rc++)
                 for(signed i = 0; i < c; i++)
-                    ret[lr][rc] += (*this)[lr][i] * other[i][rc];
+                    ret[lr][rc] += m[lr][i] * other[i][rc];
         return ret;
     }
     matrix& operator*=(const matrix& other) { return *this = *this * other; }
+
+    friend istream& operator>>(istream& in, matrix& mat) {
+        for(signed i = 0; i < mat.r; i++)
+            for(signed j = 0; j < mat.c; j++)
+                in >> mat.m[i][j];
+        return in;
+    }
+
+    friend ostream& operator<<(ostream& out, const matrix& mat) {
+        for(signed i = 0; i < mat.r; i++) {
+            for(signed j = 0; j < mat.c; j++)
+                out << mat.m[i][j] << ' ';
+            if(i < mat.r - 1) out << '\n';
+        }
+        return out;
+    }
 };
 
 i32 main() {
-    matrix<ModInt<1'000'000>> arr1({
-        {0, 1},
-        {1, 1}
-    });
-    matrix<ModInt<1'000'000>> arr2({{0}, {1}});
-    println((pow(arr1, input()) * arr2)[0][0]);
+    tcRep() {
+        in64(a, b);
+        println(b - a + 2);
+    }
 }
