@@ -97,7 +97,7 @@ template <typename T> inline void iter_swap(T a, T b) {
     swap(*a, *b);
 }
 
-template <typename T> inline void swap(T& a, T& b) {
+template <typename T> inline void swap(T& a, T& b) noexcept {
     T tmp = a; a = b; b = tmp;
 }
 template <typename T> T abs(const T& v) { return v < 0 ? -v : v; }
@@ -127,6 +127,11 @@ public:
     explicit vec(long long len, const T& val) {
         data_begin = new T[len+1]();
         for(long long i = 0; i < len; i++) *(data_begin + i) = val;
+        length = capacity = len;
+    }
+    explicit vec(long long len, const T arr[]) {
+        data_begin = new T[len+1]();
+        for(long long i = 0; i < len; i++) *(data_begin + i) = arr[i];
         length = capacity = len;
     }
     vec(const vec& other) : length(other.length), capacity(other.capacity) {
@@ -176,16 +181,37 @@ public:
         length++;
         return *(data_begin + length - 1) = val;
     }
-    T& push_back(const T& val) { return push(val); }
+    inline T& push_back(const T& val) { return push(val); }
     template <typename... C> T& emplace(const C&... c) {
         return push(T(c...));
     }
+
+    inline T& insert(long long pos, const T& val) {
+        return insert_(data_begin + pos, val);
+    }
+
+private:
+    T& insert_(T* pos, const T& val) {
+        assert(pos <= end() && data_begin <= pos);
+        if(pos == end()) return push(val);
+        T temp = back();
+        int idx = pos - data_begin;
+        for(T* i = end() - 1; i != pos; i--) {
+            *i = *(i-1);
+        }
+        *pos = val;
+        push(temp);
+        // ReSharper disable once CppDFALocalValueEscapesFunction
+        return *(data_begin + idx);
+    }
+public:
     T pop() {
         T ret = back();
         length--;
         *(data_begin + length) = T();
         return ret;
     }
+    inline T pop_back() { return pop(); }
     void clear() { length = 0; }
     void dispose() {
         delete[] data_begin;
@@ -213,6 +239,7 @@ namespace std { template <typename T = long long> using vector = vec<T>; }
 class str : public vec<char> {
 public:
     str() = default;
+    // ReSharper disable once CppNonExplicitConvertingConstructor
     str(const char* c) { // NOLINT(*-explicit-constructor)
         long long l = 0;
         const char* d = c;
@@ -239,6 +266,42 @@ public:
             if(operator[](i) != b[i]) return operator[](i) < b[i];
         }
         return size() < b.size();
+    }
+    str& operator+=(const str& s) {
+        for(char c : s) push(c);
+        return *this;
+    }
+    str operator+(const str& s) const {
+        str ret = *this;
+        ret += s;
+        return ret;
+    }
+    str operator+(const char* c) const {
+        str ret = *this;
+        ret += str(c);
+        return ret;
+    }
+    str& operator+=(const char* c) {
+        return operator+=(str(c));
+    }
+    friend str operator+(const char* c, const str& s) {
+        str ret = str(c);
+        ret += s;
+        return ret;
+    }
+    str operator+(const char c) const {
+        str ret = *this;
+        ret.push_back(c);
+        return ret;
+    }
+    str& operator+=(const char c) {
+        push_back(c);
+        return *this;
+    }
+    friend str operator+(const char c, const str& s) {
+        str ret = s;
+        ret.insert(0, c);
+        return ret;
     }
 };
 using string = str;
@@ -330,6 +393,14 @@ public:
     T front() = delete;
 };
 
+template <typename T = long long> class pq {
+    long long sz = 0;
+    vec<T> data{1};
+public:
+    // TODO
+};
+template <typename T = long long> using priority_queue = pq<T>;
+
 template <typename T1 = long long, typename T2 = long long>
 class pair {
 public:
@@ -394,10 +465,33 @@ template <typename T, typename Compare> void sort(vec<T>& v, Compare cmp) { sort
 template <typename T> void sort(vec<T>& v) { sort(v.begin(), v.end(), less<T>); }
 
 template <typename T> void reverse(T* s, T* e) {
-    if(s == e--) return;
-    while(s != e) swap(*s, *e), s++, e--;
+    if(s >= e || s == --e) return;
+    while(s < e) swap(*s, *e), s++, e--;
 }
 template <typename T> void reverse(vec<T>& v) { reverse(v.begin(), v.end()); }
+
+
+str to_string(long long i) {
+    if(i == 0) return "0";
+    if(i < -9'223'372'036'854'775'807) return "-9223372036854775808";
+    str s;
+    bool flag = false;
+    if(i < 0) flag = true, i = -i;
+    while(i) s.push('0' + i % 10), i /= 10;
+    if(flag) s.push('-');
+    reverse(s);
+    return s;
+}
+
+inline string tostr(const __int128 &i) {string ret,bs;
+    if(!i){return"0";}if(i<0)return"-"+tostr(-i);__int128 t=1;for(int as = 0; as < 18; as++)t*=10;__int128 a=i/(t*t);
+    if(a){ret+=tostr((long long)a);
+        bs=tostr((long long)(i/t%(t*10)+t));for(int j = 0; j < 18; j++)ret+=bs[j+1];bs=tostr((long long)((i%t)+t));
+        for(int j = 0; j < 18; j++)ret+=bs[j+1];
+    }else{__int128 b=i/t%(t*10);if(b){ret+=tostr((long long)b);bs=tostr((long long)((i%t)+t));
+        for(int j = 0; j < 18; j++) ret+=bs[j+1];}else{ret+=tostr((long long)(i%t));}}return ret;}
+
+inline string to_string(const __int128& i) { return tostr(i); }
 
 #pragma endregion
 
@@ -543,7 +637,7 @@ public:
         while(x) x->upd(), x = x->p;
     }
     explicit Splay(const std::vector<T>& arr, void (*updateFunc)(Node&) = nullptr, void (*pushFunc)(Node&) = nullptr) {
-        long long length = static_cast<long long>(arr.size());
+        auto length = static_cast<long long>(arr.size());
         sz = length;
         if(updateFunc) updFunctions.push_back(updateFunc);
         if(pushFunc) pushFunctions.push_back(pushFunc);
@@ -596,6 +690,7 @@ public:
         tree->v = val;
     }
 
+    // ReSharper disable once CppMemberFunctionMayBeStatic
     void set(Node* x, const T& val) {
         x->v = val;
     }
@@ -880,8 +975,8 @@ template <typename T> T modInv(T a, const T& m) { // by @kuhyaku
     u %= m; if (u < 0) {u += m;} return u;
 }
 inline long long pow(long long a, long long b, long long mod) {return pow_(b < 0 ? modInv(a, mod) : a, abs(b), mod);}
-inline long long pow(long long a, long long b) { long long ans=1;while(b){if(b&1)ans=ans*a;b>>=1;a=a*a;} return ans; }
-template <typename T> inline T pow(T a, T b) { T ans=1;while(b){if(b&1)ans=ans*a;b>>=1;a=a*a;} return ans; }
+inline long long pow(long long a, long long b) { if(b<0){return 0;}long long ans=1;while(b){if(b&1)ans=ans*a;b>>=1;a=a*a;} return ans; }
+// template <typename T> inline T pow(T a, T b) { if(b<0){return 0;}T ans=1;while(b){if(b&1)ans=ans*a;b>>=1;a=a*a;} return ans; }
 
 #pragma endregion
 
@@ -895,6 +990,25 @@ template <typename T> inline T pow(T a, T b) { T ans=1;while(b){if(b&1)ans=ans*a
 #pragma endregion
 
 #pragma region Python
+
+struct rev_range {
+    long long s, e;
+    struct iterator {
+        long long cur;
+        iterator& operator++() { --cur; return *this; }
+        iterator operator++(int) { auto r = *this; cur--; return r; }
+        iterator& operator--() { ++cur; return *this; }
+        iterator operator--(int) { auto r = *this; cur++; return r; }
+        bool operator==(const iterator& b) const { return cur == b.cur; }
+        bool operator<(const iterator& b) const { return cur > b.cur; }
+        long long operator*() const { return cur; }
+    };
+    explicit rev_range(long long n) : s(n-1), e(-1) {}
+    /// [left..right]
+    rev_range(long long left, long long right) : s(left), e(right - 1) {}
+    iterator begin() const { return {s}; }
+    iterator end() const { return {e}; }
+};
 
 struct range {
     long long s, e;
@@ -913,6 +1027,7 @@ struct range {
     range(long long left, long long right) : s(left), e(right + 1) {}
     iterator begin() const { return {s}; }
     iterator end() const { return {e}; }
+    rev_range rev() const { return {e-1, s}; }
 };
 
 #pragma endregion
@@ -927,9 +1042,9 @@ struct range {
 /////////////////////// Custom Keywords ///////////////////////
 using i64 = long long; using i32 = int; using i128 = __int128;
 #ifdef LOCAL
-const bool is_local = true;
+constexpr bool is_local = true;
 #else
-const bool is_local = false;
+constexpr bool is_local = false;
 #endif
 
 inline void assert_(bool a, const char* str, int line) {
@@ -939,62 +1054,16 @@ inline void assert_(bool a, const char* str, int line) {
             put("ASSERTION FAILED: ");
             ln(str);
             flush();
+            // ReSharper disable once CppDFALoopConditionNotUpdated
         } while(!is_local);
     }
 }
 
 #pragma endregion
 
-template <typename T = long long, typename AddType = T> struct segtree {
-    vec<T> tree; signed n = -1; signed offset = 1;
-    explicit segtree(const vec<T> &arr) {
-        n = signed(arr.size()); tree = vec<T>(2 * n, T());
-        for(signed i = n, j = 0; i < 2 * n; i++, j++) tree[i] = arr[j];
-        for(signed i = n - 1; i > 0; i--) tree[i] = tree[i << 1] + tree[i << 1 | 1];
-    }
-    segtree() = default;
-    explicit segtree(signed i) { tree = vec<T>(i * 2, T()); n = i; }
-    segtree(signed lBound, signed rBound) {
-        n = rBound - lBound + 1; offset = lBound;
-        tree = vec<T>(n * 2, T());
-    }
-    void add(signed tar, const AddType& val) { tar -= offset;
-        tree[n + tar] += val;
-        for(signed i = (n + tar) >> 1; i; i >>= 1) tree[i] = tree[i << 1] + tree[i << 1 | 1];
-    }
-    void set(signed tar, const T &val) { tar -= offset;
-        tree[n + tar] = val;
-        for(signed i = (n + tar) >> 1; i; i >>= 1) tree[i] = tree[i << 1] + tree[i << 1 | 1];
-    }
-    inline void set(signed tar, const auto& val) { set(tar, T(val)); }
-    template <typename T2, typename... T3> requires (sizeof...(T3) > 0)
-    inline void set(signed tar, const T2& val, const T3&... arr) { set(tar, T(val, arr...)); }
-    T query(signed left, signed right) { left -= offset; right -= offset;
-        signed l = n + left, r = n + right + 1;
-        T ansL, ansR;
-        bool lSet = false, rSet = false;
-        for(; l < r; l >>= 1, r >>= 1) {
-            if(l & 1) {
-                if(!lSet) lSet = true, ansL = tree[l++];
-                else ansL = ansL + tree[l++];
-            }
-            if(r & 1) {
-                if(!rSet) rSet = true, ansR = tree[--r];
-                else ansR = tree[--r] + ansR;
-            }
-        }
-        if(!lSet) return ansR;
-        if(!rSet) return ansL;
-        return ansL + ansR;
-    }
-    inline T query(signed tar) { return tree[n + tar - offset]; }
-};
-
 #pragma endregion
 
 
 int main() {
-    i64 n = get();
-    i64 m = 1 + (1LL << n);
-    ln(m*m);
+
 }

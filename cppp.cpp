@@ -156,7 +156,6 @@ constexpr long double PI = 3.141592653589793238462643383279502884L;
 long long iR_v_, iR_v2_, iR_v5_;
 #define inRep() input(iR_v_); forn(iR_v3_, iR_v_)
 #define inRep2() input(iR_v2_); forn(iR_v4_, iR_v2_)
-#define inRep3() input(iR_v2_); forn(iR_v4_, iR_v2_)
 #define tcRep() input(iR_v5_); forf(TCN, 1, iR_v5_)
 #pragma endregion
 #pragma region algorithms
@@ -828,8 +827,27 @@ struct matrix {
 };
 
 i32 main() {
-    tcRep() {
-        in64(a, b);
-        println(b - a + 2);
+    in64(n, k);
+    vl arr(n, cin);
+    arr.sort();
+    i64 l = 0, r = k - 1;
+    i64 ans = i64max;
+    i64 lCur = 0, gCur = 0, lCnt = 0, gCnt = 0;
+    forf(i, 1, r) gCur += arr[i], gCnt++;
+    forn(i, n) {
+        if(i) {
+            lCur += arr[i-1];
+            lCnt++;
+            gCur -= arr[i];
+            gCnt--;
+        }
+        while(r < n - 1 && arr[i] - arr[l] > arr[r + 1] - arr[i]) {
+            lCur -= arr[l];
+            gCur += arr[r + 1];
+            lCnt--, gCnt++;
+            l++, r++;
+        }
+        setMin(ans, lCnt * arr[i] - lCur + gCur - gCnt * arr[i]);
     }
+    println(ans);
 }

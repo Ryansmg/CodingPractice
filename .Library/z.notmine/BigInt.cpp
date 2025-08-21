@@ -138,7 +138,7 @@ struct BigInt {
     }
 
     // Note: sign ignored.
-    void __internal_add(const BigInt &v) {
+    void internal_add(const BigInt &v) {
         if (a.size() < v.a.size()) {
             a.resize(v.a.size(), 0);
         }
@@ -166,7 +166,7 @@ struct BigInt {
 
     BigInt operator+=(const BigInt &v) {
         if (sign == v.sign) {
-            __internal_add(v);
+            internal_add(v);
         } else {
             if (__compare_abs(*this, v) >= 0) {
                 __internal_sub(v);
@@ -190,7 +190,7 @@ struct BigInt {
                 this->sign = -this->sign;
             }
         } else {
-            __internal_add(v);
+            internal_add(v);
         }
         return *this;
     }
