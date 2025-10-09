@@ -1,3 +1,4 @@
+// ReSharper disable CppIfCanBeReplacedByConstexprIf
 #include <bits/stdc++.h>
 using namespace std;
 using i32 = int; using i64 = long long;

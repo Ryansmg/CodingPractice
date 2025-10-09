@@ -393,13 +393,44 @@ public:
     T front() = delete;
 };
 
-template <typename T = long long> class pq {
+
+template <typename T = long long, auto compare = less<T>> class pq {
     long long sz = 0;
     vec<T> data{1};
 public:
-    // TODO
+    void push(const T& val) {
+        long long i = ++sz;
+        data.push(val);
+        while(i > 1 && compare(data[i/2], data[i]))
+            swap(data[i], data[i/2]), i >>= 1;
+    }
+    T pop() {
+        T ret = data[1];
+        data[1] = data[sz--];
+        data.pop();
+        long long idx = 1;
+        while(idx <= sz) {
+            long long nxtIdx = -1;
+            if(idx * 2 + 1 <= sz && compare(data[idx], data[idx * 2 + 1])
+                && compare(data[idx * 2], data[idx * 2 + 1]))
+                nxtIdx = idx * 2 + 1;
+            else if(idx * 2 <= sz && compare(data[idx], data[idx * 2]))
+                nxtIdx = idx * 2;
+            if(nxtIdx != -1) {
+                swap(data[idx], data[nxtIdx]);
+                idx = nxtIdx;
+            } else break;
+        }
+        return ret;
+    }
+    const T& top() const { return data[1]; }
+    T& top() { return data[1]; }
+    bool empty() const { return !sz; }
+    void clear() { data = vec<T>(1); sz = 0; }
+    long long size() const { return sz; }
 };
 template <typename T = long long> using priority_queue = pq<T>;
+template <typename T = long long> using gpq = pq<T, greater<T>>;
 
 template <typename T1 = long long, typename T2 = long long>
 class pair {
@@ -795,8 +826,11 @@ public:
         }
     }
 
+    T front() { return this->kth(0)->v; }
+    T back() { return this->kth(this->sz - 1)->v; }
+
     /// 없는 경우 nullptr를 반환
-    T* find(const T& key) {
+    Node* find(const T& key) {
         Node* p = this->tree;
         if(!p) return nullptr;
         while(p) {
@@ -810,7 +844,7 @@ public:
             }
         }
         Splay<T>::splay(p);
-        return key == p->v ? &p->v : nullptr;
+        return key == p->v ? p : nullptr;
     }
 
     inline bool contains(const T& key) { return find(key); }
@@ -1064,6 +1098,19 @@ inline void assert_(bool a, const char* str, int line) {
 #pragma endregion
 
 
-int main() {
 
+int main() {
+    i64 n = get(), k = get();
+    k = min(n - 1, k);
+    vec arr(n);
+    for(int i : range(n)) get(arr[i]);
+    set left, right;
+    i64 ans = -2147483647;
+    for(int i = n - k - 1; i < n; i++)
+        right.insert(arr[i]);
+    for(int i = 0; i + (n - k - 1) < n; i++) {
+        left.insert(arr[i]);
+        ans = max(ans, right.back() - left.front());
+        right.erase(arr[i + n - k]);
+    }
 }

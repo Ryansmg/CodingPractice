@@ -1,4 +1,4 @@
-/* Update : 2025-03-26 */
+/* Update : 2025-09-09 */
 
 #include <vector>
 #include <iostream>
@@ -12,6 +12,7 @@ public:
     public:
         inline explicit ref(Bitset* p, size_t idx) : p(p), wi(idx/128), bi(idx%128) {}
         inline ref& flip() { p->m[wi] ^= (__int128(1) << bi); return *this; }
+        // ReSharper disable once CppNonExplicitConversionOperator
         inline operator bool() const { return p->m[wi] & (__int128(1) << bi); } // NOLINT(*-explicit-constructor)
         inline ref& operator=(bool b) {
             if(b) p->m[wi] |= (__int128(1) << bi);
@@ -30,9 +31,21 @@ public:
     static Bitset of(signed value) { return Bitset(32, value); }
     static Bitset of(unsigned value) { return Bitset(32, value); }
     Bitset& flip() { for(auto& i : m) i = ~i; return *this; }
-    inline Bitset& flip(size_t pos) { m[pos/128] ^= (__int128(1) << (pos % 128)); return *this; }
+    inline Bitset& flip(size_t pos) { m[pos/128] ^= __int128(1) << (pos % 128); return *this; }
     inline bool operator[](size_t i) const { return !!(m[i/128] & (__int128(1) << (i%128))); }
     inline ref operator[](size_t i) { return ref(this, i); }
+
+    inline void reset() {
+        for(size_t i = 0; i < wl; i++) m[i] = 0;
+    }
+
+    bool any() const {
+        for(const auto& i : m) if(i) return true;
+        return false;
+    }
+
+    inline long long size() const { return l; }
+    inline long long length() const { return l; }
 
     long long count() const {
         long long r = 0; using ull = unsigned long long;
@@ -88,7 +101,7 @@ public:
             m[i] = m[i - ws] << bs;
             if (i > ws && bs) m[i] |= m[i - ws - 1] >> (128 - bs);
         }
-        std::fill(m.begin(), m.begin() + ws, 0);
+        std::fill_n(m.begin(), ws, 0);
         return *this;
     }
 
@@ -143,7 +156,7 @@ public:
         for (int i = firstDigits; i < len; i += 9)
             dec.push_back(std::stoul(s.substr(i, 9)));
         std::vector<bool> bits;
-        const uint64_t base = 1000000000;
+        constexpr uint64_t base = 1000000000;
         while (!dec.empty()) {
             uint64_t carry = 0;
             for (unsigned int & i : dec) {

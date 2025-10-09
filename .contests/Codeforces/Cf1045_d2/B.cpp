@@ -251,6 +251,17 @@ template <typename Iter> void shuffle(Iter first, Iter last) {
 template <typename T> void shuffle(T& arr) { shuffle(arr.begin(), arr.end()); }
 
 
+/// log_a(b)
+long long log(long long a, long long b) {
+    assert(a > 1 && b > 0);
+    __int128 t = a;
+    long long ans = 0;
+    while(t < b) ans++, t *= a;
+    if(t == b) return ans;
+    return ans - 1;
+}
+
+
 constexpr signed dx4[4] = { 0, 1, 0, -1 }; constexpr signed dy4[4] = { -1, 0, 1, 0 };
 #pragma endregion
 #pragma region custom_types_1
@@ -827,27 +838,19 @@ struct matrix {
 };
 
 i32 main() {
-    in64(n, k);
-    vl arr(n, cin);
-    arr.sort();
-    i64 l = 0, r = k - 1;
-    i64 ans = i64max;
-    i64 lCur = 0, gCur = 0, lCnt = 0, gCnt = 0;
-    forf(i, 1, r) gCur += arr[i], gCnt++;
-    forn(i, n) {
-        if(i) {
-            lCur += arr[i-1];
-            lCnt++;
-            gCur -= arr[i];
-            gCnt--;
+    tcRep() {
+        in64(n, k);
+        vl arr(n, cin);
+        if(k % 2) {
+            for(i64& i : arr) {
+                if(i % 2) i += k;
+            }
+            println(arr);
+            continue;
         }
-        while(r < n - 1 && arr[i] - arr[l] > arr[r + 1] - arr[i]) {
-            lCur -= arr[l];
-            gCur += arr[r + 1];
-            lCnt--, gCnt++;
-            l++, r++;
+        forn(i, n) {
+            arr[i] += k * (arr[i] % (k + 1));
         }
-        setMin(ans, lCnt * arr[i] - lCur + gCur - gCnt * arr[i]);
+        println(arr);
     }
-    println(ans);
 }

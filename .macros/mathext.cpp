@@ -57,6 +57,8 @@ inline long long pow(long long a, long long b, long long mod) {return pow_(b < 0
 inline long long pow(long long a, long long b) { long long ans=1;while(b){if(b&1)ans=ans*a;b>>=1;a=a*a;} return ans; }
 template <typename T> requires (!is_same_v<T, long long> && !is_convertible_v<T, long long>)
 inline T pow(T a, long long b) { if(!b){return a/a;} b--; T ans=a; while(b){if(b&1)ans=ans*a;b>>=1;a=a*a;} return ans; }
+template <typename T, typename T2> requires (!is_same_v<T, long long> && !is_convertible_v<T, long long>)
+inline T pow(T a, long long b, T2 mod) { if(!b){return a/a;} b--; T ans=a; while(b){if(b&1)ans=ans*a%mod;b>>=1;a=a*a%mod;} return ans; }
 template <typename T> inline T pow(T a, T b) { T ans=1;while(b){if(b&1)ans=ans*a;b>>=1;a=a*a;} return ans; }
 
 template <typename T> inline T gcd_(T a, T b) { if(a < b) swap(a, b); while(b) { T r = a % b; a = b; b = r; } return a; }
@@ -395,6 +397,8 @@ public:
     BigInt operator/(const BigInt &v) const { return divmod(*this, v).first; }
 
     BigInt operator%(const BigInt &v) const { return divmod(*this, v).second; }
+
+    BigInt& operator%=(const BigInt& v) { return *this = *this % v; }
 
     BigInt& operator/=(int v) {
         // assert(v > 0); // operator / not well-defined for v <= 0.
@@ -1061,6 +1065,20 @@ struct Matrix {
         return ret;
     }
 
+    Matrix& operator-=(const Matrix& other) {
+        assert(r == other.r && c == other.c);
+        for(signed i = 0; i < r; i++)
+            for(signed j = 0; j < c; j++)
+                m[r][c] -= other[r][c];
+        return *this;
+    }
+
+    Matrix operator-(const Matrix& other) const {
+        Matrix ret = *this;
+        ret -= other;
+        return ret;
+    }
+
     Matrix operator-() const {
         Matrix ret = *this;
         for(signed i = 0; i < r; i++)
@@ -1092,6 +1110,19 @@ struct Matrix {
         Matrix ret = *this; ret *= val; return ret;
     }
 
+    Matrix& naive_mul(const Matrix& other) {
+        assert(r == other.r && c == other.c);
+        for(signed i = 0; i < r; i++)
+            for(signed j = 0; j < c; j++)
+                m[i][j] *= other.m[i][j];
+        return *this;
+    }
+
+    friend Matrix naive_mul(const Matrix& a, const Matrix& b) {
+        auto ret = a;
+        ret *= b;
+        return ret;
+    }
 
     Matrix& operator/=(const T& val) {
         for(signed i = 0; i < r; i++)
@@ -1102,6 +1133,32 @@ struct Matrix {
 
     Matrix operator/(const T& val) const {
         Matrix ret = *this; ret /= val; return ret;
+    }
+
+
+    Matrix& operator/=(const Matrix& other) {
+        assert(r == other.r && c == other.c);
+        for(signed i = 0; i < r; i++)
+            for(signed j = 0; j < c; j++)
+                m[r][c] /= other[r][c];
+        return *this;
+    }
+
+    Matrix operator/(const Matrix& other) const {
+        Matrix ret = *this;
+        ret /= other;
+        return ret;
+    }
+
+    Matrix& operator%=(const T& val) {
+        for(signed i = 0; i < r; i++)
+            for(signed j = 0; j < c; j++)
+                m[i][j] %= val;
+        return *this;
+    }
+
+    Matrix operator%(const T& val) const {
+        Matrix ret = *this; ret %= val; return ret;
     }
 
     friend istream& operator>>(istream& in, Matrix& mat) {
@@ -1192,7 +1249,7 @@ struct Matrix {
         for(int i = 0; i < c && cnt < r; i++) {
             int select = -1;
             for(int j = cnt; j < r; j++) {
-                if(ret[j][i]) {
+                if(ret[j][i] != T(0)) {
                     select = j;
                     break;
                 }
@@ -1200,14 +1257,15 @@ struct Matrix {
             if(select == -1) continue;
             std::swap(ret[cnt], ret[select]);
             T temp = ret[cnt][i];
-            ret.row(cnt) /= temp;
+            ret.row(cnt) /= temp; ret[cnt][i] = T(1);
             for(int j = 0; j < r; j++) {
                 if(j == cnt) continue;
                 T t = ret[j][i];
-                if(!t) continue;
+                if(t == T(0)) continue;
                 for(int k = i; k < c; k++) {
                     ret[j][k] -= t * ret[cnt][k];
                 }
+                ret[j][i] = T(0);
             }
             cnt++;
         }
@@ -1256,25 +1314,35 @@ struct Matrix {
     }
 
     Matrix inverse() const {
-        auto dt = determinant();
-        assert(dt != T(0));
-        return adjoint() / dt;
+        return inverse_with_existence().first;
+    }
+
+    pair<Matrix, bool> inverse_with_existence() const {
+        assert(r == c);
+        vector<vector<T>> nxt(r, vector<T>(r * 2));
+        forn(i, r) forn(j, c) nxt[i][j] = m[i][j];
+        forn(i, r) nxt[i][i + c] = T(1);
+        Matrix R = Matrix(nxt).RREF();
+        forn(i, r) forn(j, c) {
+            if(i == j && R[i][j] != T(1)) return std::make_pair(Matrix(), false);
+            if(i != j && R[i][j] != T(0)) return std::make_pair(Matrix(), false);
+        }
+        vector<vector<T>> res(r, vector<T>(r));
+        forn(i, r) forn(j, c) res[i][j] = R[i][j + c];
+        return std::make_pair(Matrix(res), true);
     }
 };
 
-#define Int BigInt
-#define Float BigDecimal<16>
-using Double = BigDecimal<>;
+using i64 = long long;
+using f64 = long double;
 
 signed main() {
     std::ios::sync_with_stdio(false);
     cin.tie(nullptr); cout.tie(nullptr);
 
-    int n; cin >> n;
-    vector<vector<long double>> arr(n, vector<long double>(n));
-    forn(i, n) forn(j, n) cin >> arr[i][j];
-    Matrix a(arr);
-
-    if(a.determinant() == 0) cout << "no inverse\n";
-    else cout << a.inverse() << "\n";
+    cout << Matrix(vector<vector<f64>>{
+        {2, 1, -4},
+        {-4, -1, 6},
+        {-2, 2, -2}
+    }).inverse();
 }

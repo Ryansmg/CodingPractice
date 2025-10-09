@@ -69,8 +69,10 @@ public:
     void add(long long a, long long b) { a = a < 0 ? (-a) * 2 + 1 : a * 2; b = b < 0 ? (-b) * 2 + 1 : b * 2;
         g.makeDEdge(a^1, b); g.makeDEdge(b^1, a); }
     void add(long long a) { add(a, a); } void addTrue(long long a) { add(a, a); } void addFalse(long long a) { add(-a, -a); } void addOr(long long a, long long b) { add(a, b); }
-    void addXor(long long a, long long b) { add(a, b); add(-a, -b); } /// a != b이도록 조건을 설정
-    void addXnor(long long a, long long b) { add(a, -b); add(-a, b); } /// a == b이도록 조건을 설정
+    /// a != b이도록 조건을 설정
+    void addXor(long long a, long long b) { add(a, b); add(-a, -b); }
+    /// a == b이도록 조건을 설정
+    void addXnor(long long a, long long b) { add(a, -b); add(-a, b); }
     /// a : true, -a : false
     /// 1 <= a, b <= n
     bool possible() {
