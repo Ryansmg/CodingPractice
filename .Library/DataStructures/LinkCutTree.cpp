@@ -1,7 +1,7 @@
-// Update : 2025-05-19
+// Update : 2025-10-13
 
-#include <bits/stdc++.h>
-using namespace std;
+#include <vector>
+using std::vector, std::swap;
 
 template <typename T>
 class LinkCutTree {
@@ -13,25 +13,37 @@ public:
         T val = T();
         explicit Node(LinkCutTree* ptr) : lct(ptr) {}
         /// @returns whether this is the root of the splay tree
-        bool isRoot() const { return !p || (this != p->l && this != p->r); }
-        bool isLChild() const { return p && this == p->l; }
-        bool isRChild() const { return p && this == p->r; }
-        void push() {
-            for(auto f : lct->pushFunctions) f(this);
+        inline bool isRoot() const { return !p || (this != p->l && this != p->r); }
+        inline bool isLChild() const { return p && this == p->l; }
+        inline bool isRChild() const { return p && this == p->r; }
+        inline void push() {
             if(flip) {
                 swap(l, r);
                 if(l) l->flip ^= 1;
                 if(r) r->flip ^= 1;
                 flip = false;
             }
+            for(auto f : lct->pushFunctions) f(this);
         }
-        T& operator*() { return val; }
-        const T& operator*() const { return val; }
-        void upd() {
+        inline T& operator*() { return val; }
+        inline const T& operator*() const { return val; }
+        inline void upd() {
             if(l) l->push();
             if(r) r->push();
             sz = 1 + (l ? l->sz : 0) + (r ? r->sz : 0);
             for(auto f : lct->updFunctions) f(this);
+        }
+        inline void rotate() {
+            if(isLChild()) {
+                if(r) r->p = p;
+                p->l = r; r = p;
+            } else {
+                if(l) l->p = p;
+                p->r = l; l = p;
+            }
+            if (!p->isRoot()) (p->isLChild() ? p->p->l : p->p->r) = this;
+            auto t = p; p = t->p; t->p = this;
+            t->upd(); upd();
         }
     };
 private:
@@ -39,20 +51,6 @@ private:
     vector<void(*)(Node*)> pushFunctions;
     int sz = 0;
 
-    void rotate(Node *x) {
-        if(x->p->p) x->p->p->push(), x->p->p->upd();
-        x->p->push(), x->p->upd(); x->push(); x->upd();
-        if(x->isLChild()) {
-            if(x->r) x->r->p = x->p;
-            x->p->l = x->r; x->r = x->p;
-        } else {
-            if(x->l) x->l->p = x->p;
-            x->p->r = x->l; x->l = x->p;
-        }
-        if(!x->p->isRoot()) (x->p->isLChild() ? x->p->p->l : x->p->p->r) = x;
-        auto t = x->p; x->p = t->p; t->p = x;
-        t->upd(); x->upd();
-    }
 public:
     LinkCutTree() = default;
     explicit LinkCutTree(void(*updateFunc)(Node*), void(*pushFunc)(Node*) = nullptr) {
@@ -63,18 +61,21 @@ public:
     void addUpdFun(void (*updateFunc)(Node*)) { updFunctions.push_back(updateFunc); }
     void addPushFun(void (*pushFunc)(Node*)) { pushFunctions.push_back(pushFunc); }
 
-    void splay(Node* x) {
-        while(!x->isRoot()) {
-            Node *p = x->p, *pp = p->p;
-            if(!x->p->isRoot()) x->p->p->push(), x->p->p->upd();
-            p->push(); x->push(); p->upd(); x->upd();
-            if(p->isRoot()) { rotate(x); break; }
-            rotate((x == p->l) == (p == pp->l) ? p : x);
-            rotate(x);
+    static void splay(Node* x) {
+        for (; !x->isRoot(); x->rotate()) {
+            if (!x->p->isRoot()) x->p->p->push();
+            x->p->push(); x->push();
+            if (x->p->isRoot()) continue;
+            if (x->isLChild() == x->p->isLChild()) x->p->rotate();
+            else x->rotate();
         }
         x->push(); x->upd();
     }
 
+    /**
+     * generates a new node that contains the value `val`.
+     * storing and freeing the pointer should be done by the user.
+     */
     Node* gen(const T& val) {
         sz++;
         Node* t = new Node(this);
@@ -82,6 +83,10 @@ public:
         return t;
     }
 
+    /**
+     * generates a new node that contains the value `T(args...)`.
+     * storing and freeing the pointer should be done by the user.
+     */
     template <typename... Args>
     Node* gen(const Args&... args) {
         sz++;
@@ -92,31 +97,43 @@ public:
 
     /// makes chain x the root of lct
     void access(Node* x) {
-        splay(x); x->r = nullptr; x->upd();
-        while(x->p) splay(x->p), x->p->r = x, splay(x);
+        splay(x); x->r = 0; x->upd();
+        for (; x->p; splay(x)) {
+            splay(x->p); x->p->r = x; x->p->upd();
+        }
     }
 
-    void link(Node* parent, Node* child) {
+    inline void link(Node* parent, Node* child) {
         setRoot(child);
         access(child); access(parent);
         child->l = parent; parent->p = child;
+        child->upd();
     }
 
     /// cut x and x->p (at lct)
-    void cut(Node* x) {
+    inline void cut(Node* x) {
         access(x);
         x->l->p = nullptr;
         x->l = nullptr;
+        x->upd();
     }
 
-    // a - b 간선이 있어야 함
-    void cutEdge(Node* a, Node* b) {
+    /// a - b 간선이 있어야 함
+    inline void cutEdge(Node* a, Node* b) {
         if(par(a) == b) cut(a);
         else assert(par(b) == a), cut(b);
     }
 
-    Node* root(Node* x) {
-        access(x); while(x->l) x = x->l;
+    inline bool hasEdge(Node* a, Node* b) {
+        return par(a) == b || par(b) == a;
+    }
+
+    inline bool connected(Node* u, Node* v) {
+        return root(u) == root(v);
+    }
+
+    inline Node* root(Node* x) {
+        access(x); while(x->l) x = x->l, x->push();
         splay(x); return x;
     }
 
@@ -124,27 +141,29 @@ public:
     Node* par(Node* x) {
         access(x);
         if(!x->l) return nullptr;
-        x = x->l; while(x->r) x = x->r;
+        x = x->l; x->push();
+        while(x->r) x = x->r, x->push();
         splay(x); return x;
     }
 
-    Node* lca(Node* x, Node* y) {
+    inline Node* lca(Node* x, Node* y) {
         access(x); access(y); splay(x);
         return x->p ? x->p : x;
     }
 
     /// 트리에서의 부모까지 거리
-    int depth(Node* x) {
+    inline int depth(Node* x) {
         access(x); return x->l ? x->l->sz : 0;
     }
 
-    /// @param x must be `void f(Node*)`
+    /// @param x target node
+    /// @param f must be `void f(Node*)`
     template <typename Callable>
     void update(Node* x, const Callable& f) {
         splay(x); f(x); splay(x); x->push(); x->upd();
     }
 
-    void setRoot(Node* x) {
+    inline void setRoot(Node* x) {
         access(x); splay(x); x->flip ^= 1;
     }
 
@@ -153,11 +172,15 @@ public:
     template <typename Callable>
     void path(Node* x, Node* y, const Callable& f) {
         Node* rt = root(x);
-        setRoot(x); access(y); splay(x);
-        f(x); splay(x); x->push(); x->upd();
+        setRoot(x); access(y);
+        splay(x);
+        f(x); x->push(); x->upd();
         setRoot(rt);
     }
 };
+
+#include <iostream>
+using std::ios_base, std::cin, std::cout;
 
 // BOJ 13539. 트리와 쿼리 11
 int main() {

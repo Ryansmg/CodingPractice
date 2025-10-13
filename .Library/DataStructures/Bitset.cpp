@@ -1,4 +1,4 @@
-/* Update : 2025-09-09 */
+/* Update : 2025-10-11 */
 
 #include <vector>
 #include <iostream>
@@ -10,7 +10,7 @@ public:
     class ref {
         Bitset* p; size_t wi, bi;
     public:
-        inline explicit ref(Bitset* p, size_t idx) : p(p), wi(idx/128), bi(idx%128) {}
+        inline explicit ref(Bitset* p, size_t idx) : p(p), wi(idx >> 7), bi(idx & 127) {}
         inline ref& flip() { p->m[wi] ^= (__int128(1) << bi); return *this; }
         // ReSharper disable once CppNonExplicitConversionOperator
         inline operator bool() const { return p->m[wi] & (__int128(1) << bi); } // NOLINT(*-explicit-constructor)
@@ -22,7 +22,7 @@ public:
         inline ref& operator=(const ref& b) { operator=(static_cast<bool>(b)); return *this; }
     };
     Bitset() = default;
-    explicit Bitset(size_t sz) : l(sz), wl((sz+127)/128), m((sz+127)/128, 0) { }
+    explicit Bitset(size_t sz) : l(sz), wl((sz + 127) >> 7), m((sz + 127) >> 7, 0) { }
     explicit Bitset(size_t sz, __int128 value) : Bitset(sz) { m[0] = value; }
     static Bitset of(__int128 value) { return Bitset(128, value); }
     static Bitset of(unsigned __int128 value) { return Bitset(128, value); }
@@ -31,8 +31,8 @@ public:
     static Bitset of(signed value) { return Bitset(32, value); }
     static Bitset of(unsigned value) { return Bitset(32, value); }
     Bitset& flip() { for(auto& i : m) i = ~i; return *this; }
-    inline Bitset& flip(size_t pos) { m[pos/128] ^= __int128(1) << (pos % 128); return *this; }
-    inline bool operator[](size_t i) const { return !!(m[i/128] & (__int128(1) << (i%128))); }
+    inline Bitset& flip(size_t pos) { m[pos >> 7] ^= __int128(1) << (pos & 127); return *this; }
+    inline bool operator[](size_t i) const { return !!(m[i >> 7] & (__int128(1) << (i & 127))); }
     inline ref operator[](size_t i) { return ref(this, i); }
 
     inline void reset() {
@@ -93,9 +93,13 @@ public:
         return *this;
     }
 
-    Bitset& operator<<=(size_t shift) {
+    Bitset& operator<<=(long long shift) {
+        if(shift < 0) {
+            *this >>= -shift;
+            return *this;
+        }
         if (shift == 0) return *this;
-        long long ws = shift / 128, bs = shift % 128;
+        long long ws = shift >> 7, bs = shift & 127;
         if (ws >= static_cast<long long>(wl)) { std::fill(m.begin(), m.end(), 0); return *this; }
         for (long long i = wl - 1; i >= ws; --i) {
             m[i] = m[i - ws] << bs;
@@ -105,9 +109,13 @@ public:
         return *this;
     }
 
-    Bitset& operator>>=(size_t shift) {
+    Bitset& operator>>=(long long shift) {
+        if(shift < 0) {
+            *this <<= -shift;
+            return *this;
+        }
         if (shift == 0) return *this;
-        long long ws = shift / 128, bs = shift % 128;
+        long long ws = shift >> 7, bs = shift & 127;
         if (ws >= static_cast<long long>(wl)) { std::fill(m.begin(), m.end(), 0); return *this; }
         for (long long i = 0; i < static_cast<long long>(wl - ws); ++i) {
             m[i] = m[i + ws] >> bs;
@@ -123,7 +131,7 @@ public:
     inline Bitset operator>>(size_t shift) const { Bitset r(*this); r >>= shift; return r; }
 
     friend std::ostream& operator<<(std::ostream& out, const Bitset& v) {
-        for(long long i=v.l-1; i>=0; i--) out << ((v.m[i/128] & (__int128(1) << (i % 128))) ? 1 : 0);
+        for(long long i=v.l-1; i>=0; i--) out << ((v.m[i >> 7] & (__int128(1) << (i & 127))) ? 1 : 0);
         return out;
     }
 
@@ -161,8 +169,8 @@ public:
             uint64_t carry = 0;
             for (unsigned int & i : dec) {
                 uint64_t cur = carry * base + i;
-                i = static_cast<uint32_t>(cur / 2);
-                carry = cur % 2;
+                i = static_cast<uint32_t>(cur >> 1);
+                carry = cur & 1;
             }
             bits.push_back(carry);
             while (!dec.empty() && dec[0] == 0) dec.erase(dec.begin());

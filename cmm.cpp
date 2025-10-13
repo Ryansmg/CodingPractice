@@ -855,6 +855,7 @@ public:
         Splay<T>::erase(t);
     }
 };
+
 template <typename Key = long long, typename Value = long long>
 class map {
     struct Pair {
@@ -862,7 +863,6 @@ class map {
         bool operator==(const Pair& b) const { return key == b.key; }
         bool operator<(const Pair& b) const { return key < b.key; }
     };
-private:
     set<Pair> s;
 public:
     bool contains(const Key& key) { return s.contains({key}); }
@@ -1096,7 +1096,6 @@ inline void assert_(bool a, const char* str, int line) {
 #pragma endregion
 
 #pragma endregion
-
 
 
 int main() {

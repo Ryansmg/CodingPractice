@@ -1,4 +1,4 @@
-/* Update : 2025-02-11 */
+/* Update : 2025-10-11 */
 
 /// 교환법칙이 성립하지 않는 연산을 지원
 /// i > j인 i와 j에 대해 operator+(arr[i], arr[j])가 호출될 수 있으나,
@@ -35,7 +35,9 @@ struct iterSeg {
         return ansL + ansR;
     }
     T query(signed tar) { return tree[n + tar - 1]; }
-    std::span<T> getLeafs() { return std::span<T>(tree.begin() + n, tree.begin() + 2 * n - 1); }
+#ifdef __cpp_lib_span
+    std::span<T> getLeafs() { return std::span<T>(tree.begin() + n, tree.begin() + 2 * n); }
+#endif
 };
 
 // Example : BOJ 2042. 구간 합 구하기

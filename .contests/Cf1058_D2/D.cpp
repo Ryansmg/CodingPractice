@@ -156,237 +156,37 @@ struct segtree {
 
 #pragma endregion
 
-template <typename T>
-class LinkCutTree {
-public:
-    struct Node {
-        Node *l = nullptr, *r = nullptr, *p = nullptr;
-        int sz = 1; bool flip = false;
-        LinkCutTree *lct;
-        T val = T();
-        explicit Node(LinkCutTree* ptr) : lct(ptr) {}
-        /// @returns whether this is the root of the splay tree
-        inline bool isRoot() const { return !p || (this != p->l && this != p->r); }
-        inline bool isLChild() const { return p && this == p->l; }
-        inline bool isRChild() const { return p && this == p->r; }
-        void push() {
-            if(flip) {
-                swap(l, r);
-                if(l) l->flip ^= 1;
-                if(r) r->flip ^= 1;
-                flip = false;
-            }
-            for(auto f : lct->pushFunctions) f(this);
-        }
-        inline T& operator*() { return val; }
-        inline const T& operator*() const { return val; }
-        void upd() {
-            if(l) l->push();
-            if(r) r->push();
-            sz = 1 + (l ? l->sz : 0) + (r ? r->sz : 0);
-            for(auto f : lct->updFunctions) f(this);
-        }
-        void rotate() {
-            if(isLChild()) {
-                if(r) r->p = p;
-                p->l = r; r = p;
-            } else {
-                if(l) l->p = p;
-                p->r = l; l = p;
-            }
-            if (!p->isRoot()) (p->isLChild() ? p->p->l : p->p->r) = this;
-            auto t = p; p = t->p; t->p = this;
-            t->upd(); upd();
-        }
-    };
-private:
-    vector<void(*)(Node*)> updFunctions;
-    vector<void(*)(Node*)> pushFunctions;
-    int sz = 0;
 
-public:
-    LinkCutTree() = default;
-    explicit LinkCutTree(void(*updateFunc)(Node*), void(*pushFunc)(Node*) = nullptr) {
-        updFunctions.push_back(updateFunc);
-        if(pushFunc) pushFunctions.push_back(pushFunc);
-    }
-
-    void addUpdFun(void (*updateFunc)(Node*)) { updFunctions.push_back(updateFunc); }
-    void addPushFun(void (*pushFunc)(Node*)) { pushFunctions.push_back(pushFunc); }
-
-    static void splay(Node* x) {
-        for (; !x->isRoot(); x->rotate()) {
-            if (!x->p->isRoot()) x->p->p->push();
-            x->p->push(); x->push();
-            if (x->p->isRoot()) continue;
-            if (x->isLChild() == x->p->isLChild()) x->p->rotate();
-            else x->rotate();
-        }
-        x->push(); x->upd();
-    }
-
-    Node* gen(const T& val) {
-        sz++;
-        Node* t = new Node(this);
-        t->val = val;
-        return t;
-    }
-
-    template <typename... Args>
-    Node* gen(const Args&... args) {
-        sz++;
-        Node* t = new Node(this);
-        t->val = T(args...);
-        return t;
-    }
-
-    /// makes chain x the root of lct
-    void access(Node* x) {
-        splay(x); x->r = 0; x->upd();
-        for (; x->p; splay(x)) {
-            splay(x->p); x->p->r = x; x->p->upd();
-        }
-    }
-
-    inline void link(Node* parent, Node* child) {
-        setRoot(child);
-        access(child); access(parent);
-        child->l = parent; parent->p = child;
-        child->upd();
-    }
-
-    /// cut x and x->p (at lct)
-    inline void cut(Node* x) {
-        access(x);
-        x->l->p = nullptr;
-        x->l = nullptr;
-        x->upd();
-    }
-
-    // a - b 간선이 있어야 함
-    inline void cutEdge(Node* a, Node* b) {
-        if(par(a) == b) cut(a);
-        else assert(par(b) == a), cut(b);
-    }
-
-    inline bool hasEdge(Node* a, Node* b) {
-        return par(a) == b || par(b) == a;
-    }
-
-    inline bool connected(Node* u, Node* v) {
-        return root(u) == root(v);
-    }
-
-    inline Node* root(Node* x) {
-        access(x); while(x->l) x = x->l, x->push();
-        splay(x); return x;
-    }
-
-    /// 트리에서의 부모
-    Node* par(Node* x) {
-        access(x);
-        if(!x->l) return nullptr;
-        x = x->l; while(x->r) x = x->r, x->push();
-        splay(x); return x;
-    }
-
-    inline Node* lca(Node* x, Node* y) {
-        access(x); access(y); splay(x);
-        return x->p ? x->p : x;
-    }
-
-    /// 트리에서의 부모까지 거리
-    inline int depth(Node* x) {
-        access(x); return x->l ? x->l->sz : 0;
-    }
-
-    /// @param x must be `void f(Node*)`
-    template <typename Callable>
-    void update(Node* x, const Callable& f) {
-        splay(x); f(x); splay(x); x->push(); x->upd();
-    }
-
-    inline void setRoot(Node* x) {
-        access(x); splay(x); x->flip ^= 1;
-    }
-
-    /// f는 x~y 경로를 나타내는 서브트리의 루트를 인자로 받아야 함.
-    /// 쿼리 / 업데이트 모두 가능
-    template <typename Callable>
-    void path(Node* x, Node* y, const Callable& f) {
-        Node* rt = root(x);
-        setRoot(x); access(y);
-        splay(x);
-        f(x); x->push(); x->upd();
-        setRoot(rt);
-    }
-};
-
-
-struct T;
-using LCT = LinkCutTree<T>;
-using Nd = LCT::Node*;
-using i64 = long long;
-
-struct T {
-    Nd l = nullptr, r = nullptr;
-    i64 c = -1, cmx = -1; Nd mx = nullptr;
-    int id = -1;
-};
-
-void upd(Nd t) {
-    t->val.cmx = t->val.c, t->val.mx = t;
-    if(t->l && t->l->val.cmx > t->val.cmx) t->val.cmx = t->l->val.cmx, t->val.mx = t->l->val.mx;
-    if(t->r && t->r->val.cmx > t->val.cmx) t->val.cmx = t->r->val.cmx, t->val.mx = t->r->val.mx;
+bool possible(const vector<i32>& arr) {
+    auto arr2 = arr; reverse(all(arr2));
+    if(arr.size() % 2 && arr[arr.size()/2]) return false;
+    return arr == arr2;
 }
 
-
-#define forf(i, a, b) for(i64 i = a; i <= b; i++)
-#define forn(i, n) for(i64 i = 0; i < n; i++)
-
 int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(nullptr); cout.tie(nullptr);
-    int t; cin >> t;
-    while(t--) {
-        LCT lct(upd);
-        int n, m; cin >> n >> m;
-        vector<Nd> nds(n), ends;
-        i64 cans = 0, ans = 0;
-        forn(i, n) nds[i] = lct.gen(), nds[i]->val.mx = nds[i], nds[i]->val.id = i;
-        forn(i, n - 1) {
-            i64 a = i + 1, b, c; cin >> b >> c;
-            cans += c;
-            Nd x = lct.gen({nds[a], nds[b], c, c});
-            ends.push_back(x);
-            x->val.mx = x;
-            lct.link(x, nds[a]);
-            lct.link(x, nds[b]);
+    tcRep() {
+        in64(n);
+        set<i64> uniqueIdx, idx2;
+        uniqueIdx.insert(1);
+        vector<i64> ans(2 * n);
+        forf(i, 2, 2*n) {
+            put("? ", uniqueIdx.size() + 1, " ");
+            for(i64 j : uniqueIdx) put(j, " ");
+            ln(i); cout.flush();
+            in64(res);
+            if(!res) uniqueIdx.insert(i);
+            else idx2.insert(i), ans[i-1] = res;
         }
-        forn(j, m) {
-            i64 u, v, c; cin >> u >> v >> c;
-            if(u == v) {
-                ans ^= cans; continue;
+        forf(i, 1, 2*n) {
+            if(uniqueIdx.contains(i)) {
+                put("? ", idx2.size() + 1, " ");
+                for(i64 j : idx2) put(j, " ");
+                ln(i); cout.flush();
+                ans[i-1] = get();
             }
-            T pathv;
-            lct.path(nds[u], nds[v], [&](Nd x) {
-                pathv = x->val;
-            });
-            if(pathv.cmx > c) {
-                cans += c - pathv.cmx;
-                lct.cutEdge(pathv.mx, pathv.mx->val.l);
-                lct.cutEdge(pathv.mx, pathv.mx->val.r);
-                pathv.mx->val.c = pathv.mx->val.cmx = c;
-                pathv.mx->val.mx = pathv.mx;
-                lct.link(pathv.mx, nds[u]);
-                lct.link(pathv.mx, nds[v]);
-                pathv.mx->val.l = nds[u];
-                pathv.mx->val.r = nds[v];
-            }
-            ans ^= cans;
         }
-        cout << ans << '\n';
-        for(auto x : nds) delete x;
-        for(auto x : ends) delete x;
+        put("! ");
+        for(i64 i : ans) put(i, " ");
+        ln(); cout.flush();
     }
 }
