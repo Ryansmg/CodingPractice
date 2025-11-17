@@ -155,14 +155,41 @@ struct segtree {
 #pragma endregion
 
 
-int main() {
+i32 main() {
     tcRep() {
         in64(n);
-        vector<i64> arr(n + 1);
-        rep(n) arr[get()]++;
-        multiset<i64> s;
-        forf(i, 1, n) if(arr[i]) s.insert(arr[i]);
+        vector<i64> ua(n), da(n);
+        for(i64& i: ua) get(i);
+        for(i64& i: da) get(i);
+        vector<i64> umx(n), umn(n), dmx(n), dmn(n);
+        umx[0] = umn[0] = ua[0];
+        forf(i, 1, n-1) {
+            umx[i] = max(umx[i-1], ua[i]);
+            umn[i] = min(umn[i-1], ua[i]);
+        }
+        dmx[n-1] = dmn[n-1] = da[n-1];
+        forr(i, n-2, 0) {
+            dmx[i] = max(dmx[i+1], da[i]);
+            dmn[i] = min(dmn[i+1], da[i]);
+        }
 
+        vector<pair<i64, i64>> tmp;
+        forn(i, n) tmp.emplace_back(min(umn[i], dmn[i]), max(umx[i], dmx[i]));
+        sort(tmp);
+        vector<pair<i64, i64>> res;
+        i64 prvL = -1;
+        for(const auto& [l, r] : tmp) {
+            if(l != prvL) {
+                while(!res.empty() && r <= res.back().second) res.pop_back();
+                res.emplace_back(l, r), prvL = l;
+            }
+        }
+        i64 ans = 0;
+        prvL = 0;
+        for(const auto& [l, r] : res) {
+            ans += (l - prvL) * (2*n - r + 1);
+            prvL = l;
+        }
+        ln(ans);
     }
 }
-

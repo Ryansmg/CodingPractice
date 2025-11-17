@@ -18,6 +18,7 @@ using true_type = tf_type_<true>; using false_type = tf_type_<false>;
 template <typename> struct is_integral_ : false_type {};
 template <typename> struct is_signed_ : false_type {};
 template <typename> struct is_unsigned_ : false_type {};
+template <typename> struct is_floating_point_ : false_type {};
 
 template <> struct is_signed_<bool> : true_type {};
 template <> struct is_signed_<char> : true_type {};
@@ -34,9 +35,14 @@ template <> struct is_unsigned_<unsigned long> : true_type {};
 template <> struct is_unsigned_<unsigned long long> : true_type {};
 template <> struct is_unsigned_<unsigned __int128> : true_type {};
 
+template <> struct is_floating_point_<float> : true_type {};
+template <> struct is_floating_point_<double> : true_type {};
+template <> struct is_floating_point_<long double> : true_type {};
+
 template <typename T> concept is_signed = is_signed_<remove_c<T>>::value;
 template <typename T> concept is_unsigned = is_unsigned_<remove_c<T>>::value;
 template <typename T> concept is_integral = is_integral_<remove_c<T>>::value || is_signed<T> || is_unsigned<T>;
+template <typename T> concept is_floating_point = is_floating_point_<remove_c<T>>::value;
 
 template <typename> struct unsigned_type_ { using type = unsigned long long; };
 template <> struct unsigned_type_<char> { using type = unsigned char; };
@@ -47,6 +53,11 @@ template <> struct unsigned_type_<long long> { using type = unsigned long long; 
 template <> struct unsigned_type_<__int128> { using type = unsigned __int128; };
 
 template <typename T> using unsigned_type = unsigned_type_<T>::type;
+
+template<typename Tp> struct remove_reference { using type = Tp; };
+template<typename Tp> struct remove_reference<Tp&> { using type = Tp; };
+template<typename Tp> struct remove_reference<Tp&&> { using type = Tp; };
+
 #pragma endregion
 
 #pragma region C++
@@ -57,6 +68,12 @@ inline bool islower(char c) { return 'a' <= c && c <= 'z'; }
 inline bool isupper(char c) { return 'A' <= c && c <= 'Z'; }
 inline bool isalpha(char c) { return islower(c) || isupper(c); }
 inline bool isblank(char c) { return c == ' ' || c == '\n' || c == '\r'; }
+
+// from msys2 implementation
+template <typename Tp> [[__nodiscard__,__gnu__::__always_inline__]]
+constexpr remove_reference<Tp>::type&& move(Tp&& t) noexcept
+{ return static_cast<remove_reference<Tp>::type&&>(t); }
+
 
 inline void assert_(bool a, const char* str, int line);
 #define assert(...) assert_(__VA_ARGS__, # __VA_ARGS__, __LINE__)
@@ -86,6 +103,14 @@ long long rand(long long l, long long r) {
 
 void srand(__int128 seed) { random::next = seed; }
 
+template <typename T> inline void swap(T& a, T& b) noexcept {
+    T tmp = move(a); a = move(b); b = move(tmp);
+}
+
+template <typename T> inline void iter_swap(T a, T b) {
+    swap(*a, *b);
+}
+
 template <typename Iter> void shuffle(Iter first, Iter last) {
     if (first == last) return;
     for (Iter i = first + 1; i != last; ++i)
@@ -93,13 +118,6 @@ template <typename Iter> void shuffle(Iter first, Iter last) {
 }
 template <typename T> void shuffle(T& arr) { shuffle(arr.begin(), arr.end()); }
 
-template <typename T> inline void iter_swap(T a, T b) {
-    swap(*a, *b);
-}
-
-template <typename T> inline void swap(T& a, T& b) noexcept {
-    T tmp = a; a = b; b = tmp;
-}
 template <typename T> T abs(const T& v) { return v < 0 ? -v : v; }
 template <typename T> T max(const T& a, const T& b) { return a < b ? b : a; }
 template <typename T> T min(const T& a, const T& b) { return a < b ? a : b; }
@@ -454,7 +472,8 @@ long long stoll(const str& s) {
 
 #pragma region Algorithm
 
-template <typename T, typename Compare> void merge(const T* s1, const T* e1, const T* s2, const T* e2, T* out, Compare cmp = less<T>) {
+template <typename T, typename Compare>
+inline void merge(const T* s1, const T* e1, const T* s2, const T* e2, T* out, Compare cmp = less<T>) {
     while(s1 != e1 && s2 != e2) {
         if(cmp(*s1, *s2)) *(out++) = *(s1++);
         else *(out++) = *(s2++);
@@ -463,19 +482,50 @@ template <typename T, typename Compare> void merge(const T* s1, const T* e1, con
     while(s2 != e2) *(out++) = *(s2++);
 }
 
-template <typename T, typename Compare> void merge(const vec<T>& a, const vec<T>& b, vec<T>& out, Compare cmp = less<T>) {
+template <typename T>
+inline void merge(const T* s1, const T* e1, const T* s2, const T* e2, T* out) {
+    while(s1 != e1 && s2 != e2) {
+        if(*s1 <= *s2) *(out++) = *(s1++);
+        else *(out++) = *(s2++);
+    }
+    while(s1 != e1) *(out++) = *(s1++);
+    while(s2 != e2) *(out++) = *(s2++);
+}
+
+template <typename T, typename Compare>
+inline void merge(const vec<T>& a, const vec<T>& b, vec<T>& out, Compare cmp = less<T>) {
     merge(a.begin(), a.end(), b.begin(), b.end(), out.begin(), cmp);
 }
 
-template <typename T, typename Compare> void naive_sort(T* s, T* e, Compare cmp = less<T>) {
-    for(T* i = s; i != e; i++)
-        for(T* j = i + 1; j != e; j++)
-            if(!cmp(*i, *j)) swap(*i, *j);
+template <typename T>
+inline void merge(const vec<T>& a, const vec<T>& b, vec<T>& out) {
+    merge(a.begin(), a.end(), b.begin(), b.end(), out.begin());
 }
 
-template <typename T, typename Compare> void sort_(T* s, T* e, T* buf, Compare cmp) {
+template <typename T, typename Compare>
+inline void naive_sort(T* s, T* e, Compare cmp = less<T>) {
+    for(T* i = s; i != e; i++) {
+        T* sel = i;
+        for(T* j = i + 1; j != e; j++)
+            if(!cmp(*sel, *j)) sel = j;
+        if(sel != i) swap(*i, *sel);
+    }
+}
+
+template <typename T>
+inline void naive_sort(T* s, T* e) {
+    for(T* i = s; i != e; i++) {
+        T* sel = i;
+        for(T* j = i + 1; j != e; j++)
+            if(*sel > *j) sel = j;
+        if(sel != i) swap(*i, *sel);
+    }
+}
+
+template <typename T, typename Compare>
+void sort_(T* s, T* e, T* buf, Compare cmp) {
     long long dist = e - s;
-    if(dist <= 5) {
+    if(dist <= 16) {
         naive_sort(s, e, cmp);
         return;
     }
@@ -485,15 +535,32 @@ template <typename T, typename Compare> void sort_(T* s, T* e, T* buf, Compare c
     for(long long i = 0; i < dist; i++) *(s + i) = *(buf + i);
 }
 
-template <typename T> void sort(T* s, T* e) { sort(s, e, less<T>); }
-template <typename T, typename Compare> void sort(T* s, T* e, Compare cmp) {
+template <typename T>
+void sort_(T* s, T* e, T* buf) {
+    long long dist = e - s;
+    if(dist <= 16) {
+        naive_sort(s, e);
+        return;
+    }
+    sort_(s, s + dist / 2 + 1, buf);
+    sort_(s + dist / 2 + 1, e, buf);
+    merge(s, s + dist / 2 + 1, s + dist / 2 + 1, e, buf);
+    for(long long i = 0; i < dist; i++) *(s + i) = *(buf + i);
+}
+
+template <typename T> inline void sort(T* s, T* e) {
+    T* buffer = new T[e - s]();
+    sort_(s, e, buffer);
+    delete[] buffer;
+}
+template <typename T, typename Compare> inline void sort(T* s, T* e, Compare cmp) {
     T* buffer = new T[e - s]();
     sort_(s, e, buffer, cmp);
     delete[] buffer;
 }
 
-template <typename T, typename Compare> void sort(vec<T>& v, Compare cmp) { sort(v.begin(), v.end(), cmp); }
-template <typename T> void sort(vec<T>& v) { sort(v.begin(), v.end(), less<T>); }
+template <typename T, typename Compare> inline void sort(vec<T>& v, Compare cmp) { sort(v.begin(), v.end(), cmp); }
+template <typename T> inline void sort(vec<T>& v) { sort(v.begin(), v.end()); }
 
 template <typename T> void reverse(T* s, T* e) {
     if(s >= e || s == --e) return;
@@ -798,7 +865,7 @@ public:
     }
 };
 
-template <typename T = long long> class set : public Splay<T> {
+template <typename T = long long, const bool allow_multi = false> class set : public Splay<T> {
     using Node = Splay<T>::Node;
 public:
     long long size() const { return this->sz; }
@@ -806,11 +873,12 @@ public:
         Node *p = this->tree;
         if(!p) {
             this->tree = new Node(key, this);
+            this->sz = 1;
             return;
         }
         while(true) {
-            if(key == p->v) return;
-            if(key < p->v) {
+            if(!allow_multi && key == p->v) return;
+            if(key <= p->v) {
                 if(!p->l) {
                     Splay<T>::insert(p, true, key);
                     break;
@@ -848,6 +916,7 @@ public:
     }
 
     inline bool contains(const T& key) { return find(key); }
+    inline bool empty() const { return !size(); }
 
     void erase(const T& key) {
         Node* t = find(key);
@@ -855,6 +924,8 @@ public:
         Splay<T>::erase(t);
     }
 };
+
+template <typename T = long long> using multiset = set<T, true>;
 
 template <typename Key = long long, typename Value = long long>
 class map {
@@ -946,6 +1017,24 @@ template <is_integral T> void get(T& t) {
     if(neg) t = -t;
 }
 
+template <is_floating_point T> void get(T& t) {
+    t = 0; bool neg = false;
+    char c = getc();
+    while(!isdigit(c) && c != '-' && c != '.') c = getc();
+    if(c == '-') neg = true, c = getc();
+    if(c == '.') goto after;
+    while(isdigit(c)) t = t * 10 + (c - '0'), c = getc();
+    if(c != '.') {
+        if(neg) t = -t;
+        return;
+    }
+    after:
+    T cur = 1; cur /= 10;
+    c = getc();
+    while(isdigit(c)) t += cur * (c - '0'), cur /= 10, c = getc();
+    if(neg) t = -t;
+}
+
 void get(bool& t) { int v; get(v); t = v; }
 
 void get(str& s) {
@@ -986,6 +1075,24 @@ void put(bool b) { putc(b ? '1' : '0'); }
 template <is_signed T> void put(const T& t) {
     if(t < 0) putc('-'), put(static_cast<unsigned_type<T>>(-(t + 1)) + 1);
     else put(static_cast<unsigned_type<T>>(t));
+}
+
+int stdio_floating_point_precision_ = 18;
+
+void setprecision(int prec) {
+    stdio_floating_point_precision_ = prec;
+}
+
+template <is_floating_point T> void put(T t) {
+    if(t < 0) putc('-'), t = -t;
+    __int128 it = t;
+    put(it); t -= it; t *= 10;
+    putc('.');
+    for(int i = 0; i < 18; i++) {
+        it = t; put(it);
+        t -= it; t *= 10;
+        if(!t) break;
+    }
 }
 
 template <typename T1, typename... T2> void put(const T1& a, const T2&... b) { put(a); put(b...); }
@@ -1070,11 +1177,13 @@ struct range {
 
 #define loop while(true)
 
+using i64 = long long; using i32 = int; using i128 = __int128;
+using f32 = double; using f64 = long double;
+
 #pragma endregion
 
 #pragma region Custom Keywords
-/////////////////////// Custom Keywords ///////////////////////
-using i64 = long long; using i32 = int; using i128 = __int128;
+
 #ifdef LOCAL
 constexpr bool is_local = true;
 #else
@@ -1083,13 +1192,11 @@ constexpr bool is_local = false;
 
 inline void assert_(bool a, const char* str, int line) {
     if(!a) {
-        do {
-            ln();
-            put("ASSERTION FAILED: ");
-            ln(str);
-            flush();
-            // ReSharper disable once CppDFALoopConditionNotUpdated
-        } while(!is_local);
+        ln();
+        put("ASSERTION FAILED: ");
+        ln(str);
+        flush();
+        throw;
     }
 }
 
@@ -1099,17 +1206,10 @@ inline void assert_(bool a, const char* str, int line) {
 
 
 int main() {
-    i64 n = get(), k = get();
-    k = min(n - 1, k);
-    vec arr(n);
-    for(int i : range(n)) get(arr[i]);
-    set left, right;
-    i64 ans = -2147483647;
-    for(int i = n - k - 1; i < n; i++)
-        right.insert(arr[i]);
-    for(int i = 0; i + (n - k - 1) < n; i++) {
-        left.insert(arr[i]);
-        ans = max(ans, right.back() - left.front());
-        right.erase(arr[i + n - k]);
+    multiset arr;
+    i64 n = get();
+    for(int i = 0; i < n; i++) {
+        arr.insert(get());
     }
+    while(!arr.empty()) ln(arr.front()), arr.erase(arr.front());
 }

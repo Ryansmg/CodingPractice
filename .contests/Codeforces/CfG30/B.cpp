@@ -155,14 +155,22 @@ struct segtree {
 #pragma endregion
 
 
-int main() {
+i32 main() {
     tcRep() {
         in64(n);
-        vector<i64> arr(n + 1);
-        rep(n) arr[get()]++;
-        multiset<i64> s;
-        forf(i, 1, n) if(arr[i]) s.insert(arr[i]);
-
+        vector<i64> arr(n);
+        forn(i, n) get(arr[i]);
+        bool ok = false;
+        forn(i, n) {
+            if(ok) break;
+            forf(j, i+1, n-1) {
+                if(ok) break;
+                if((arr[j] % arr[i]) % 2 == 0) {
+                    ln(arr[i], " ", arr[j]);
+                    ok = true;
+                }
+            }
+        }
+        if(!ok) ln(-1);
     }
 }
-

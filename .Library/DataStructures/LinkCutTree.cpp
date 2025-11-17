@@ -1,6 +1,7 @@
-// Update : 2025-10-13
+// Update : 2025-11-03
 
 #include <vector>
+#include <cassert>
 using std::vector, std::swap;
 
 template <typename T>
@@ -97,7 +98,7 @@ public:
 
     /// makes chain x the root of lct
     void access(Node* x) {
-        splay(x); x->r = 0; x->upd();
+        splay(x); x->r = nullptr; x->upd();
         for (; x->p; splay(x)) {
             splay(x->p); x->p->r = x; x->p->upd();
         }

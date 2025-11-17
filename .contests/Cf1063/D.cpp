@@ -155,14 +155,73 @@ struct segtree {
 #pragma endregion
 
 
-int main() {
+i32 main() {
     tcRep() {
-        in64(n);
-        vector<i64> arr(n + 1);
-        rep(n) arr[get()]++;
-        multiset<i64> s;
-        forf(i, 1, n) if(arr[i]) s.insert(arr[i]);
+        in64(n, q);
+        vector<pair<i64, i64>> qst(q);
+        for(auto& [l, r] : qst) get(l, r);
+        sort(qst);
+        vector<pair<i64, i64>> qs;
+        for(const auto& [l, r] : qst) {
+            if(qs.empty() || qs.back().first != l) {
+                if(qs.empty() || qs.back().second < r) qs.emplace_back(l, r);
+            } else {
+                qs.back().second = r;
+            }
+        }
+        i64 zero_pos = 0;
+        for(i64 l = 1, r = n; l <= r;) {
+            i64 m = (l + r) / 2;
+            ln("? ", 1, " ", m);
+            cout.flush();
+            in64(res);
+            if(res) zero_pos = m, r = m - 1;
+            else l = m + 1;
+        }
+        if(qs.back().second < zero_pos || zero_pos < qs[0].first) {
+            ln("! ", 0);
+            cout.flush();
+            continue;
+        }
+        q = qs.size();
+        i64 L = 0, R = q - 1;
+        while(L < q - 1 && qs[L].second < zero_pos) L++;
+        while(R > 0 && qs[R].first > zero_pos) R--;
+        ln("? ", qs[L].first, " ", qs[L].second);
+        cout.flush();
+        in64(resL);
+        ln("? ", qs[R].first, " ", qs[R].second);
+        cout.flush();
+        in64(resR);
 
+        if(resL == resR) {
+            ln("! ", resL);
+            cout.flush();
+        }
+        else if(resL > resR) {
+            i64 ansv = resL;
+            for(i64 l = L, r = R; l <= r;) {
+                i64 m = (l + r) / 2;
+                ln("? ", qs[m].first, " ", qs[m].second);
+                cout.flush();
+                in64(res);
+                if(res >= ansv) ansv = res, l = m + 1;
+                else r = m - 1;
+            }
+            ln("! ", ansv);
+            cout.flush();
+        } else {
+            i64 ansv = resR;
+            for(i64 l = L, r = R; l <= r;) {
+                i64 m = (l + r) / 2;
+                ln("? ", qs[m].first, " ", qs[m].second);
+                cout.flush();
+                in64(res);
+                if(res >= ansv) ansv = res, r = m - 1;
+                else l = m + 1;
+            }
+            ln("! ", ansv);
+            cout.flush();
+        }
     }
 }
-

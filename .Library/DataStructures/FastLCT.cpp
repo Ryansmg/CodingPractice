@@ -1,4 +1,5 @@
 // Update : 2025-11-04
+// 그리 빠르진 않음
 
 #include <vector>
 #include <cassert>
@@ -7,8 +8,9 @@ using ptr = signed;
 constexpr ptr null = 0;
 
 struct T {
-    ptr p = null;
-    long long val = 0, sum = 0;
+    ptr l = null, r = null;
+    long long val = 155715571557, edgeIdx = -1;
+    long long mn = 155715571557, mnEdgeIdx = -1;
 };
 
 struct Node {
@@ -17,7 +19,7 @@ struct Node {
     T val = T();
 };
 
-Node M[222222];
+Node M[666666];
 
 inline void reserve(int size) {
     assert(std::size(M) >= (unsigned) size);
@@ -52,9 +54,11 @@ inline void pull(ptr nd) {
     M[nd].sz = 1 + (M[nd].l ? M[M[nd].l].sz : 0) + (M[nd].r ? M[M[nd].r].sz : 0);
 
     // implement here
-    M[nd].val.sum = M[nd].val.val;
-    if(M[nd].l) M[nd].val.sum += M[M[nd].l].val.sum;
-    if(M[nd].r) M[nd].val.sum += M[M[nd].r].val.sum;
+    M[nd].val.mn = M[nd].val.val; M[nd].val.mnEdgeIdx = M[nd].val.edgeIdx;
+    if(M[nd].l && M[M[nd].l].val.mn < M[nd].val.mn)
+        M[nd].val.mn = M[M[nd].l].val.mn, M[nd].val.mnEdgeIdx = M[M[nd].l].val.mnEdgeIdx;
+    if(M[nd].r && M[M[nd].r].val.mn < M[nd].val.mn)
+        M[nd].val.mn = M[M[nd].r].val.mn, M[nd].val.mnEdgeIdx = M[M[nd].r].val.mnEdgeIdx;
 }
 
 inline void rotate(ptr nd) {
@@ -118,11 +122,33 @@ inline void link_(ptr parent, ptr child) {
     pull(child);
 }
 
+inline void link(ptr parent, ptr child) {
+    setRoot(child);
+    link_(parent, child);
+}
+
 inline void cut(ptr x) {
     access(x);
     M[M[x].l].p = null;
     M[x].l = null;
     pull(x);
+}
+
+ptr par(ptr x) {
+    access(x);
+    if(!M[x].l) return null;
+    x = M[x].l; push(x);
+    while(M[x].r) x = M[x].r, push(x);
+    splay(x); return x;
+}
+
+inline void cutEdge(ptr a, ptr b) {
+    if(par(a) == b) cut(a);
+    else assert(par(b) == a), cut(b);
+}
+
+inline bool hasEdge(ptr a, ptr b) {
+    return par(a) == b || par(b) == a;
 }
 
 inline ptr root(ptr x) {
@@ -137,6 +163,10 @@ inline bool connected(ptr u, ptr v) {
 inline ptr lca(ptr x, ptr y) {
     access(x); access(y); splay(x);
     return M[x].p ? M[x].p : x;
+}
+
+inline int depth(ptr x) {
+    access(x); return M[x].l ? M[M[x].l].sz : 0;
 }
 
 /// @param x target node
@@ -167,53 +197,69 @@ int main() {
     ios::sync_with_stdio(false);
     cin.tie(nullptr); cout.tie(nullptr);
     int n, q; cin >> n >> q;
-    for(int i = 1; i <= n; i++) gen();
-
-    for(int i = 1; i <= n; i++) {
-        int t; cin >> t;
-        if(connected(t, i)) M[i].val.p = t;
-        else link_(t, i);
+    vector<ptr> nodes(n+1), edges(n-1);
+    set<int> free;
+    set<pair<long long, int>> used;
+    for(int i = 1; i <= n; i++) nodes[i] = gen();
+    for(int i = 0; i < n - 1; i++) {
+        edges[i] = gen();
+        M[edges[i]].val.edgeIdx = M[edges[i]].val.mnEdgeIdx = i;
+        free.insert(i);
     }
-
-    for(int i = 1; i <= n; i++) {
-        long long t; cin >> t;
-        update(i, [&](ptr nd) { M[nd].val.val = t; });
-    }
-
+    reserve(n + n - 1);
     while(q--) {
-        long long t, i, j, x;
+        long long t, i, j, d, x;
         cin >> t;
         if(t == 1) {
-            cin >> i >> j;
-            ptr rt = root(i);
-            ptr lf = M[rt].val.p;
-            ptr nx = lca(i, lf);
-            if(nx == i) {
-                M[rt].val.p = null;
-                if(rt != lf && rt != nx) {
-                    cut(nx);
-                    assert(!connected(lf, rt));
-                    link_(lf, rt);
+            cin >> i >> j >> d;
+            bool ok = !connected(nodes[i], nodes[j]);
+            if(!ok) {
+                T res;
+                path(nodes[i], nodes[j], [&](const ptr nd) {
+                    res = M[nd].val;
+                });
+                if(res.mn < d) {
+                    int dealloc = res.mnEdgeIdx;
+                    ptr tarEdge = edges[dealloc];
+                    cutEdge(tarEdge, M[tarEdge].val.l);
+                    cutEdge(tarEdge, M[tarEdge].val.r);
+                    used.erase(used.find({M[tarEdge].val.val, M[tarEdge].val.edgeIdx}));
+                    free.insert(dealloc);
+                    ok = true;
                 }
-            } else cut(i);
+            }
 
-            if(connected(i, j)) {
-                M[i].val.p = j;
-            } else link_(j, i);
-        } else if(t == 2) {
-            cin >> i >> x;
-            update(i, [&](ptr nd) { M[nd].val.val = x; });
-        } else {
+            if(ok) {
+                int alloc = *free.begin(); free.erase(alloc);
+                M[edges[alloc]].val.val = d;
+                M[edges[alloc]].val.l = nodes[i];
+                M[edges[alloc]].val.r = nodes[j];
+                link(edges[alloc], nodes[i]);
+                link(edges[alloc], nodes[j]);
+                used.insert({d, alloc});
+            }
+
+        }
+        else if(t == 2) {
             cin >> x;
-            ptr rt = root(x);
-            ptr lf = M[rt].val.p;
-            ptr nx = lca(x, lf);
-            long long ans = -M[nx].val.val;
-            path(rt, x, [&](ptr nd) { ans += M[nd].val.sum; });
-            path(nx, lf, [&](ptr nd) { ans += M[nd].val.sum; });
-            cout << ans << '\n';
+            while(!used.empty() && used.begin()->first < x) {
+                int dealloc = used.begin()->second;
+                ptr tarEdge = edges[dealloc];
+                cutEdge(tarEdge, M[tarEdge].val.l);
+                cutEdge(tarEdge, M[tarEdge].val.r);
+                used.erase(used.begin());
+                free.insert(dealloc);
+            }
+        }
+        else {
+            cin >> i >> j;
+            if(connected(nodes[i], nodes[j])) {
+                path(nodes[i], nodes[j], [](const ptr nd) {
+                    cout << M[nd].val.mn << '\n';
+                });
+            } else {
+                cout << "0\n";
+            }
         }
     }
-
-    std::stold("");
 }

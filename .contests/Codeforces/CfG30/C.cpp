@@ -155,14 +155,54 @@ struct segtree {
 #pragma endregion
 
 
-int main() {
+i32 main() {
     tcRep() {
-        in64(n);
-        vector<i64> arr(n + 1);
-        rep(n) arr[get()]++;
-        multiset<i64> s;
-        forf(i, 1, n) if(arr[i]) s.insert(arr[i]);
+        in64(n, m);
+        vector<i64> a(n), b(m), c(m);
+        forn(i, n) get(a[i]);
+        forn(i, m) get(b[i]);
+        forn(i, m) get(c[i]);
 
+        vector<pair<i64, i64>> monsters;
+        forn(i, m) monsters.emplace_back(b[i], c[i]);
+        multiset<i64> swords, failed_swords;
+        forn(i, n) swords.insert(a[i]);
+        sort(monsters, greater<>());
+
+        i64 ans = 0;
+
+        vector<pair<i64, i64>> monsters_noc;
+        // c, b
+        multiset<pair<i64, i64>, greater<pair<i64, i64>>> msts;
+
+        while(!swords.empty()) {
+            while(!monsters.empty() && monsters.back().first <= *swords.begin()) {
+                msts.emplace(monsters.back().second, monsters.back().first);
+                monsters.pop_back();
+            }
+            if(msts.empty() || msts.begin()->first == 0) {
+                failed_swords.insert(*swords.begin());
+                swords.erase(swords.begin());
+                continue;
+            }
+            i64 t = max(*swords.begin(), msts.begin()->first);
+            swords.erase(swords.begin());
+            swords.insert(t);
+            msts.erase(msts.begin());
+            ans++;
+        }
+
+        for(const auto& [C, B] : msts) {
+            assert(!C);
+            monsters.emplace_back(B, C);
+        }
+        sort(monsters, greater<>());
+
+        for(const auto& [B, C] : monsters) {
+            if(failed_swords.empty()) break;
+            if(B <= *failed_swords.rbegin()) failed_swords.erase(prev(failed_swords.end())), ans++;
+        }
+
+        ln(ans);
     }
 }
-

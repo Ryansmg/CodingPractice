@@ -154,15 +154,94 @@ struct segtree {
 
 #pragma endregion
 
+struct seg {
+    struct T {
+        i64 monCnt = 0;
+        i64 cmax = -1;
+        i64 cmaxIdx = -1;
+        multiset<i64> mons;
 
-int main() {
+        T operator+(const T& b) const {
+            if(cmax > b.cmax) return {monCnt + b.monCnt, cmax, cmaxIdx};
+            return {monCnt + b.monCnt, b.cmax, b.cmaxIdx};
+        }
+    };
+
+    vector<T> M;
+
+    i64 len = 0;
+
+    seg() = default;
+
+    void init(i64 L) {
+        M = vector<T>(4 * L);
+        len = L;
+    }
+
+    void add(i64 p, i64 s, i64 e, i64 t, i64 v) {
+        if(s == e) {
+            M[p].monCnt++;
+            M[p].cmax = max(M[p].cmax, v);
+            M[p].mons.insert(v);
+            M[p].cmaxIdx = t;
+            return;
+        }
+        i64 m = (s + e) / 2;
+        if(t <= m) add(p*2, s, m, t, v);
+        else add(p*2+1, m+1, e, t, v);
+        M[p] = M[p*2] + M[p*2+1];
+    }
+
+    T query(i64 p, i64 s, i64 e, i64 l, i64 r) {
+        if(l <= s && e <= r) return M[p];
+        if(e < l || r < s) return {};
+        i64 m = (s + e) / 2;
+        return query(p*2, s, m, l, r) + query(p*2+1, m+1, e, l, r);
+    }
+
+    void remove(i64 p, i64 s, i64 e, i64 t) {
+        if(s == e) {
+            M[p].monCnt--;
+            M[p].mons.erase(prev(M[p].mons.end()));
+            M[p].cmax = M[p].mons.empty() ? 0 : *M[p].mons.rbegin();
+            M[p].cmaxIdx = t;
+            return;
+        }
+        i64 m = (s + e) / 2;
+        if(t <= m) remove(p*2, s, m, t);
+        else remove(p*2+1, m+1, e, t);
+        M[p] = M[p*2] + M[p*2+1];
+    }
+};
+
+i32 main() {
     tcRep() {
-        in64(n);
-        vector<i64> arr(n + 1);
-        rep(n) arr[get()]++;
-        multiset<i64> s;
-        forf(i, 1, n) if(arr[i]) s.insert(arr[i]);
-
+        in64(n, k);
+        instr(s);
+        instr(t);
+        i64 ok = n;
+        while(ok && s[ok-1] == t[ok-1]) ok--;
+        auto cur = s;
+        vector<string> ans;
+        bool possible = true;
+        while(ok && possible) {
+            if(ans.size() > k) break;
+            i64 avail = ok - 1;
+            forr(i, ok-1, 0) {
+                if(avail > i) avail = i;
+                while(avail && cur[avail] != t[i]) avail--;
+                if(cur[avail] != t[i]) {
+                    possible = false; break;
+                }
+                if(avail < i) cur[avail+1] = cur[avail];
+            }
+            ans.push_back(cur);
+            while(ok && cur[ok-1] == t[ok-1]) ok--;
+        }
+        if(ans.size() > k || !possible) ln(-1);
+        else {
+            ln(ans.size());
+            for(const auto& i : ans) ln(i);
+        }
     }
 }
-

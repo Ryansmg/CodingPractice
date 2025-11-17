@@ -214,6 +214,4 @@ int main() {
             cout << ans << '\n';
         }
     }
-
-    std::stold("");
 }

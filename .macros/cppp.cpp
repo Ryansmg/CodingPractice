@@ -779,6 +779,8 @@ vi prime_list(int n) {
 i64 I = 1'000'000'000;
 
 i32 main() {
+    int a, b;
+    swap(a, b);
     tcRep() {
         in64(n);
 

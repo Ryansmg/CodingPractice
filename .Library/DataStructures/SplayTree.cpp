@@ -300,10 +300,6 @@ void update(Splay<GoldMine>::Node& a) {
     if(a.r) a.v.merge(a.r->v);
 }
 
-void push(Splay<GoldMine>::Node& a) {
-    if(a.v.flip) swap(a.v.l, a.v.r);
-}
-
 
 // BOJ 17607. 수열과 쿼리 31
 #include <iostream>
@@ -319,8 +315,7 @@ int main() {
         if(t) arr[i] = {1, 1, 1, 1, 1};
         else arr[i] = {-15571557, -15571557, -15571557, -15571557, -15571557};
     }
-    Splay<GoldMine> splay(arr, update, push);
-    splay.addPushFun(Splay<GoldMine>::push_flip);
+    Splay<GoldMine> splay(arr, update, Splay<GoldMine>::push_flip);
 
     int m; cin >> m;
     while(m--) {
