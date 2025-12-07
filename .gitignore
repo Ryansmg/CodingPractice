@@ -9,3 +9,5 @@
 /CMakeLists.txt
 /RustCoding/target
 /.autocp
+in.txt
+out.txt

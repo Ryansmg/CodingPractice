@@ -93,13 +93,7 @@ inline string readline() {
 }
 
 struct enable_fastio_ {
-    enable_fastio_() {
-        ios::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr);
-#ifdef LOCAL
-        freopen("../in.txt", "r", stdin);
-        freopen("../out.txt", "w", stdout);
-#endif
-    }
+    enable_fastio_() { ios::sync_with_stdio(false); cin.tie(nullptr); cout.tie(nullptr); }
 } efio_;
 
 #pragma endregion
@@ -160,23 +154,54 @@ struct segtree {
 
 #pragma endregion
 
+inline bool overlap(const array<i64, 4>& a, const array<i64, 4>& b) {
+    const auto& [r1, i1, x1, y1] = a;
+    const auto& [r2, i2, x2, y2] = b;
+
+    return (x1-x2) * (x1-x2) + (y1-y2) * (y1-y2) <= (r1+r2) * (r1+r2);
+}
 
 int main() {
-    vector<vector<i64>> ans;
-    in64(n, m);
-    forn(i, 1LL<<n) {
-        if(popcount(i) != m) continue;
-        vector<i64> cur;
-        forn(j, n)
-            if(i & (1LL << j))
-                cur.push_back(j + 1);
-        do {
-            ans.push_back(cur);
-        } while(next_permutation(all(cur)));
+    in64(n);
+    vector<array<i64, 4>> circles, origin(1);
+    vector<int> ans(n + 1, 0);
+    forf(i, 1, n) {
+        in64(x, y, r);
+        x += 1'000'000'000;
+        y += 1'000'000'000;
+        circles.push_back({r, i, x, y});
+        origin.push_back({r, i, x, y});
     }
-    sort(ans);
-    for(auto& i : ans) {
-        for(auto& j : i) put(j, ' ');
-        ln();
+    sort(circles, [](const array<i64, 4>& a, const array<i64, 4>& b) {
+        if(a[0] != b[0]) return a[0] > b[0];
+        return a[1] < b[1];
+    });
+
+    map<pair<i64, i64>, vector<i64>> buckets;
+    i64 b = circles[0][0]; // bucket size
+
+    auto assign = [&] {
+        buckets.clear();
+        for(const auto& [r, i, x, y] : circles)
+            if(!ans[i])
+                buckets[{x / b, y / b}].push_back(i);
+    };
+    assign();
+
+    for(const auto& [r, i, x, y] : circles) {
+        if(ans[i]) continue;
+        ans[i] = i;
+
+        if(b > r * 2) b /= 2, assign();
+        i64 bx = x / b, by = y / b;
+        forf(dx, -2, 2) forf(dy, -2, 2) {
+            if(!buckets.contains({bx + dx, by + dy})) continue;
+            for(i64 j : buckets[{bx + dx, by + dy}]) {
+                if(ans[j]) continue;
+                if(overlap(origin[i], origin[j])) ans[j] = i;
+            }
+        }
     }
+
+    forf(i, 1, n) cout << ans[i] << ' ';
 }

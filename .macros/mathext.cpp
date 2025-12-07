@@ -127,6 +127,8 @@ struct ModInt {
     inline ModInt operator+(const ModInt& b) const { ModInt ret = *this; ret += b.v; return ret; }
     inline ModInt operator-(const ModInt& b) const { ModInt ret = *this; ret -= b.v; return ret; }
     inline ModInt operator*(const ModInt& b) const { return { v * b.v % mod }; }
+    inline bool operator==(const ModInt& b) const { return v == b.v; }
+    inline auto operator<=>(const ModInt& b) const { return v <=> b.v; }
 
     inline ModInt& operator+=(const ModInt& b) {
         v += b.v;

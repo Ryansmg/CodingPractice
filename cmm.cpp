@@ -285,6 +285,18 @@ public:
         }
         return size() < b.size();
     }
+    bool operator<=(const str& b) const {
+        for(long long i = 0; i < min(size(), b.size()); i++) {
+            if(operator[](i) != b[i]) return operator[](i) < b[i];
+        }
+        return size() <= b.size();
+    }
+    bool operator>(const str& b) const {
+        for(long long i = 0; i < min(size(), b.size()); i++) {
+            if(operator[](i) != b[i]) return operator[](i) > b[i];
+        }
+        return size() > b.size();
+    }
     str& operator+=(const str& s) {
         for(char c : s) push(c);
         return *this;
@@ -933,6 +945,7 @@ class map {
         Key key = Key(); Value value = Value();
         bool operator==(const Pair& b) const { return key == b.key; }
         bool operator<(const Pair& b) const { return key < b.key; }
+        bool operator<=(const Pair& b) const { return key <= b.key; }
     };
     set<Pair> s;
 public:
@@ -940,7 +953,7 @@ public:
     void insert(const Key& key, const Value& value) {
         Pair p = { key, value };
         auto x = s.find(p);
-        if(x) x->value = value;
+        if(x) x->v.value = value;
         else s.insert(p);
     }
     void erase(const Key& key) { s.erase({key}); }
@@ -951,9 +964,12 @@ public:
             s.insert({key});
             x = s.find({key});
         }
-        return x->value;
+        return x->v.value;
     }
     const Value& operator[](const Key& key) const { return operator[](key); }
+
+    template <typename Callable>
+    inline void forEach(const Callable& f) { s.forEach(f); }
 };
 
 #pragma endregion
@@ -1206,10 +1222,5 @@ inline void assert_(bool a, const char* str, int line) {
 
 
 int main() {
-    multiset arr;
-    i64 n = get();
-    for(int i = 0; i < n; i++) {
-        arr.insert(get());
-    }
-    while(!arr.empty()) ln(arr.front()), arr.erase(arr.front());
+    
 }
